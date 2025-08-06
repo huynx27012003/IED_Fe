@@ -51,7 +51,7 @@
 <script>
 import Loading from "@/components/Loading.vue";
 
-import { login, getUserFromToken } from "@/api/auth";
+// import { login, getUserFromToken } from "@/api/auth";
 import Cookies from "js-cookie";
 import { mapMutations } from "vuex";
 export default {
@@ -139,21 +139,50 @@ export default {
             await new Promise((resolve) => setTimeout(resolve, 1000)); // giả lập delay
             this.$message.success("Đăng ký thành công (giả lập)!");
             this.toggleMode();
-          } else {
-            const { token } = await login(
-              this.form.username,
-              this.form.password
+          }
+          // else {
+          //   const { token } = await login(
+          //     this.form.username,
+          //     this.form.password
+          //   );
+          //   Cookies.set("token", token);
+          //   const userInfo = await getUserFromToken(token);
+
+          //   const userData = {
+          //     username:
+          //       userInfo?.username || this.form.username || userInfo?.sub,
+          //     ...userInfo,
+          //   };
+          //   localStorage.setItem("user", JSON.stringify(userData));
+          //   console.log("User data:", userData);
+          //   this.setAuthenticated(true);
+          //   this.setUser(userData);
+          //   await this.$nextTick();
+          //   this.$router.push({ name: "tree" });
+          // }
+          else {
+            const matched = this.accounts.find(
+              (acc) =>
+                acc.username === this.form.username &&
+                acc.password === this.form.password
             );
+
+            if (!matched) {
+              this.$message.error("Sai tài khoản hoặc mật khẩu!");
+              return;
+            }
+
+            // Tạo mock token
+            const token = `mock-token-${matched.username}`;
             Cookies.set("token", token);
-            const userInfo = await getUserFromToken(token);
 
             const userData = {
-              username:
-                userInfo?.username || this.form.username || userInfo?.sub,
-              ...userInfo,
+              username: matched.username,
+              role: matched.role,
+              token,
             };
+
             localStorage.setItem("user", JSON.stringify(userData));
-            console.log("User data:", userData);
             this.setAuthenticated(true);
             this.setUser(userData);
             await this.$nextTick();

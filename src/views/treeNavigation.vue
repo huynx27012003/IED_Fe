@@ -37,12 +37,15 @@
               v-for="item in ownerServerList"
               :key="item.id"
               :node="item"
-              :selectedNodes="selectedOwnerNodes"
+              :selectedNodes="selectedNodes"
+              :selectedParameterId="selectedParameterId"
+              @select-parameter="handleSelectParameter"
               @fetch-children="fetchChildrenServer"
               @show-properties="showPropertiesData"
               @update-selection="updateSelectionOwner"
               @clear-selection="clearSelectionOwner"
               @open-context-menu="openContextMenu"
+              @toggle-node="handleToggleNode"
             />
           </ul>
         </div>
@@ -69,7 +72,7 @@
               v-for="item in locationList"
               :key="item.id"
               :node="item"
-              :selectedNodes="selectedLocationNodes"
+              :selectedNodes="selectedNodes"
               @fetch-children="fetchChildrenServer"
               @show-properties="showPropertiesData"
               @update-selection="updateSelectionLocation"
@@ -666,13 +669,13 @@
       </div>
     </div>
     <ContextMenu
-      :visible="!!rightClickNode"
+      v-if="contextMenuVisible"
+      class="context-menu"
+      :visible="contextMenuVisible"
       :position="contextMenuPosition"
       :selectedNode="rightClickNode"
       @close="closeContextMenu"
-      @delete-node="handleDeleteNode"
-      @show-data="showData"
-      @edit-node="handleEditNode"
+      @open-tab="handleOpenTab"
     />
   </div>
 </template>
@@ -717,7 +720,6 @@ export default {
         Feeder: "",
         Panel: "",
       },
-      rightClickNode: null,
       contextMenuPosition: { x: 0, y: 0 },
       Information: {
         Name: "",
@@ -809,6 +811,7 @@ export default {
       },
       sl: 10,
       count: "",
+      selectedParameterId: null,
       ownerServerList: [
         {
           id: "owner1",
@@ -852,7 +855,14 @@ export default {
               id: "owner3-loc1",
               name: "Location of Hà Nội",
               mode: "location",
-              children: [],
+              children: [
+                {
+                  id: "Voltage Level1",
+                  name: "VL2",
+                  mode: "voltage",
+                  children: [],
+                },
+              ],
             },
             {
               id: "owner2",
@@ -872,8 +882,290 @@ export default {
                         {
                           id: "Voltage Level1",
                           name: "VL1",
-                          mode: "voltageLevel",
-                          children: [],
+                          mode: "voltage",
+                          children: [
+                            {
+                              id: "FD",
+                              name: "FD",
+                              mode: "feeder",
+                              children: [
+                                {
+                                  id: "IED1",
+                                  name: "IED1",
+                                  mode: "ied",
+                                  children: [
+                                    {
+                                      id: "setting1",
+                                      name: "System Setting",
+                                      mode: "systemsetting",
+                                      children: [
+                                        {
+                                          id: "Voltage Input 2",
+                                          name: "Voltage Input 2",
+                                          mode: "parameter",
+                                          children: [
+                                            {
+                                              id: "Primary Voltage 1",
+                                              name: "Primary Voltage 1",
+                                              value: "1000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Primary Value",
+                                            },
+                                            {
+                                              id: "Second Voltage 1",
+                                              name: "Second Voltage 1",
+                                              value: "2000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Secondary Value",
+                                            },
+                                            {
+                                              id: "VT Ratio 1",
+                                              name: "VT Ratio 1",
+                                              value: "2000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "VT Ratio",
+                                            },
+                                          ],
+                                        },
+                                        {
+                                          id: "Current Input 2",
+                                          name: "Current Input 2",
+                                          mode: "parameter",
+                                          children: [
+                                            {
+                                              id: "Primary Voltage 1",
+                                              name: "Primary Voltage 1",
+                                              value: "1000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Primary Value",
+                                            },
+                                            {
+                                              id: "Second Voltage 1",
+                                              name: "Second Voltage 1",
+                                              value: "2000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Secondary Value",
+                                            },
+                                            {
+                                              id: "CT Ratio 1",
+                                              name: "CT Ratio 1",
+                                              value: "2000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "CT Ratio",
+                                            },
+                                          ],
+                                        },
+                                        {
+                                          id: "Neutral Voltage Input 2",
+                                          name: "Neutral Voltage Input 2",
+                                          mode: "parameter",
+                                          children: [
+                                            {
+                                              id: "Primary Voltage 1",
+                                              name: "Primary Voltage 1",
+                                              value: "1000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Primary Value",
+                                              mode: "parameterValue",
+                                            },
+                                            {
+                                              id: "Second Voltage 1",
+                                              name: "Second Voltage 1",
+                                              value: "2000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Secondary Value",
+                                              mode: "parameterValue",
+                                            },
+                                            {
+                                              id: "Neutral VT Ratio 1",
+                                              name: "Neutral VT Ratio 1",
+                                              value: "2000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Neutral VT Ratio 1",
+                                              mode: "parameterValue",
+                                            },
+                                          ],
+                                        },
+                                        {
+                                          id: "Neutral Current Input 2",
+                                          name: "Neutral Curent Input 2",
+                                          mode: "parameter",
+                                          children: [
+                                            {
+                                              id: "Primary Voltage 4",
+                                              name: "Primary Voltage 4",
+                                              value: "1000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Primary Value",
+                                              mode: "parameterValue",
+                                            },
+                                            {
+                                              id: "Second Voltage 4",
+                                              name: "Second Voltage 4",
+                                              value: "2000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Secondary Value",
+                                              mode: "parameterValue",
+                                            },
+                                            {
+                                              id: "Neutral CT Ratio 4",
+                                              name: "Neutral CT Ratio 4",
+                                              value: "2000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Neutral VT Ratio ",
+                                              mode: "parameterValue",
+                                            },
+                                          ],
+                                        },
+                                        {
+                                          id: "Rated Frequency 1",
+                                          name: "Rated Frequency 1",
+                                          mode: "parameter",
+                                          children: [
+                                            {
+                                              id: "Primary Voltage 5",
+                                              name: "Primary Voltage 5",
+                                              value: "1000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Primary Value",
+                                              mode: "parameterValue",
+                                            },
+                                            {
+                                              id: "Second Voltage 5",
+                                              name: "Second Voltage 5",
+                                              value: "2000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Secondary Value",
+                                              mode: "parameterValue",
+                                            },
+                                            {
+                                              id: "Neutral CT Ratio 5",
+                                              name: "Neutral CT Ratio 5",
+                                              value: "2000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Neutral VT Ratio ",
+                                              mode: "parameterValue",
+                                            },
+                                          ],
+                                        },
+                                        {
+                                          id: "Active Group 1",
+                                          name: "Active Group 1",
+                                          mode: "parameter",
+                                          children: [
+                                            {
+                                              id: "Primary Voltage 6",
+                                              name: "Primary Voltage 6",
+                                              value: "1000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Primary Value",
+                                              mode: "parameterValue",
+                                            },
+                                            {
+                                              id: "Second Voltage 6",
+                                              name: "Second Voltage 6",
+                                              value: "2000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Secondary Value",
+                                              mode: "parameterValue",
+                                            },
+                                            {
+                                              id: "Neutral CT Ratio 6",
+                                              name: "Neutral CT Ratio 6",
+                                              value: "2000",
+                                              Unit: "V",
+                                              MinVal: "0",
+                                              MaxVal: "10000",
+                                              Description: "Neutral VT Ratio ",
+                                              mode: "parameterValue",
+                                            },
+                                          ],
+                                        },
+                                      ],
+                                    },
+                                    {
+                                      id: "setting2",
+                                      name: "System Setting 2",
+                                      mode: "systemsetting",
+                                      children: [
+                                        {
+                                          id: "Voltage Input 1",
+                                          name: "Voltage Input 1",
+                                          mode: "parameter",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "Current Input 1",
+                                          name: "Current Input 1",
+                                          mode: "parameter",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "Neutral Voltage Input 1",
+                                          name: "Neutral Voltage Input 1",
+                                          mode: "parameter",
+                                          children: [],
+                                        },
+                                      ],
+                                    },
+                                    {
+                                      id: "group1",
+                                      name: "Group 1",
+                                      mode: "group",
+                                      children: [
+                                        {
+                                          id: "protection1",
+                                          name: "Phase Overcurrent",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection2",
+                                          name: "Neutral Overcurrent",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                      ],
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                          ],
                         },
                       ],
                     },
@@ -894,17 +1186,75 @@ export default {
         "Surge arrester",
       ],
       LocationType: ["location", "voltage", "feeder"],
+      contextMenuVisible: false,
+      contextMenuPosition: { x: 0, y: 0 },
+      rightClickNode: null,
     };
   },
   beforeMount() {},
   methods: {
+    methods: {
+      handleSelectParameter(node) {
+        this.selectedParameterId = node.id;
+      },
+    },
+    handleToggleNode(node) {
+      node.expanded = !node.expanded;
+    },
+    handleOpenTab(payload) {
+      if (!payload || !payload.id) {
+        console.error("Tab thiếu id:", payload);
+        return;
+      }
+
+      const newTab = {
+        ...payload, // ✅ Lấy toàn bộ tab và node
+      };
+
+      const existing = this.tabs.find((t) => t.id === newTab.id);
+      if (!existing) {
+        this.tabs.push(newTab);
+      }
+
+      this.activeTab = newTab;
+    },
+
+    openTabForNode(node) {
+      if (!node || !node.id) return;
+      const existingIndex = this.tabs.findIndex((tab) => tab.id === node.id);
+      if (existingIndex !== -1) {
+        this.activeTab = this.tabs[existingIndex];
+      } else {
+        this.tabs.push(node);
+        this.activeTab = node;
+      }
+      this.closeContextMenu();
+    },
     openContextMenu(event, node) {
       event.preventDefault();
-      this.rightClickNode = node;
+
+      if (!node || !node.id) {
+        console.warn("⚠️ Không thể mở context menu: node không hợp lệ", node);
+        return;
+      }
+
+      this.contextMenuVisible = true;
       this.contextMenuPosition = { x: event.clientX, y: event.clientY };
+      this.rightClickNode = node;
+      console.log("Right clicked node:", node);
+      document.addEventListener("click", this.handleOutsideClick);
     },
     closeContextMenu() {
+      this.contextMenuVisible = false;
       this.rightClickNode = null;
+      document.removeEventListener("click", this.handleOutsideClick);
+    },
+
+    handleOutsideClick(e) {
+      const menu = this.$el.querySelector(".context-menu");
+      if (menu && !menu.contains(e.target)) {
+        this.closeContextMenu();
+      }
     },
     removeTab(index) {
       if (this.activeTab.id == this.tabs[index].id) {
@@ -923,12 +1273,19 @@ export default {
       document.addEventListener("mouseup", this.stopResizeServer);
     },
     resizeServer(event) {
-      if (!this.$refs.sidebarServer) return;
-      let newWidth = (event.clientX / window.innerWidth) * 100;
-      let finalWidth = Math.max(10, Math.min(40, newWidth));
-      // Cập nhật width của sidebar và context-data
-      this.$refs.sidebarServer.style.width = finalWidth + "vw";
-      this.$refs.contextDataServer.style.width = 100 - finalWidth + "vw";
+      if (!this.$refs.sidebarServer || !this.$refs.sidebarServer.offsetParent)
+        return;
+
+      const sidebarLeft =
+        this.$refs.sidebarServer.offsetParent.getBoundingClientRect().left;
+      const newWidth = event.clientX - sidebarLeft;
+      const containerWidth = this.$refs.sidebarServer.offsetParent.clientWidth;
+
+      let percentWidth = (newWidth / containerWidth) * 100;
+      let finalWidth = Math.max(10, Math.min(40, percentWidth)); // giới hạn trong khoảng 10–40%
+
+      this.$refs.sidebarServer.style.width = finalWidth + "%";
+      this.$refs.contextDataServer.style.width = 100 - finalWidth + "%";
     },
     stopResizeServer() {
       document.removeEventListener("mousemove", this.resizeServer);
@@ -1044,73 +1401,93 @@ export default {
     },
 
     async fetchChildren(node) {
-      if (!node.children) {
-        try {
-          let newId = uuid.newUuid();
-          const data = [
-            {
-              id: newId,
-              name: newId,
-            },
-          ];
-          Vue.set(node, "children", data);
-        } catch (error) {
-          console.error("Lỗi khi lấy dữ liệu:", error);
-        }
-      }
-    },
+      // console.log("📥 Fetching children for node:");
+      // console.log("🆔 ID: ", node.id);
+      // console.log("📛 Name: ", node.name);
+      // console.log("📦 Mode: ", node.mode);
+      // console.log(
+      //   "🔗 ParentArr: ",
+      //   node.parentArr?.map((p) => p.name)
+      // );
+      // console.log("↩️ ParentNode: ", node.parentNode?.name || "None");
+      // Nếu đã có children, không fetch lại
+      if (node.children && node.children.length > 0) return;
 
-    async fetchChildrenServer(node) {
-      if (!node.children) {
-        try {
-          let newRows = [];
+      // Ví dụ lấy children từ tree (tuỳ logic bạn dùng, có thể dùng API hoặc clone)
+      const children = node.childrenFromData || []; // hoặc node._rawChildren nếu có
 
-          // Mock data for assets
-          const mockAssets = [
-            {
-              id: node.id + "-asset1",
-              name: "Mock Asset 1",
-              asset: "Transformer",
-              serial_no: "SN123",
-              parentId: node.id,
-              parentName: node.name,
-              parentArr: [
-                ...(node.parentArr || []),
-                { id: node.id, parent: node.name },
-              ],
-            },
-          ];
+      // Gán mảng children vào node
+      this.$set(node, "children", children);
 
-          // Mock data for locations
-          const mockLocations = [
-            {
-              id: node.id + "-loc1",
-              name: "Mock Location 1",
-              mode: "location",
-              parentId: node.id,
-              parentName: node.name,
-              parentArr: [
-                ...(node.parentArr || []),
-                { id: node.id, parent: node.name },
-              ],
-            },
-          ];
+      for (const child of children) {
+        // Gán cha trực tiếp
+        child.parentNode = node;
 
-          if (this.LocationType.includes(node.mode)) {
-            newRows.push(...mockAssets);
-          } else if (node.mode && node.mode.startsWith("OWNER")) {
-            newRows.push(...mockLocations);
-          } else {
-            newRows = [];
+        // Gán mảng tổ tiên
+        let parentArr = [];
+        if (node.parentArr) {
+          parentArr = [...node.parentArr];
+        } else {
+          // Nếu chưa có parentArr, build từ parentNode
+          let current = node.parentNode;
+          while (current) {
+            parentArr.unshift(current);
+            current = current.parentNode;
           }
-
-          Vue.set(node, "children", newRows);
-        } catch (error) {
-          console.error("Error fetching mock children:", error);
         }
+
+        // Thêm node hiện tại vào mảng tổ tiên
+        parentArr.push(node);
+        child.parentArr = parentArr;
+
+        // Đệ quy nếu cần preload
+        // this.fetchChildren(child); // nếu bạn muốn gán sẵn hết cây
       }
     },
+    async fetchChildrenServer(node) {
+      // if (!node.children || node.children.length === 0) {
+      //   // Tìm các phần tử con từ ownerServerList theo id node cha:
+      //   const childNodes = this.ownerServerList.filter(
+      //     (item) => item.parentId === node.id
+      //   );
+      //   // Gán các node con này vào node.children một cách reactive:
+      //   Vue.set(node, "children", childNodes);
+      // }
+      console.log("Fetching children for node:");
+      console.log("ID: ", node);
+      console.log("Name: ", node.name);
+      console.log("Mode: ", node.mode);
+      console.log(
+        "🔗 ParentArr: ",
+        node.parentArr?.map((p) => p.name)
+      );
+      console.log("↩️ ParentNode: ", node.parentNode?.name || "None");
+      if (node.children && node.children.length > 0) return;
 
+      const children = node.childrenFromData || [];
+      this.$set(node, "children", children);
+      for (const child of children) {
+        child.parentNode = node;
+
+        let parentArr = [];
+        if (node.parentArr) {
+          parentArr = [...node.parentArr];
+        } else {
+          let current = node.parentNode;
+          while (current) {
+            parentArr.unshift(current);
+            current = current.parentNode;
+          }
+        }
+
+        // Thêm node hiện tại vào mảng tổ tiên
+        parentArr.push(node);
+        child.parentArr = parentArr;
+
+        // Đệ quy nếu cần preload
+        // this.fetchChildren(child); // nếu bạn muốn gán sẵn hết cây
+      }
+    },
     async hideProperties() {
       this.propertiesSign = false;
       const content = this.$refs.content;
@@ -1241,13 +1618,13 @@ export default {
   margin: 0;
   padding: 0;
   background-color: #f5f5f5;
-  font-size: 12px; /* Giảm cỡ chữ toàn trang */
+  font-size: 12px;
 }
 
 .explorer {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(100%) !important;
 }
 
 .resizable-sidebar {

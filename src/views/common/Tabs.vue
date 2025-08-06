@@ -1,4 +1,5 @@
 <!-- eslint-disable -->
+<!-- eslint-disable -->
 <template>
   <div ref="customTabs" class="custom-tabs">
     <div class="tabs-header">
@@ -8,35 +9,42 @@
       <div class="tabs-header-data" ref="tabsHeader" @scroll="checkScroll">
         <div
           v-for="(tab, index) in tabs"
-          :key="tab.id"
+          :key="tab?.id || index"
           @click="selectTab(tab, index)"
-          @mouseover="hoveredTab = tab.id"
+          @mouseover="hoveredTab = tab?.id"
           @mouseleave="hoveredTab = null"
           class="tab-item"
-          :class="{ active: activeTab.id === tab.id }"
+          :class="{ active: activeTab?.id === tab?.id }"
           ref="tabItems"
         >
           <i
             style="color: #fdd835; margin-right: 8px"
             class="fa-solid fa-folder-open mgr-10 mgl-10"
           ></i>
-          <span v-if="dataTypeOwner.includes(tab.mode)" class="tab-label">{{
-            tab.name
+          <span v-if="dataTypeOwner.includes(tab?.mode)" class="tab-label">
+            {{ tab?.name }}
+          </span>
+          <span v-else-if="dataType.includes(tab?.mode)" class="tab-label">
+            {{ tab?.name }}
+          </span>
+          <span v-else-if="assetType.includes(tab?.asset)" class="tab-label">
+            {{ tab?.serial_no }}
+          </span>
+          <span v-else-if="tab?.type === 'job'" class="tab-label">{{
+            tab?.name
           }}</span>
-          <span v-if="dataType.includes(tab.mode)" class="tab-label">{{
-            tab.name
+          <span v-else-if="tab?.type === 'test'" class="tab-label">{{
+            tab?.name
           }}</span>
-          <span v-if="assetType.includes(tab.asset)" class="tab-label">{{
-            tab.serial_no
-          }}</span>
-          <span v-if="tab.type == 'job'" class="tab-label">{{ tab.name }}</span>
-          <span v-if="tab.type == 'test'" class="tab-label">{{
-            tab.name
-          }}</span>
+
+          <span v-else class="tab-label">
+            {{ tab?.name || "Untitled" }}
+          </span>
+
           <span
             class="close-icon mgr-10 mgl-10"
             :class="{
-              visible: hoveredTab === tab.id || activeTab.id === tab.id,
+              visible: hoveredTab === tab?.id || activeTab?.id === tab?.id,
             }"
             @click.stop="closeTab(index)"
             >✖</span
@@ -48,16 +56,16 @@
       </div>
     </div>
     <div class="tabs-content">
-      <div v-for="item in tabs" :key="item.id">
+      <div v-for="item in tabs" :key="item?.id || 'tab-' + index">
         <component
-          v-show="activeTab.id === item.id"
+          v-show="activeTab?.id === item?.id"
           ref="componentLoadData"
           :sideData="sideSign"
           :is="checkTab(item)"
           :ownerData="item"
+          :expandedGroup="item.node?.id"
           @edit-start="handleEditStart"
-        >
-        </component>
+        ></component>
       </div>
     </div>
   </div>
@@ -65,19 +73,15 @@
 
 <script>
 /* eslint-disable */
-
-// import LocationViewData from '@/views/LocationInsert/locationLevelView.vue'
-// import OwnerView from '@/views/OwnerViewData/index.vue'
-// import Transformer from '@/views/AssetView/Transformer/index.vue'
+import SystemSettingTab from "@/views/common/SystemSettingTab.vue";
+import TestManagementTab from "@/views/common/TestManagementTab.vue";
 
 export default {
   name: "Tabs",
-  // components: {
-  //     LocationViewData,
-  //     OwnerView,
-  //     Transformer,
-
-  // },
+  components: {
+    SystemSettingTab,
+    TestManagementTab,
+  },
   model: {
     prop: "value",
     event: "input",
@@ -123,7 +127,7 @@ export default {
     tabs(newVal) {
       this.checkScroll();
       const customTabs = this.$refs.customTabs;
-      if (customTabs && this.tabs.length == 0) {
+      if (customTabs && this.tabs.length === 0) {
         customTabs.style.borderBottom = "none";
       }
     },
@@ -132,16 +136,7 @@ export default {
     async selectTab(tab, index) {
       this.activeTab = tab;
       this.$emit("input", tab);
-      this.$nextTick(() => {
-        const component = this.$refs.componentLoadData[index];
-        if (component && typeof component.loadMapForView === "function") {
-          component.loadMapForView();
-        } else {
-          console.warn(
-            `Component tại index ${index} không có hàm loadMapForView.`
-          );
-        }
-      });
+      this.$emit("input", tab);
     },
     closeTab(index) {
       this.$emit("close-tab", index);
@@ -175,15 +170,22 @@ export default {
       });
     },
     checkTab(tab) {
-      if (this.dataType.includes(tab.mode)) {
+      if (tab?.component === "SystemSettingTab") {
+        return "SystemSettingTab";
+      }
+      if (tab?.component === "TestManagementTab") {
+        return "TestManagementTab";
+      }
+
+      if (this.dataType.includes(tab?.mode)) {
         return "LocationViewData";
-      } else if (this.dataTypeOwner.includes(tab.mode)) {
+      } else if (this.dataTypeOwner.includes(tab?.mode)) {
         return "OwnerView";
       } else {
-        if (tab.asset != undefined) {
-          if (tab.asset == "Transformer") {
+        if (tab?.asset !== undefined) {
+          if (tab.asset === "Transformer") {
             return "Transformer";
-          } else if (tab.asset == "Circuit breaker") {
+          } else if (tab.asset === "Circuit breaker") {
             return "CircuitBreaker";
           } else {
             return "Transformer";
@@ -195,7 +197,7 @@ export default {
     },
     handleEditStart() {
       const currentComponent = this.$refs.componentLoadData.find(
-        (comp) => comp.$vnode.key === this.activeTab.id
+        (comp) => comp?.$vnode?.key === this.activeTab?.id
       );
       if (currentComponent) {
         currentComponent.isEditing = true;
@@ -204,6 +206,10 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* CSS giữ nguyên không đổi */
+</style>
 
 <style scoped>
 .custom-tabs {
@@ -292,13 +298,14 @@ export default {
 }
 
 .tabs-content {
-  width: calc(100% - 100px);
+  width: calc(100% - 50px);
   height: calc(100% - 15px);
-  overflow-y: auto; /* Cho phép cuộn theo chiều dọc */
-  overflow-x: hidden; /* Scroll ngang vẫn hiển thị */
-  scrollbar-width: none; /* Ẩn scrollbar dọc trên Firefox */
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
   margin-left: 20px;
   padding-top: 10px;
+  /* margin-right: 10px; */
 }
 
 .tabs-content::-webkit-scrollbar {

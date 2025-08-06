@@ -295,7 +295,7 @@ export default {
   border-top: 1px solid #eee;
   font-size: 11px;
   color: #555;
-  height: 3vh;
+  height: 3.5vh;
   display: flex;
   align-items: center;
   justify-content: flex-end;
