@@ -1,8 +1,9 @@
 <template>
   <div class="system-setting-tab">
     <h3>{{ ownerData.id }}</h3>
-    <h3>Parent: {{ parentName }}</h3>
+    <!-- <h3>Parent: {{ parentName }}</h3> -->
     <h3>System Setting: {{ ownerData.node.name }}</h3>
+    <h3>{{ ownerData.node.mode }}</h3>
     <table class="parameter-table">
       <thead>
         <tr>
@@ -14,7 +15,7 @@
           <th>Description</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody v-show="ownerData.node.name === 'System Setting'">
         <template v-for="group in parameterGroups" :key="group.id">
           <tr class="group-header">
             <td :colspan="6">{{ group.name }}</td>
@@ -22,12 +23,25 @@
           <tr v-for="param in group.children" :key="param.id">
             <td>{{ param.name }}</td>
             <td>{{ param.value }}</td>
-            <td>{{ param.Unit }}</td>
-            <td>{{ param.MinVal }}</td>
-            <td>{{ param.MaxVal }}</td>
-            <td>{{ param.Description }}</td>
+            <td>{{ param.unit }}</td>
+            <td>{{ param.minVal }}</td>
+            <td>{{ param.maxVal }}</td>
+            <td>{{ param.description }}</td>
           </tr>
         </template>
+      </tbody>
+      <tbody v-show="ownerData.node.name !== 'System Setting'">
+        <!-- <tr class="group-header">
+          <td :colspan="6">{{ ownerData.node.name }}</td>
+        </tr> -->
+        <tr v-for="param in parameterGroups" :key="param.id">
+          <td>{{ param.name }}</td>
+          <td>{{ param.value }}</td>
+          <td>{{ param.unit }}</td>
+          <td>{{ param.minVal }}</td>
+          <td>{{ param.maxVal }}</td>
+          <td>{{ param.description }}</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -55,30 +69,26 @@ export default {
       const node = this.ownerData?.node || {};
       const parentArr = node.parentArr || [];
 
-      console.log("🔍 Debug parentArr:", parentArr);
+      console.log(
+        "🔍 Debug parentArr:",
+        parentArr.map((p) => ({ id: p.id, name: p.name }))
+      );
       console.log("🔍 Debug ownerData.parent:", this.ownerData.parent);
-      console.log("🔍 Debug node.parent:", node.parent);
+      console.log("🔍 Debug node.parentNode:", node.parentNode?.name || "None");
 
       if (parentArr.length >= 1) {
         const last = parentArr[parentArr.length - 1];
-        console.log("✅ parentName from parentArr:", last.name || last.parent);
         return last.name || last.parent || "(unnamed parent)";
       }
 
       if (this.ownerData.parent?.name) {
-        console.log(
-          "✅ parentName from ownerData.parent:",
-          this.ownerData.parent.name
-        );
         return this.ownerData.parent.name;
       }
 
-      if (node.parent?.name) {
-        console.log("✅ parentName from node.parent:", node.parent.name);
-        return node.parent.name;
+      if (node.parentNode?.name) {
+        return node.parentNode.name;
       }
 
-      console.log("⚠️ parentName fallback to '(no parent)'");
       return "(no parent)";
     },
   },

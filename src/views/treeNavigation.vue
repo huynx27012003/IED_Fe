@@ -908,28 +908,28 @@ export default {
                                               id: "Primary Voltage 1",
                                               name: "Primary Voltage 1",
                                               value: "1000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Primary Value",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Primary Value",
                                             },
                                             {
                                               id: "Second Voltage 1",
                                               name: "Second Voltage 1",
                                               value: "2000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Secondary Value",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Secondary Value",
                                             },
                                             {
                                               id: "VT Ratio 1",
                                               name: "VT Ratio 1",
                                               value: "2000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "VT Ratio",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "VT Ratio",
                                             },
                                           ],
                                         },
@@ -942,28 +942,31 @@ export default {
                                               id: "Primary Voltage 1",
                                               name: "Primary Voltage 1",
                                               value: "1000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Primary Value",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Primary Value",
+                                              mode: "parameterValue",
                                             },
                                             {
                                               id: "Second Voltage 1",
                                               name: "Second Voltage 1",
                                               value: "2000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Secondary Value",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Secondary Value",
+                                              mode: "parameterValue",
                                             },
                                             {
                                               id: "CT Ratio 1",
                                               name: "CT Ratio 1",
                                               value: "2000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "CT Ratio",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "CT Ratio",
+                                              mode: "parameterValue",
                                             },
                                           ],
                                         },
@@ -976,30 +979,30 @@ export default {
                                               id: "Primary Voltage 1",
                                               name: "Primary Voltage 1",
                                               value: "1000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Primary Value",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Primary Value",
                                               mode: "parameterValue",
                                             },
                                             {
                                               id: "Second Voltage 1",
                                               name: "Second Voltage 1",
                                               value: "2000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Secondary Value",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Secondary Value",
                                               mode: "parameterValue",
                                             },
                                             {
                                               id: "Neutral VT Ratio 1",
                                               name: "Neutral VT Ratio 1",
                                               value: "2000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Neutral VT Ratio 1",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Neutral VT Ratio 1",
                                               mode: "parameterValue",
                                             },
                                           ],
@@ -1013,30 +1016,30 @@ export default {
                                               id: "Primary Voltage 4",
                                               name: "Primary Voltage 4",
                                               value: "1000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Primary Value",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Primary Value",
                                               mode: "parameterValue",
                                             },
                                             {
                                               id: "Second Voltage 4",
                                               name: "Second Voltage 4",
                                               value: "2000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Secondary Value",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Secondary Value",
                                               mode: "parameterValue",
                                             },
                                             {
                                               id: "Neutral CT Ratio 4",
                                               name: "Neutral CT Ratio 4",
                                               value: "2000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Neutral VT Ratio ",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Neutral VT Ratio ",
                                               mode: "parameterValue",
                                             },
                                           ],
@@ -1050,30 +1053,30 @@ export default {
                                               id: "Primary Voltage 5",
                                               name: "Primary Voltage 5",
                                               value: "1000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Primary Value",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Primary Value",
                                               mode: "parameterValue",
                                             },
                                             {
                                               id: "Second Voltage 5",
                                               name: "Second Voltage 5",
                                               value: "2000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Secondary Value",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Secondary Value",
                                               mode: "parameterValue",
                                             },
                                             {
                                               id: "Neutral CT Ratio 5",
                                               name: "Neutral CT Ratio 5",
                                               value: "2000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Neutral VT Ratio ",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Neutral VT Ratio ",
                                               mode: "parameterValue",
                                             },
                                           ],
@@ -1087,30 +1090,30 @@ export default {
                                               id: "Primary Voltage 6",
                                               name: "Primary Voltage 6",
                                               value: "1000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Primary Value",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Primary Value",
                                               mode: "parameterValue",
                                             },
                                             {
                                               id: "Second Voltage 6",
                                               name: "Second Voltage 6",
                                               value: "2000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Secondary Value",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Secondary Value",
                                               mode: "parameterValue",
                                             },
                                             {
                                               id: "Neutral CT Ratio 6",
                                               name: "Neutral CT Ratio 6",
                                               value: "2000",
-                                              Unit: "V",
-                                              MinVal: "0",
-                                              MaxVal: "10000",
-                                              Description: "Neutral VT Ratio ",
+                                              unit: "V",
+                                              minVal: "0",
+                                              maxVal: "10000",
+                                              description: "Neutral VT Ratio ",
                                               mode: "parameterValue",
                                             },
                                           ],
@@ -1201,22 +1204,78 @@ export default {
     handleToggleNode(node) {
       node.expanded = !node.expanded;
     },
+    fetchParent(node) {
+      return "setting1";
+    },
     handleOpenTab(payload) {
-      if (!payload || !payload.id) {
-        console.error("Tab thiếu id:", payload);
+      if (!payload || !payload.id || !payload.node) {
+        console.error("Tab thiếu id hoặc node:", payload);
         return;
       }
 
-      const newTab = {
-        ...payload, // ✅ Lấy toàn bộ tab và node
-      };
+      const newTab = { ...payload };
+      console.log("handleOpenTab: New tab payload:", newTab);
 
+      // Check if newTab.node.mode is 'parameter'
+      if (newTab.node.mode === "parameter") {
+        const parentId = this.fetchParent(newTab);
+        console.log("🔍 Parameter mode detected, parentId:", parentId);
+        const existingParentIndex = this.tabs.findIndex(
+          (t) => t.node && t.node.id === parentId
+        );
+        if (existingParentIndex !== -1) {
+          console.log(
+            "Removing parent tab at index:",
+            existingParentIndex,
+            "with ID:",
+            this.tabs[existingParentIndex].id
+          );
+          this.tabs.splice(existingParentIndex, 1);
+        }
+      }
+
+      // Check if the new tab already exists
       const existing = this.tabs.find((t) => t.id === newTab.id);
       if (!existing) {
         this.tabs.push(newTab);
+        console.log("Added new tab:", newTab.id);
+      } else {
+        console.log("Tab already exists:", newTab.id);
       }
 
-      this.activeTab = newTab;
+      // Set the new tab as active and emit input event
+      this.activeTab = { ...newTab };
+      this.$emit("input", newTab);
+      console.log("Set activeTab:", this.activeTab.id);
+      console.log(
+        "Current tabs:",
+        this.tabs.map((t) => ({ id: t.id, name: t.name }))
+      );
+
+      // Force UI update and scroll to new tab
+      this.$nextTick(() => {
+        this.scrollToActiveTab();
+      });
+    },
+
+    scrollToActiveTab() {
+      this.$nextTick(() => {
+        const tabsHeader =
+          this.$refs.contentData.querySelector(".tabs-header-data");
+        const tabItems = this.$refs.contentData.querySelectorAll(".tab-item");
+        if (tabsHeader && tabItems) {
+          const activeTabElement = Array.from(tabItems).find((el) =>
+            el.classList.contains("active")
+          );
+          if (activeTabElement) {
+            activeTabElement.scrollIntoView({
+              behavior: "smooth",
+              inline: "center",
+            });
+            console.log("Scrolled to active tab:", this.activeTab.id);
+          }
+        }
+      });
     },
 
     openTabForNode(node) {

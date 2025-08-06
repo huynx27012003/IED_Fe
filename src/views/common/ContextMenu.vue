@@ -65,8 +65,7 @@
     </ul>
     <!-- Menu cho parameter -->
     <ul ul v-else-if="nodeMode === 'parameter'">
-      <li @click="openParameterSettings">Open</li>
-
+      <li @click="emitAction('parameterValue')">Open</li>
       <li class="danger" @click="emitAction('delete')">Delete</li>
     </ul>
     <!-- Menu cho owner -->
@@ -146,18 +145,22 @@ export default {
       }
 
       if (action === "test") {
-        tab.id = `${this.selectedNode.id}-test`;
+        tab.id = `${this.selectedNode.id}-testManagement`;
         tab.name = `${this.selectedNode.name} - Test Management`;
         tab.component = "TestManagementTab";
+      }
+      if (action === "parameterValue") {
+        tab.id = `${this.selectedNode.id}`;
+        tab.name = `${this.selectedNode.name}`;
+        tab.component = "SystemSettingTab";
       }
 
       if (tab.id) {
         const parentArr = [];
 
-        // Tìm danh sách các node cha từ selectedNode, nếu có
         let current = this.selectedNode.parentNode;
         while (current) {
-          parentArr.unshift(current); // đẩy cha vào đầu mảng để giữ thứ tự gốc → ngọn
+          parentArr.unshift(current);
           current = current.parentNode;
         }
 

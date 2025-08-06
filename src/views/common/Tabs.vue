@@ -36,11 +36,9 @@
           <span v-else-if="tab?.type === 'test'" class="tab-label">{{
             tab?.name
           }}</span>
-
           <span v-else class="tab-label">
             {{ tab?.name || "Untitled" }}
           </span>
-
           <span
             class="close-icon mgr-10 mgl-10"
             :class="{
@@ -117,26 +115,43 @@ export default {
   watch: {
     value: {
       handler(newVal) {
+        console.log("🔄 Tabs.vue value watcher: newVal:", newVal);
         if (newVal && (!this.activeTab || newVal.id !== this.activeTab.id)) {
           this.activeTab = { ...newVal };
+          console.log("✅ Tabs.vue set activeTab:", this.activeTab.id);
         }
       },
       deep: true,
       immediate: true,
     },
-    tabs(newVal) {
-      this.checkScroll();
-      const customTabs = this.$refs.customTabs;
-      if (customTabs && this.tabs.length === 0) {
-        customTabs.style.borderBottom = "none";
-      }
+    tabs: {
+      handler(newVal, oldVal) {
+        console.log(
+          "📋 Tabs.vue tabs watcher: newVal:",
+          newVal.map((t) => ({ id: t.id, name: t.name }))
+        );
+        this.checkScroll();
+        const customTabs = this.$refs.customTabs;
+        if (customTabs && newVal.length === 0) {
+          customTabs.style.borderBottom = "none";
+        }
+        // If a new tab was added, set it as active
+        if (newVal.length > oldVal.length) {
+          const newTab = newVal[newVal.length - 1];
+          this.activeTab = { ...newTab };
+          this.$emit("input", newTab);
+          console.log("➕ Tabs.vue set new tab as active:", newTab.id);
+        }
+      },
+      deep: true,
     },
   },
   methods: {
     async selectTab(tab, index) {
-      this.activeTab = tab;
-      this.$emit("input", tab);
-      this.$emit("input", tab);
+      if (tab && tab.id !== this.activeTab?.id) {
+        this.activeTab = { ...tab };
+        this.$emit("input", tab);
+      }
     },
     closeTab(index) {
       this.$emit("close-tab", index);
@@ -176,7 +191,6 @@ export default {
       if (tab?.component === "TestManagementTab") {
         return "TestManagementTab";
       }
-
       if (this.dataType.includes(tab?.mode)) {
         return "LocationViewData";
       } else if (this.dataTypeOwner.includes(tab?.mode)) {
