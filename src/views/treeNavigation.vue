@@ -912,6 +912,7 @@ export default {
                                               minVal: "0",
                                               maxVal: "10000",
                                               description: "Primary Value",
+                                              mode: "parameterValue",
                                             },
                                             {
                                               id: "Second Voltage 1",
@@ -921,6 +922,7 @@ export default {
                                               minVal: "0",
                                               maxVal: "10000",
                                               description: "Secondary Value",
+                                              mode: "parameterValue",
                                             },
                                             {
                                               id: "VT Ratio 1",
@@ -930,6 +932,7 @@ export default {
                                               minVal: "0",
                                               maxVal: "10000",
                                               description: "VT Ratio",
+                                              mode: "parameterValue",
                                             },
                                           ],
                                         },
@@ -939,7 +942,7 @@ export default {
                                           mode: "parameter",
                                           children: [
                                             {
-                                              id: "Primary Voltage 1",
+                                              id: "Primary Voltage 8",
                                               name: "Primary Voltage 1",
                                               value: "1000",
                                               unit: "V",
@@ -949,7 +952,7 @@ export default {
                                               mode: "parameterValue",
                                             },
                                             {
-                                              id: "Second Voltage 1",
+                                              id: "Second Voltage 8",
                                               name: "Second Voltage 1",
                                               value: "2000",
                                               unit: "V",
@@ -959,7 +962,7 @@ export default {
                                               mode: "parameterValue",
                                             },
                                             {
-                                              id: "CT Ratio 1",
+                                              id: "CT Ratio 8",
                                               name: "CT Ratio 1",
                                               value: "2000",
                                               unit: "V",
@@ -976,7 +979,7 @@ export default {
                                           mode: "parameter",
                                           children: [
                                             {
-                                              id: "Primary Voltage 1",
+                                              id: "Primary Voltage 9",
                                               name: "Primary Voltage 1",
                                               value: "1000",
                                               unit: "V",
@@ -986,7 +989,7 @@ export default {
                                               mode: "parameterValue",
                                             },
                                             {
-                                              id: "Second Voltage 1",
+                                              id: "Second Voltage 9",
                                               name: "Second Voltage 1",
                                               value: "2000",
                                               unit: "V",
@@ -996,7 +999,7 @@ export default {
                                               mode: "parameterValue",
                                             },
                                             {
-                                              id: "Neutral VT Ratio 1",
+                                              id: "Neutral VT Ratio 9",
                                               name: "Neutral VT Ratio 1",
                                               value: "2000",
                                               unit: "V",
@@ -1121,31 +1124,6 @@ export default {
                                       ],
                                     },
                                     {
-                                      id: "setting2",
-                                      name: "System Setting 2",
-                                      mode: "systemsetting",
-                                      children: [
-                                        {
-                                          id: "Voltage Input 1",
-                                          name: "Voltage Input 1",
-                                          mode: "parameter",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "Current Input 1",
-                                          name: "Current Input 1",
-                                          mode: "parameter",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "Neutral Voltage Input 1",
-                                          name: "Neutral Voltage Input 1",
-                                          mode: "parameter",
-                                          children: [],
-                                        },
-                                      ],
-                                    },
-                                    {
                                       id: "group1",
                                       name: "Group 1",
                                       mode: "group",
@@ -1159,6 +1137,121 @@ export default {
                                         {
                                           id: "protection2",
                                           name: "Neutral Overcurrent",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection3",
+                                          name: "Negative Sequence",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection4",
+                                          name: "Phase Undervoltage",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection5",
+                                          name: "Phase Overvoltage",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection6",
+                                          name: "Neutral Overvoltage",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection7",
+                                          name: "Under Frequency",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection8",
+                                          name: "Over Frequency",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection9",
+                                          name: "Breaker Failure",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection10",
+                                          name: "Auto Reclose",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                      ],
+                                    },
+                                    {
+                                      id: "group2",
+                                      name: "Group 2",
+                                      mode: "group",
+                                      children: [
+                                        {
+                                          id: "protection11",
+                                          name: "Phase Overcurrent",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection12",
+                                          name: "Neutral Overcurrent",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection13",
+                                          name: "Negative Sequence",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection14",
+                                          name: "Phase Undervoltage",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection15",
+                                          name: "Phase Overvoltage",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection16",
+                                          name: "Neutral Overvoltage",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection17",
+                                          name: "Under Frequency",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection18",
+                                          name: "Over Frequency",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection19",
+                                          name: "Breaker Failure",
+                                          mode: "protection",
+                                          children: [],
+                                        },
+                                        {
+                                          id: "protection20",
+                                          name: "Auto Reclose",
                                           mode: "protection",
                                           children: [],
                                         },
@@ -1208,56 +1301,35 @@ export default {
       return "setting1";
     },
     handleOpenTab(payload) {
-      if (!payload || !payload.id || !payload.node) {
-        console.error("Tab thiếu id hoặc node:", payload);
-        return;
-      }
+      if (!payload || !payload.id || !payload.node) return;
 
       const newTab = { ...payload };
-      console.log("handleOpenTab: New tab payload:", newTab);
 
-      // Check if newTab.node.mode is 'parameter'
+      // Xóa tab cha nếu cần (chế độ parameter)
       if (newTab.node.mode === "parameter") {
-        const parentId = this.fetchParent(newTab);
-        console.log("🔍 Parameter mode detected, parentId:", parentId);
-        const existingParentIndex = this.tabs.findIndex(
-          (t) => t.node && t.node.id === parentId
-        );
-        if (existingParentIndex !== -1) {
-          console.log(
-            "Removing parent tab at index:",
-            existingParentIndex,
-            "with ID:",
-            this.tabs[existingParentIndex].id
-          );
-          this.tabs.splice(existingParentIndex, 1);
+        const parentId = this.fetchParent(newTab.node);
+        const idx = this.tabs.findIndex((t) => t.node?.id === parentId);
+        if (idx !== -1) {
+          this.tabs.splice(idx, 1);
         }
       }
 
-      // Check if the new tab already exists
-      const existing = this.tabs.find((t) => t.id === newTab.id);
-      if (!existing) {
-        this.tabs.push(newTab);
-        console.log("Added new tab:", newTab.id);
+      // Kiểm tra tab đã tồn tại chưa
+      const exists = this.tabs.find((t) => t.id === newTab.id);
+      if (!exists) {
+        this.tabs.push(newTab); // Thêm tab mới
+        this.activeTab = newTab; // Đặt activeTab ngay lập tức
       } else {
-        console.log("Tab already exists:", newTab.id);
+        this.activeTab = exists; // Nếu đã tồn tại, đặt làm active
       }
 
-      // Set the new tab as active and emit input event
-      this.activeTab = { ...newTab };
-      this.$emit("input", newTab);
-      console.log("Set activeTab:", this.activeTab.id);
-      console.log(
-        "Current tabs:",
-        this.tabs.map((t) => ({ id: t.id, name: t.name }))
-      );
-
-      // Force UI update and scroll to new tab
+      // Đảm bảo UI cập nhật sau khi DOM sẵn sàng
       this.$nextTick(() => {
-        this.scrollToActiveTab();
+        if (this.$refs.tabs) {
+          this.$refs.tabs.verifyActiveTab(); // Gọi phương thức trong Tabs.vue
+        }
       });
     },
-
     scrollToActiveTab() {
       this.$nextTick(() => {
         const tabsHeader =
@@ -1273,6 +1345,34 @@ export default {
               inline: "center",
             });
             console.log("Scrolled to active tab:", this.activeTab.id);
+          } else {
+            console.warn(
+              "No active tab element found for ID:",
+              this.activeTab.id
+            );
+            const matchingTab = this.tabs.find(
+              (t) => t.id === this.activeTab.id
+            );
+            if (matchingTab) {
+              this.activeTab = { ...matchingTab };
+              this.$emit("input", this.activeTab);
+              console.log(
+                "Forced reset and re-emitted activeTab:",
+                this.activeTab.id
+              );
+              this.$nextTick(() => {
+                const newActiveTabElement = Array.from(tabItems).find((el) =>
+                  el.classList.contains("active")
+                );
+                if (newActiveTabElement) {
+                  newActiveTabElement.scrollIntoView({
+                    behavior: "smooth",
+                    inline: "center",
+                  });
+                  console.log(" Re-scrolled to active tab:", this.activeTab.id);
+                }
+              });
+            }
           }
         }
       });

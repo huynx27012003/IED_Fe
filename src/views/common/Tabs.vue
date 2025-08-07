@@ -1,5 +1,4 @@
 <!-- eslint-disable -->
-<!-- eslint-disable -->
 <template>
   <div ref="customTabs" class="custom-tabs">
     <div class="tabs-header">
@@ -94,7 +93,7 @@ export default {
   },
   data() {
     return {
-      activeTab: this.value,
+      activeTab: this.value || {},
       sideSign: this.side,
       hoveredTab: null,
       canScrollLeft: false,
@@ -113,37 +112,24 @@ export default {
     };
   },
   watch: {
-    value: {
-      handler(newVal) {
-        console.log("🔄 Tabs.vue value watcher: newVal:", newVal);
-        if (newVal && (!this.activeTab || newVal.id !== this.activeTab.id)) {
-          this.activeTab = { ...newVal };
-          console.log("✅ Tabs.vue set activeTab:", this.activeTab.id);
-        }
-      },
-      deep: true,
-      immediate: true,
+    value(newVal) {
+      if (newVal && (!this.activeTab || newVal.id !== this.activeTab.id)) {
+        this.activeTab = { ...newVal }; // Đồng bộ activeTab với value
+        this.$nextTick(() => {
+          this.scrollToActiveTab(); // Cuộn đến tab active sau khi cập nhật
+        });
+      }
     },
-    tabs: {
-      handler(newVal, oldVal) {
-        console.log(
-          "📋 Tabs.vue tabs watcher: newVal:",
-          newVal.map((t) => ({ id: t.id, name: t.name }))
-        );
-        this.checkScroll();
-        const customTabs = this.$refs.customTabs;
-        if (customTabs && newVal.length === 0) {
-          customTabs.style.borderBottom = "none";
-        }
-        // If a new tab was added, set it as active
-        if (newVal.length > oldVal.length) {
-          const newTab = newVal[newVal.length - 1];
-          this.activeTab = { ...newTab };
-          this.$emit("input", newTab);
-          console.log("➕ Tabs.vue set new tab as active:", newTab.id);
-        }
-      },
-      deep: true,
+    tabs(newVal, oldVal) {
+      if (newVal.length > oldVal.length) {
+        const newTab = newVal[newVal.length - 1]; // Lấy tab mới nhất
+        this.activeTab = { ...newTab }; // Đặt làm active
+        this.$emit("input", newTab); // Phát sự kiện để đồng bộ với parent
+        this.$nextTick(() => {
+          this.scrollToActiveTab(); // Cuộn đến tab active
+        });
+      }
+      this.checkScroll();
     },
   },
   methods: {
@@ -151,7 +137,43 @@ export default {
       if (tab && tab.id !== this.activeTab?.id) {
         this.activeTab = { ...tab };
         this.$emit("input", tab);
+        console.log("🖱️ Tabs.vue selectTab:", tab.id);
+        this.$nextTick(() => {
+          this.verifyActiveTab();
+        });
       }
+    },
+    scrollToActiveTab() {
+      this.$nextTick(() => {
+        const tabItems = this.$refs.tabItems;
+        if (tabItems && this.activeTab?.id) {
+          const activeTabElement = Array.from(tabItems).find((el) =>
+            el.classList.contains("active")
+          );
+          if (activeTabElement) {
+            activeTabElement.scrollIntoView({
+              behavior: "smooth",
+              inline: "center",
+            });
+            console.log("Scrolled to active tab:", this.activeTab.id);
+          } else {
+            console.warn(
+              "No active tab element found for ID:",
+              this.activeTab.id
+            );
+            const matchingTab = this.tabs.find(
+              (t) => t.id === this.activeTab.id
+            );
+            if (matchingTab) {
+              this.activeTab = { ...matchingTab };
+              this.$emit("input", this.activeTab);
+              this.$nextTick(() => {
+                this.scrollToActiveTab(); // Thử lại sau khi cập nhật
+              });
+            }
+          }
+        }
+      });
     },
     closeTab(index) {
       this.$emit("close-tab", index);
@@ -216,6 +238,9 @@ export default {
       if (currentComponent) {
         currentComponent.isEditing = true;
       }
+    },
+    verifyActiveTab() {
+      this.scrollToActiveTab(); // Gọi scrollToActiveTab thay vì logic cũ
     },
   },
 };
