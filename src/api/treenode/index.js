@@ -4,7 +4,7 @@ const URL = 'http://192.168.4.63:8082/api/entity-tree';
 export async function getEntityTreeRaw() {
   const r = await fetch(URL, { headers: { accept: 'application/json' } });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json(); // giữ nguyên y BE (có thể có children: null)
+  return r.json();
 }
 
 export async function getEntityTree() {
@@ -66,6 +66,7 @@ export function filterTreeByName(tree = [], keyword = '') {
   return res;
 }
 
+
 function findPathById(tree = [], id) {
   const target = String(id);
   const path = [];
@@ -88,6 +89,7 @@ function findPathById(tree = [], id) {
   }
   return ok ? path : null;
 }
+
 
 /**
  * Trả về object:
@@ -135,10 +137,45 @@ export function getPropertiesById(tree = [], nodeId) {
   return props;
 }
 
-// Tiện: tự fetch cây rồi tính properties
+// fetch cây và trả về object properties
 export async function getPropertiesByIdAsync(nodeId) {
   const tree = await getEntityTree(); // normalize sẵn
   return getPropertiesById(tree, nodeId);
+}
+
+/** node cha trực tiếp */
+export function getParentById(tree = [], nodeId) {
+  const normalized = Array.isArray(tree) ? tree.map(normalizeNode) : [];
+  const path = findPathById(normalized, nodeId);
+  if (!path || path.length < 2) return null;
+  return path[path.length - 2];
+}
+
+/**  danh sách tổ tiên */
+export function getAncestorsById(tree = [], nodeId) {
+  const normalized = Array.isArray(tree) ? tree.map(normalizeNode) : [];
+  const path = findPathById(normalized, nodeId);
+  return Array.isArray(path) && path.length > 1 ? path.slice(0, -1) : [];
+}
+
+/** ancestor gần nhất có mode = targetMode */
+export function getAncestorByMode(tree = [], nodeId, targetMode) {
+  const ancestors = getAncestorsById(tree, nodeId);
+  for (let i = ancestors.length - 1; i >= 0; i--) {
+    if (ancestors[i]?.mode === targetMode) return ancestors[i];
+  }
+  return null;
+}
+
+// Bản async
+export async function getParentByIdAsync(nodeId) {
+  const tree = await getEntityTree();
+  return getParentById(tree, nodeId);
+}
+
+export async function getAncestorByModeAsync(nodeId, targetMode) {
+  const tree = await getEntityTree();
+  return getAncestorByMode(tree, nodeId, targetMode);
 }
 
 export default {
@@ -150,4 +187,9 @@ export default {
   filterTreeByName,
   getPropertiesById,
   getPropertiesByIdAsync,
+  getParentById,
+  getAncestorsById,
+  getAncestorByMode,
+  getParentByIdAsync,
+  getAncestorByModeAsync,
 };

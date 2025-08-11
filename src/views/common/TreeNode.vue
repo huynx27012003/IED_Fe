@@ -8,7 +8,7 @@
       <div class="icon-wrapper">
         <img
           v-if="
-            node.mode !== 'parameter' &&
+            node.mode !== 'settingFunction' &&
             node.children &&
             node.children.length > 0
           "
@@ -30,14 +30,14 @@
             style="width: 16px; height: 16px"
           />
         </template>
-        <template v-if="node.mode === 'parameter'">
+        <template v-if="node.mode === 'settingFunction'">
           <img
             :src="require('@/assets/parameter.png')"
             alt="Parameter"
             style="width: 16px; height: 16px"
           />
         </template>
-        <template v-else-if="node.mode === 'systemsetting'">
+        <template v-else-if="node.mode === 'systemSetting'">
           <img
             :src="require('@/assets/systemSetting.png')"
             alt="System Setting"
@@ -94,7 +94,7 @@
 
     <spinner style="margin-left: 20px" v-if="isLoading" />
 
-    <ul v-if="node.expanded && node.mode !== 'parameter'">
+    <ul v-if="node.expanded && node.mode !== 'settingFunction'">
       <TreeNode
         v-for="child in node.children"
         :key="child.id"
@@ -148,7 +148,7 @@ export default {
         this.clearSelection();
         this.$emit("show-properties", this.node);
 
-        if (this.node.mode === "parameter") {
+        if (this.node.mode === "settingFunction") {
           this.$emit("select-parameter", this.node);
           return;
         }

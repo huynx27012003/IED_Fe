@@ -732,15 +732,15 @@ export default {
       },
       contextMenuPosition: { x: 0, y: 0 },
       Information: {
-        Name: "Test",
-        Description: "Test Description",
-        Vendor: "Test Vendor",
-        Model: " Test Model",
-        SerialNumber: " Test Serial Number",
-        HardwareVersion: " Test Hardware Version",
-        SoftwareVersion: " Test Software Version",
-        OrderCode: " Test Order Code",
-        Roles: " Test Roles",
+        name: "Test",
+        description: "Test Description",
+        vendor: "Test Vendor",
+        model: " Test Model",
+        serialNumber: " Test Serial Number",
+        hardwareVersion: " Test Hardware Version",
+        softwareVersion: " Test Software Version",
+        orderCode: " Test Order Code",
+        roles: " Test Roles",
       },
       jobProperties: {
         name: "",
@@ -822,7 +822,340 @@ export default {
       sl: 10,
       count: "",
       selectedParameterId: null,
-      ownerServerList: [],
+      ownerServerList: [
+  {
+    "id": "133",
+    "name": "Hưng Yên PC",
+    "mode": "organisation",
+    "description": "test 1",
+    "value": null,
+    "unit": null,
+    "minVal": null,
+    "maxVal": null,
+    "children": [
+      {
+        "id": "115",
+        "name": "XÍ NGHIỆP LƯỚI ĐIỆN CAO THẾ HƯNG YÊN",
+        "mode": "organisation",
+        "description": "test 1",
+        "value": null,
+        "unit": null,
+        "minVal": null,
+        "maxVal": null,
+        "children": [
+          {
+            "id": "116",
+            "name": "TBA 110KV PHỐ CAO",
+            "mode": "substation",
+            "description": "test 1",
+            "value": null,
+            "unit": null,
+            "minVal": null,
+            "maxVal": null,
+            "children": [
+              {
+                "id": "119",
+                "name": "110kV",
+                "mode": "voltageLevel",
+                "description": "test 1",
+                "value": null,
+                "unit": null,
+                "minVal": null,
+                "maxVal": null,
+                "children": [
+                  {
+                    "id": "122",
+                    "name": "131",
+                    "mode": "bay",
+                    "description": "test 1",
+                    "value": null,
+                    "unit": null,
+                    "minVal": null,
+                    "maxVal": null,
+                    "children": [
+                      {
+                        "id": "132",
+                        "name": "B271_REF615",
+                        "mode": "ied",
+                        "description": "test 1",
+                        "value": null,
+                        "unit": null,
+                        "minVal": 0.1,
+                        "maxVal": 0.1,
+                        "children": [
+                          {
+                            "id": "1",
+                            "name": "System Settings",
+                            "mode": "systemSetting",
+                            "description": null,
+                            "value": null,
+                            "unit": null,
+                            "minVal": null,
+                            "maxVal": null,
+                            "children": [
+                              {
+                                "id": "VT1",
+                                "name": "Voltage Input",
+                                "mode": "settingFunction",
+                                "description": null,
+                                "value": null,
+                                "unit": null,
+                                "minVal": null,
+                                "maxVal": null,
+                                "children": [
+                                  {
+                                    "id": "VTPRIM1",
+                                    "name": "Primary Voltage",
+                                    "mode": "pcDataObject",
+                                    "description": null,
+                                    "value": "110.0",
+                                    "unit": "kV",
+                                    "minVal": 0.1,
+                                    "maxVal": 440,
+                                    "children": null
+                                  },
+                                  {
+                                    "id": "VTSEC1",
+                                    "name": "Secondary Voltage",
+                                    "mode": "pcDataObject",
+                                    "description": null,
+                                    "value": "110.0",
+                                    "unit": "V",
+                                    "minVal": 60,
+                                    "maxVal": 210,
+                                    "children": null
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "CT1",
+                                "name": "Current Input",
+                                "mode": "settingFunction",
+                                "description": null,
+                                "value": null,
+                                "unit": null,
+                                "minVal": null,
+                                "maxVal": null,
+                                "children": [
+                                  {
+                                    "id": "CTPRIM1",
+                                    "name": "Primary Current",
+                                    "mode": "pcDataObject",
+                                    "description": null,
+                                    "value": "2000.0",
+                                    "unit": "A",
+                                    "minVal": 1,
+                                    "maxVal": 6000,
+                                    "children": null
+                                  },
+                                  {
+                                    "id": "CTSEC1",
+                                    "name": "Secondary Current",
+                                    "mode": "pcDataObject",
+                                    "description": null,
+                                    "value": "1",
+                                    "unit": "A",
+                                    "minVal": null,
+                                    "maxVal": null,
+                                    "children": null
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "NVT1",
+                                "name": "Neutral Voltage Input",
+                                "mode": "settingFunction",
+                                "description": null,
+                                "value": null,
+                                "unit": null,
+                                "minVal": null,
+                                "maxVal": null,
+                                "children": [
+                                  {
+                                    "id": "NVTPRIM1",
+                                    "name": "Neutral Primary Voltage",
+                                    "mode": "pcDataObject",
+                                    "description": null,
+                                    "value": "13.856",
+                                    "unit": "kV",
+                                    "minVal": 0.1,
+                                    "maxVal": 440,
+                                    "children": null
+                                  },
+                                  {
+                                    "id": "NVTSEC1",
+                                    "name": "Neutral Secondary Voltage",
+                                    "mode": "pcDataObject",
+                                    "description": null,
+                                    "value": "110.0",
+                                    "unit": "V",
+                                    "minVal": 60,
+                                    "maxVal": 210,
+                                    "children": null
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "NCT1",
+                                "name": "Neutral Current Input",
+                                "mode": "settingFunction",
+                                "description": null,
+                                "value": null,
+                                "unit": null,
+                                "minVal": null,
+                                "maxVal": null,
+                                "children": [
+                                  {
+                                    "id": "NCTPRIM1",
+                                    "name": "Neutral Primary Current",
+                                    "mode": "pcDataObject",
+                                    "description": null,
+                                    "value": "1.0",
+                                    "unit": null,
+                                    "minVal": 0.05,
+                                    "maxVal": 15,
+                                    "children": null
+                                  },
+                                  {
+                                    "id": "NCTSEC1",
+                                    "name": "Neutral Secondary Current",
+                                    "mode": "pcDataObject",
+                                    "description": null,
+                                    "value": null,
+                                    "unit": null,
+                                    "minVal": null,
+                                    "maxVal": null,
+                                    "children": null
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "FREQ1",
+                                "name": "Rated Frequency",
+                                "mode": "settingFunction",
+                                "description": null,
+                                "value": null,
+                                "unit": null,
+                                "minVal": null,
+                                "maxVal": null,
+                                "children": [
+                                  {
+                                    "id": "NOMFREQ1",
+                                    "name": "Rated Frequency",
+                                    "mode": "pcDataObject",
+                                    "description": null,
+                                    "value": "50",
+                                    "unit": "Hz",
+                                    "minVal": null,
+                                    "maxVal": null,
+                                    "children": null
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "ACTGROUP1",
+                                "name": "Active Group",
+                                "mode": "settingFunction",
+                                "description": null,
+                                "value": null,
+                                "unit": null,
+                                "minVal": null,
+                                "maxVal": null,
+                                "children": [
+                                  {
+                                    "id": "ACTIVEGROUP1",
+                                    "name": "Active Group",
+                                    "mode": "pcDataObject",
+                                    "description": null,
+                                    "value": "1.0",
+                                    "unit": null,
+                                    "minVal": 1,
+                                    "maxVal": 6,
+                                    "children": null
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "id": "1",
+                            "name": "Group 1",
+                            "mode": "protectionGroup",
+                            "description": null,
+                            "value": null,
+                            "unit": null,
+                            "minVal": null,
+                            "maxVal": null,
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "124",
+                    "name": "172",
+                    "mode": "bay",
+                    "description": "test 1",
+                    "value": null,
+                    "unit": null,
+                    "minVal": null,
+                    "maxVal": null,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "120",
+                "name": "35kV",
+                "mode": "voltageLevel",
+                "description": "test 1",
+                "value": null,
+                "unit": null,
+                "minVal": null,
+                "maxVal": null,
+                "children": []
+              },
+              {
+                "id": "121",
+                "name": "22kV",
+                "mode": "voltageLevel",
+                "description": "test 1",
+                "value": null,
+                "unit": null,
+                "minVal": null,
+                "maxVal": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "117",
+            "name": "TBA 110KV MỸ XÁ",
+            "mode": "substation",
+            "description": "test 1",
+            "value": null,
+            "unit": null,
+            "minVal": null,
+            "maxVal": null,
+            "children": []
+          },
+          {
+            "id": "118",
+            "name": "TBA 110KV KIM ĐỘNG",
+            "mode": "substation",
+            "description": "test 1",
+            "value": null,
+            "unit": null,
+            "minVal": null,
+            "maxVal": null,
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+],
       AssetType: [
         "Transformer",
         "Circuit breaker",
@@ -896,16 +1229,15 @@ export default {
       // Kiểm tra tab đã tồn tại chưa
       const exists = this.tabs.find((t) => t.id === newTab.id);
       if (!exists) {
-        this.tabs.push(newTab); // Thêm tab mới
-        this.activeTab = newTab; // Đặt activeTab ngay lập tức
+        this.tabs.push(newTab); 
+        this.activeTab = newTab; 
       } else {
-        this.activeTab = exists; // Nếu đã tồn tại, đặt làm active
+        this.activeTab = exists; 
       }
 
-      // Đảm bảo UI cập nhật sau khi DOM sẵn sàng
       this.$nextTick(() => {
         if (this.$refs.tabs) {
-          this.$refs.tabs.verifyActiveTab(); // Gọi phương thức trong Tabs.vue
+          this.$refs.tabs.verifyActiveTab(); 
         }
       });
     },
@@ -972,7 +1304,7 @@ export default {
       event.preventDefault();
 
       if (!node || !node.id) {
-        console.warn("⚠️ Không thể mở context menu: node không hợp lệ", node);
+        console.warn(" Không thể mở context menu: node không hợp lệ", node);
         return;
       }
 
@@ -1089,7 +1421,7 @@ export default {
         this.locationList = children.filter((child) =>
           this.LocationType.includes(child.mode)
         );
-        this.selectedLocationNodes = []; // reset location selection
+        this.selectedLocationNodes = []; 
       } else {
         this.locationList = [];
       }
@@ -1196,10 +1528,10 @@ export default {
       console.log("Name: ", node.name);
       console.log("Mode: ", node.mode);
       console.log(
-        "🔗 ParentArr: ",
+        "ParentArr: ",
         node.parentArr?.map((p) => p.name)
       );
-      console.log("↩️ ParentNode: ", node.parentNode?.name || "None");
+      console.log(" ParentNode: ", node.parentNode?.name || "None");
       if (node.children && node.children.length > 0) return;
 
       const children = node.childrenFromData || [];
@@ -1287,8 +1619,21 @@ export default {
     },
 
     async showPropertiesData(node) {
+      this.selectedOwnerNodes = [node]; 
+      this.refreshProps();
       this.assetPropertySign = true;
       this.jobPropertySign = true;
+      this.Information = {
+    name: node.name,
+    description: node.description,
+    vendor: node.vendor ,
+    model: node.model,
+    serialNumber: node.serialNumber ,
+    hardwareVersion: node.hardwareVersion,
+    softwareVersion: node.softwareVersion ,
+    orderCode: node.orderCode,
+    roles: node.roles,
+  };
       this.properties = {
         name: node.name || "Mock Name",
         region: "Mock Region",
@@ -1351,20 +1696,11 @@ export default {
         : EMPTY_PROPS();
     },
 
-    // nếu bạn có handler chọn node, chỉ cần set mảng selection như cũ
     updateSelectionOwner(node) {
       this.selectedOwnerNodes = [node];
-      // không cần gọi refreshProps() vì đã có watcher selectedId
     },
     updateSelectionLocation(node) {
       this.selectedLocationNodes = [node];
-    },
-
-    // nếu bạn muốn khi click “Show properties” cũng cập nhật ngay:
-    showPropertiesData(node) {
-      this.selectedOwnerNodes = [node]; // hoặc selectedLocationNodes tuỳ tab
-      this.refreshProps(); // optional (watcher cũng sẽ bắt)
-      // ... phần asset/job mock giữ nguyên nếu cần
     },
   },
 };

@@ -1,8 +1,9 @@
 <template>
   <div class="system-setting-tab">
     <h3>{{ ownerData.id }}</h3>
-    <h3>System Setting: {{ ownerData.node.name }}</h3>
+    <h3>{{ ownerData.node.name }} của id {{ ownerData.node.id }}</h3>
     <h3>{{ ownerData.node.mode }}</h3>
+    
 
     <table class="parameter-table">
       <thead>
@@ -17,7 +18,7 @@
       </thead>
 
       <!-- System Setting Mode -->
-      <tbody v-show="ownerData.node.name === 'System Setting'">
+      <tbody v-show="ownerData.node.mode === 'systemSetting'">
         <template v-for="group in parameterGroups" :key="group.id">
           <tr class="group-header">
             <td :colspan="6">{{ group.name }}</td>
@@ -59,7 +60,7 @@
       </tbody>
 
       <!-- Other Mode -->
-      <tbody v-show="ownerData.node.name !== 'System Setting'">
+      <tbody v-show="ownerData.node.mode !== 'systemSetting'">
         <tr v-for="param in parameterGroups" :key="param.id">
           <td>{{ param.name }}</td>
           <td>

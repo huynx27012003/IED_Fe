@@ -42,7 +42,7 @@
     </ul>
 
     <!-- Menu cho systemsetting -->
-    <ul v-else-if="nodeMode === 'systemsetting'">
+    <ul v-else-if="nodeMode === 'systemSetting'">
       <li @click="emitAction('parameter')">Parameter Settings</li>
 
       <li>System Integration Design</li>
@@ -64,7 +64,7 @@
       <li class="danger" @click="emitAction('delete')">Delete</li>
     </ul>
     <!-- Menu cho parameter -->
-    <ul ul v-else-if="nodeMode === 'parameter'">
+    <ul ul v-else-if="nodeMode === 'settingFunction'">
       <li @click="emitAction('parameterValue')">Open</li>
       <li class="danger" @click="emitAction('delete')">Delete</li>
     </ul>
