@@ -179,14 +179,6 @@
                     {{ properties.Feeder }}
                   </div>
                 </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Panel</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ properties.Panel }}
-                  </div>
-                </div>
               </div>
               <div v-if="assetPropertySign" class="content-properties-header">
                 <i
@@ -201,7 +193,7 @@
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
-                    {{ assetProperties.asset }}
+                    {{ Information.name }}
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
@@ -209,7 +201,7 @@
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
-                    {{ assetProperties.asset_type }}
+                    {{ Information.description }}
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
@@ -217,7 +209,7 @@
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
-                    {{ assetProperties.serial_no }}
+                    {{ Information.vendor }}
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
@@ -225,7 +217,7 @@
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
-                    {{ assetProperties.manufacturer }}
+                    {{ Information.model }}
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
@@ -235,7 +227,7 @@
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
-                    {{ assetProperties.manufacturer_type }}
+                    {{ Information.serialNumber }}
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
@@ -245,7 +237,7 @@
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
-                    {{ assetProperties.manufacturing_year }}
+                    {{ Information.hardwareVersion }}
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
@@ -255,7 +247,7 @@
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
-                    {{ assetProperties.country }}
+                    {{ Information.softwareVersion }}
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
@@ -263,7 +255,7 @@
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
-                    {{ assetProperties.apparatus_id }}
+                    {{ Information.orderCode }}
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
@@ -271,7 +263,7 @@
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
-                    {{ assetProperties.apparatus_id }}
+                    {{ Information.roles }}
                   </div>
                 </div>
               </div>
@@ -685,7 +677,15 @@
 import TreeNode from "./common/TreeNode.vue";
 import Tabs from "./common/Tabs.vue";
 import ContextMenu from "./common/ContextMenu.vue";
-
+import { getEntityTreeRaw, getPropertiesById } from "@/api/treenode";
+const EMPTY_PROPS = () => ({
+  Owner1: "",
+  Owner2: "",
+  Owner3: "",
+  Location: "",
+  VoltageLevel: "",
+  Feeder: "",
+});
 export default {
   name: "TreeNavigation",
   components: {
@@ -693,12 +693,23 @@ export default {
     Tabs,
     ContextMenu,
   },
+  computed: {
+    selectedId() {
+      return (
+        this.selectedOwnerNodes[0]?.id ??
+        this.selectedLocationNodes[0]?.id ??
+        this.selectedNodes[0]?.id ??
+        null
+      );
+    },
+  },
+
   data() {
     return {
       activeTab: {},
       tabs: [],
       rightClickNode: null,
-      selectedOwnerNodes: [], // separate selection for Owner tab
+      selectedOwnerNodes: [],
       selectedLocationNodes: [],
       selectedNodes: [],
       locationList: [],
@@ -712,25 +723,24 @@ export default {
       hideTabContentClient: [],
       currentTabServer: "",
       properties: {
-        Owner1: "Owner 1",
+        Owner1: "",
         Owner2: "",
         Owner3: "",
         Location: "",
         VoltageLevel: "",
         Feeder: "",
-        Panel: "",
       },
       contextMenuPosition: { x: 0, y: 0 },
       Information: {
-        Name: "",
-        Description: "",
-        Vendor: "",
-        Model: "",
-        SerialNumber: "",
-        HardwareVersion: "",
-        SoftwareVersion: "",
-        OrderCode: "",
-        Roles: "",
+        Name: "Test",
+        Description: "Test Description",
+        Vendor: "Test Vendor",
+        Model: " Test Model",
+        SerialNumber: " Test Serial Number",
+        HardwareVersion: " Test Hardware Version",
+        SoftwareVersion: " Test Software Version",
+        OrderCode: " Test Order Code",
+        Roles: " Test Roles",
       },
       jobProperties: {
         name: "",
@@ -812,466 +822,7 @@ export default {
       sl: 10,
       count: "",
       selectedParameterId: null,
-      ownerServerList: [
-        {
-          id: "owner1",
-          name: "Bắc Ninh",
-          mode: "OWNER1",
-          children: [
-            // {
-            //             id: "owner3-loc1",
-            //             name: "Location of Bắc Ninh",
-            //             mode: "location",
-            //             children: [], // can be empty or with mock assets
-            //           },
-            {
-              id: "owner2",
-              name: "Lương Tài",
-              mode: "OWNER2",
-              children: [
-                {
-                  id: "owner3",
-                  name: "Phú Hòa",
-                  mode: "OWNER3",
-                  children: [
-                    // {
-                    //   id: "owner3-loc1",
-                    //   name: "Location of Phú Hòa",
-                    //   mode: "location",
-                    //   children: [], // can be empty or with mock assets
-                    // },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          id: "owner1",
-          name: "Hà Nội",
-          mode: "OWNER1",
-          children: [
-            {
-              id: "owner3-loc1",
-              name: "Location of Hà Nội",
-              mode: "location",
-              children: [
-                {
-                  id: "Voltage Level1",
-                  name: "VL2",
-                  mode: "voltage",
-                  children: [],
-                },
-              ],
-            },
-            {
-              id: "owner2",
-              name: "Hà Đông",
-              mode: "OWNER2",
-              children: [
-                {
-                  id: "owner3",
-                  name: "Văn Quán",
-                  mode: "OWNER3",
-                  children: [
-                    {
-                      id: "owner3-loc1",
-                      name: "Location of Văn Quán",
-                      mode: "location",
-                      children: [
-                        {
-                          id: "Voltage Level1",
-                          name: "VL1",
-                          mode: "voltage",
-                          children: [
-                            {
-                              id: "FD",
-                              name: "FD",
-                              mode: "feeder",
-                              children: [
-                                {
-                                  id: "IED1",
-                                  name: "IED1",
-                                  mode: "ied",
-                                  children: [
-                                    {
-                                      id: "setting1",
-                                      name: "System Setting",
-                                      mode: "systemsetting",
-                                      children: [
-                                        {
-                                          id: "Voltage Input 2",
-                                          name: "Voltage Input 2",
-                                          mode: "parameter",
-                                          children: [
-                                            {
-                                              id: "Primary Voltage 1",
-                                              name: "Primary Voltage 1",
-                                              value: "1000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Primary Value",
-                                              mode: "parameterValue",
-                                            },
-                                            {
-                                              id: "Second Voltage 1",
-                                              name: "Second Voltage 1",
-                                              value: "2000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Secondary Value",
-                                              mode: "parameterValue",
-                                            },
-                                            {
-                                              id: "VT Ratio 1",
-                                              name: "VT Ratio 1",
-                                              value: "2000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "VT Ratio",
-                                              mode: "parameterValue",
-                                            },
-                                          ],
-                                        },
-                                        {
-                                          id: "Current Input 2",
-                                          name: "Current Input 2",
-                                          mode: "parameter",
-                                          children: [
-                                            {
-                                              id: "Primary Voltage 8",
-                                              name: "Primary Voltage 1",
-                                              value: "1000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Primary Value",
-                                              mode: "parameterValue",
-                                            },
-                                            {
-                                              id: "Second Voltage 8",
-                                              name: "Second Voltage 1",
-                                              value: "2000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Secondary Value",
-                                              mode: "parameterValue",
-                                            },
-                                            {
-                                              id: "CT Ratio 8",
-                                              name: "CT Ratio 1",
-                                              value: "2000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "CT Ratio",
-                                              mode: "parameterValue",
-                                            },
-                                          ],
-                                        },
-                                        {
-                                          id: "Neutral Voltage Input 2",
-                                          name: "Neutral Voltage Input 2",
-                                          mode: "parameter",
-                                          children: [
-                                            {
-                                              id: "Primary Voltage 9",
-                                              name: "Primary Voltage 1",
-                                              value: "1000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Primary Value",
-                                              mode: "parameterValue",
-                                            },
-                                            {
-                                              id: "Second Voltage 9",
-                                              name: "Second Voltage 1",
-                                              value: "2000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Secondary Value",
-                                              mode: "parameterValue",
-                                            },
-                                            {
-                                              id: "Neutral VT Ratio 9",
-                                              name: "Neutral VT Ratio 1",
-                                              value: "2000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Neutral VT Ratio 1",
-                                              mode: "parameterValue",
-                                            },
-                                          ],
-                                        },
-                                        {
-                                          id: "Neutral Current Input 2",
-                                          name: "Neutral Curent Input 2",
-                                          mode: "parameter",
-                                          children: [
-                                            {
-                                              id: "Primary Voltage 4",
-                                              name: "Primary Voltage 4",
-                                              value: "1000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Primary Value",
-                                              mode: "parameterValue",
-                                            },
-                                            {
-                                              id: "Second Voltage 4",
-                                              name: "Second Voltage 4",
-                                              value: "2000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Secondary Value",
-                                              mode: "parameterValue",
-                                            },
-                                            {
-                                              id: "Neutral CT Ratio 4",
-                                              name: "Neutral CT Ratio 4",
-                                              value: "2000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Neutral VT Ratio ",
-                                              mode: "parameterValue",
-                                            },
-                                          ],
-                                        },
-                                        {
-                                          id: "Rated Frequency 1",
-                                          name: "Rated Frequency 1",
-                                          mode: "parameter",
-                                          children: [
-                                            {
-                                              id: "Primary Voltage 5",
-                                              name: "Primary Voltage 5",
-                                              value: "1000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Primary Value",
-                                              mode: "parameterValue",
-                                            },
-                                            {
-                                              id: "Second Voltage 5",
-                                              name: "Second Voltage 5",
-                                              value: "2000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Secondary Value",
-                                              mode: "parameterValue",
-                                            },
-                                            {
-                                              id: "Neutral CT Ratio 5",
-                                              name: "Neutral CT Ratio 5",
-                                              value: "2000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Neutral VT Ratio ",
-                                              mode: "parameterValue",
-                                            },
-                                          ],
-                                        },
-                                        {
-                                          id: "Active Group 1",
-                                          name: "Active Group 1",
-                                          mode: "parameter",
-                                          children: [
-                                            {
-                                              id: "Primary Voltage 6",
-                                              name: "Primary Voltage 6",
-                                              value: "1000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Primary Value",
-                                              mode: "parameterValue",
-                                            },
-                                            {
-                                              id: "Second Voltage 6",
-                                              name: "Second Voltage 6",
-                                              value: "2000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Secondary Value",
-                                              mode: "parameterValue",
-                                            },
-                                            {
-                                              id: "Neutral CT Ratio 6",
-                                              name: "Neutral CT Ratio 6",
-                                              value: "2000",
-                                              unit: "V",
-                                              minVal: "0",
-                                              maxVal: "10000",
-                                              description: "Neutral VT Ratio ",
-                                              mode: "parameterValue",
-                                            },
-                                          ],
-                                        },
-                                      ],
-                                    },
-                                    {
-                                      id: "group1",
-                                      name: "Group 1",
-                                      mode: "group",
-                                      children: [
-                                        {
-                                          id: "protection1",
-                                          name: "Phase Overcurrent",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection2",
-                                          name: "Neutral Overcurrent",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection3",
-                                          name: "Negative Sequence",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection4",
-                                          name: "Phase Undervoltage",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection5",
-                                          name: "Phase Overvoltage",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection6",
-                                          name: "Neutral Overvoltage",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection7",
-                                          name: "Under Frequency",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection8",
-                                          name: "Over Frequency",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection9",
-                                          name: "Breaker Failure",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection10",
-                                          name: "Auto Reclose",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                      ],
-                                    },
-                                    {
-                                      id: "group2",
-                                      name: "Group 2",
-                                      mode: "group",
-                                      children: [
-                                        {
-                                          id: "protection11",
-                                          name: "Phase Overcurrent",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection12",
-                                          name: "Neutral Overcurrent",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection13",
-                                          name: "Negative Sequence",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection14",
-                                          name: "Phase Undervoltage",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection15",
-                                          name: "Phase Overvoltage",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection16",
-                                          name: "Neutral Overvoltage",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection17",
-                                          name: "Under Frequency",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection18",
-                                          name: "Over Frequency",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection19",
-                                          name: "Breaker Failure",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                        {
-                                          id: "protection20",
-                                          name: "Auto Reclose",
-                                          mode: "protection",
-                                          children: [],
-                                        },
-                                      ],
-                                    },
-                                  ],
-                                },
-                              ],
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
+      ownerServerList: [],
       AssetType: [
         "Transformer",
         "Circuit breaker",
@@ -1287,7 +838,35 @@ export default {
       rightClickNode: null,
     };
   },
+  async mounted() {
+    try {
+      const data = await getEntityTreeRaw();
+      if (Array.isArray(data)) {
+        this.ownerServerList = data;
+      } else {
+        console.warn("API trả về dữ liệu không phải mảng:", data);
+        this.ownerServerList = [];
+      }
+    } catch (err) {
+      console.error("Lỗi khi tải entity tree:", err);
+      this.$message?.error?.("Không tải được dữ liệu cây");
+    }
+  },
   beforeMount() {},
+  watch: {
+    // đổi selection -> cập nhật properties
+    selectedId() {
+      this.refreshProps();
+    },
+    // khi cây được load/refresh -> tính lại
+    ownerServerList: {
+      handler() {
+        this.refreshProps();
+      },
+      deep: true,
+    },
+  },
+
   methods: {
     methods: {
       handleSelectParameter(node) {
@@ -1576,7 +1155,7 @@ export default {
       const children = node.childrenFromData || []; // hoặc node._rawChildren nếu có
 
       // Gán mảng children vào node
-      this.$set(node, "children", children);
+      Vue.$set(node, "children", children);
 
       for (const child of children) {
         // Gán cha trực tiếp
@@ -1624,7 +1203,7 @@ export default {
       if (node.children && node.children.length > 0) return;
 
       const children = node.childrenFromData || [];
-      this.$set(node, "children", children);
+      Vue.$set(node, "children", children);
       for (const child of children) {
         child.parentNode = node;
 
@@ -1765,6 +1344,27 @@ export default {
         }
       });
       this.$message.success("Xóa location thành công (mock)");
+    },
+    refreshProps() {
+      this.properties = this.selectedId
+        ? getPropertiesById(this.ownerServerList, this.selectedId)
+        : EMPTY_PROPS();
+    },
+
+    // nếu bạn có handler chọn node, chỉ cần set mảng selection như cũ
+    updateSelectionOwner(node) {
+      this.selectedOwnerNodes = [node];
+      // không cần gọi refreshProps() vì đã có watcher selectedId
+    },
+    updateSelectionLocation(node) {
+      this.selectedLocationNodes = [node];
+    },
+
+    // nếu bạn muốn khi click “Show properties” cũng cập nhật ngay:
+    showPropertiesData(node) {
+      this.selectedOwnerNodes = [node]; // hoặc selectedLocationNodes tuỳ tab
+      this.refreshProps(); // optional (watcher cũng sẽ bắt)
+      // ... phần asset/job mock giữ nguyên nếu cần
     },
   },
 };

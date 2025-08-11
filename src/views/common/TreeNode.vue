@@ -23,7 +23,7 @@
         />
 
         <!-- Icons theo mode -->
-        <template v-if="node.mode === 'voltage'">
+        <template v-if="node.mode === 'voltageLevel'">
           <img
             :src="require('@/assets/Voltage_Level.png')"
             alt="Voltage"
@@ -58,7 +58,7 @@
             style="width: 16px; height: 16px"
           />
         </template>
-        <template v-else-if="node.mode === 'feeder'">
+        <template v-else-if="node.mode === 'bay'">
           <img
             :src="require('@/assets/feeder.png')"
             alt="Feeder"
@@ -127,8 +127,8 @@ export default {
   data() {
     return {
       isLoading: false,
-      dataType: ["OWNER1", "OWNER2", "OWNER3", "OWNER4", "OWNER5"],
-      dataOwnerType: ["location", "feeder"],
+      dataType: ["organisation"],
+      dataOwnerType: ["substation", "bay"],
       assetType: [
         "Transformer",
         "Circuit breaker",

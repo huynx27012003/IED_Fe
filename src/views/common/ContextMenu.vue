@@ -5,7 +5,7 @@
     :style="{ top: `${position.y - 32}px`, left: `${position.x}px` }"
   >
     <!-- Menu cho feeder -->
-    <ul v-if="nodeMode === 'feeder'">
+    <ul v-if="nodeMode === 'bay'">
       <li @mouseenter="openSub(0, 'addDevices')">
         + Add Devices <span class="arrow">▶</span>
         <div v-if="isOpen(0, 'addDevices')" class="submenu">
