@@ -9,6 +9,7 @@
         <img
           v-if="
             node.mode !== 'settingFunction' &&
+            node.mode !== 'protectionFunction' &&
             node.children &&
             node.children.length > 0
           "
@@ -44,14 +45,14 @@
             style="width: 16px; height: 16px"
           />
         </template>
-        <template v-else-if="node.mode === 'protection'">
+        <template v-else-if="node.mode === 'protectionFunction'">
           <img
             :src="require('@/assets/protection.png')"
             alt="Protection"
             style="width: 16px; height: 16px"
           />
         </template>
-        <template v-else-if="node.mode === 'group'">
+        <template v-else-if="node.mode === 'protectionGroup'">
           <img
             :src="require('@/assets/group.png')"
             alt="Group"
@@ -148,7 +149,10 @@ export default {
         this.clearSelection();
         this.$emit("show-properties", this.node);
 
-        if (this.node.mode === "settingFunction") {
+        if (
+          this.node.mode === "settingFunction" ||
+          this.node.mode === "protectionFunction"
+        ) {
           this.$emit("select-parameter", this.node);
           return;
         }

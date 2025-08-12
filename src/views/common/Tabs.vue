@@ -60,6 +60,7 @@
           :sideData="sideSign"
           :is="checkTab(item)"
           :ownerData="item"
+          :tree="tree"
           :expandedGroup="item.node?.id"
           @edit-start="handleEditStart"
         ></component>
@@ -90,6 +91,7 @@ export default {
       type: String,
       required: true,
     },
+    tree: { type: Array, default: () => [] },
   },
   data() {
     return {
@@ -99,7 +101,7 @@ export default {
       canScrollLeft: false,
       canScrollRight: false,
       dataType: ["location", "voltage", "feeder"],
-      dataTypeOwner: ["OWNER1", "OWNER2", "OWNER3", "OWNER4", "OWNER5"],
+      dataTypeOwner: ["organisation"],
       assetType: [
         "Transformer",
         "Circuit breaker",
@@ -113,20 +115,43 @@ export default {
   },
   watch: {
     value(newVal) {
-      if (newVal && (!this.activeTab || newVal.id !== this.activeTab.id)) {
-        this.activeTab = { ...newVal }; // Đồng bộ activeTab với value
+      if (newVal && newVal.id) {
+        this.activeTab = { ...newVal };
+        console.log("Watch value: Set activeTab to", this.activeTab.id);
         this.$nextTick(() => {
-          this.scrollToActiveTab(); // Cuộn đến tab active sau khi cập nhật
+          this.scrollToActiveTab();
         });
+      } else {
+        console.warn("Watch value: Received invalid newVal", newVal);
       }
     },
     tabs(newVal, oldVal) {
+      console.log(
+        "Watch tabs: New tabs",
+        newVal.map((t) => t.id)
+      );
       if (newVal.length > oldVal.length) {
-        const newTab = newVal[newVal.length - 1]; // Lấy tab mới nhất
-        this.activeTab = { ...newTab }; // Đặt làm active
-        this.$emit("input", newTab); // Phát sự kiện để đồng bộ với parent
         this.$nextTick(() => {
-          this.scrollToActiveTab(); // Cuộn đến tab active
+          const newTab = newVal[newVal.length - 1];
+          this.activeTab = { ...newTab };
+          console.log("Watch tabs: Set activeTab to new tab", newTab.id);
+          this.$emit("input", newTab);
+          this.$nextTick(() => {
+            this.scrollToActiveTab();
+          });
+        });
+      } else if (
+        newVal.length > 0 &&
+        !newVal.find((tab) => tab.id === this.activeTab?.id)
+      ) {
+        this.$nextTick(() => {
+          const lastTab = newVal[newVal.length - 1];
+          this.activeTab = { ...lastTab };
+          console.log("Watch tabs: Set activeTab to last tab", lastTab.id);
+          this.$emit("input", this.activeTab);
+          this.$nextTick(() => {
+            this.scrollToActiveTab();
+          });
         });
       }
       this.checkScroll();
@@ -139,7 +164,7 @@ export default {
         this.$emit("input", tab);
         console.log("🖱️ Tabs.vue selectTab:", tab.id);
         this.$nextTick(() => {
-          this.verifyActiveTab();
+          this.scrollToActiveTab();
         });
       }
     },
@@ -167,11 +192,24 @@ export default {
             if (matchingTab) {
               this.activeTab = { ...matchingTab };
               this.$emit("input", this.activeTab);
+              console.log("Retrying scroll for activeTab:", this.activeTab.id);
               this.$nextTick(() => {
-                this.scrollToActiveTab(); // Thử lại sau khi cập nhật
+                this.scrollToActiveTab(); // Retry
+              });
+            } else if (this.tabs.length > 0) {
+              this.activeTab = { ...this.tabs[this.tabs.length - 1] };
+              this.$emit("input", this.activeTab);
+              console.log("Fallback to last tab:", this.activeTab.id);
+              this.$nextTick(() => {
+                this.scrollToActiveTab(); // Retry
               });
             }
           }
+        } else {
+          console.warn("No tabItems or activeTab.id:", {
+            tabItems,
+            activeTabId: this.activeTab?.id,
+          });
         }
       });
     },
@@ -240,7 +278,7 @@ export default {
       }
     },
     verifyActiveTab() {
-      this.scrollToActiveTab(); // Gọi scrollToActiveTab thay vì logic cũ
+      this.scrollToActiveTab();
     },
   },
 };

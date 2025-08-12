@@ -129,6 +129,10 @@ export default {
       type: String,
       default: null,
     },
+    tree: {
+      type: Array,
+      default: () => [],
+    },
   },
   data() {
     return {

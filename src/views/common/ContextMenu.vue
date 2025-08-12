@@ -82,6 +82,12 @@
 </template>
 
 <script>
+import {
+  getParentById,
+  // getAncestorsById,
+  getAncestorByMode,
+} from "@/api/treenode";
+
 export default {
   props: {
     visible: Boolean,
@@ -90,11 +96,12 @@ export default {
       type: Object,
       default: () => ({}),
     },
+    tree: { type: Array, default: () => [] },
   },
   data() {
     return {
       activePath: [],
-      ownerModes: ["OWNER1", "OWNER2", "OWNER3", "OWNER4", "OWNER5"],
+      ownerModes: ["organisation"],
     };
   },
   computed: {
@@ -127,26 +134,48 @@ export default {
     },
     emitAction(action) {
       if (!this.selectedNode || !this.selectedNode.id) {
-        console.error("⚠️ selectedNode không hợp lệ:", this.selectedNode);
+        console.error("selectedNode không hợp lệ:", this.selectedNode);
         return;
       }
 
       let tab = {
         id: "",
         name: "",
-        mode: "systemsetting",
+        mode: "",
         component: "",
       };
 
       if (action === "parameter") {
+        let parent = this.tree?.length
+          ? getParentById(this.tree, this.selectedNode.id)
+          : null;
+        console.log("getParentById(...) =>", parent);
+        if (this.selectedNode.mode === "settingFunction") {
+          parent =
+            getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
+        }
+
+        const parentName = parent?.name || this.selectedNode.name || "Unknown";
+
         tab.id = `${this.selectedNode.id}-parameter`;
-        tab.name = `${this.selectedNode.name} - Parameter Settings`;
+        tab.name = `${parentName} - Parameter Settings`;
         tab.component = "SystemSettingTab";
       }
 
       if (action === "test") {
+        let parent = this.tree?.length
+          ? getParentById(this.tree, this.selectedNode.id)
+          : null;
+        console.log("getParentById(...) =>", parent);
+        if (this.selectedNode.mode === "protectionFunction") {
+          parent =
+            getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
+        }
+
+        const parentName = parent?.name || this.selectedNode.name || "Unknown";
+
         tab.id = `${this.selectedNode.id}-testManagement`;
-        tab.name = `${this.selectedNode.name} - Test Management`;
+        tab.name = `${parentName} - Test Management`;
         tab.component = "TestManagementTab";
       }
       if (action === "parameterValue") {
@@ -172,6 +201,7 @@ export default {
         this.$emit("open-tab", {
           ...tab,
           node: nodeWithParent,
+          tree: this.tree,
         });
       }
 
