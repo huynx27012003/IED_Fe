@@ -672,8 +672,12 @@
       :tree="ownerServerList"
       @close="closeContextMenu"
       @open-tab="handleOpenTab"
+      @open-add-device-dialog="handleOpenAddDeviceDialog"
     />
   </div>
+  <el-dialog v-model="addDeviceDialogVisible" title="Add Device">
+    <p>Đây là dialog của node: {{ currentNodeId }}</p>
+  </el-dialog>
 </template>
 
 <script>
@@ -887,13 +891,12 @@ export default {
       const newTab = { ...payload };
       console.log("Payload received:", payload);
 
-      
       const exists = this.tabs.find((t) => t.id === newTab.id);
       if (!exists) {
-        this.tabs.push(newTab); 
-        this.activeTab = { ...newTab }; 
+        this.tabs.push(newTab);
+        this.activeTab = { ...newTab };
       } else {
-        this.activeTab = { ...exists }; 
+        this.activeTab = { ...exists };
       }
 
       if (newTab.node.mode === "parameter") {

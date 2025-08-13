@@ -6,32 +6,7 @@
   >
     <!-- Menu cho feeder -->
     <ul v-if="nodeMode === 'bay'">
-      <li @mouseenter="openSub(0, 'addDevices')">
-        + Add Devices <span class="arrow">▶</span>
-        <div v-if="isOpen(0, 'addDevices')" class="submenu">
-          <div class="submenu-item" @mouseenter="openSub(1, 'iec')">
-            IEC 61850 IEDs <span class="arrow">▶</span>
-            <div v-if="isOpen(1, 'iec')" class="submenu">
-              <div class="submenu-item" @mouseenter="openSub(2, 'abb')">
-                ABB <span class="arrow">▶</span>
-                <div v-if="isOpen(2, 'abb')" class="submenu">
-                  <div class="submenu-item">Generator Protection</div>
-                  <div class="submenu-item">Transformer Protection</div>
-                  <div class="submenu-item">Feeder Protection</div>
-                </div>
-              </div>
-              <div class="submenu-item">Siemens</div>
-              <div class="submenu-item">SEL</div>
-              <div class="submenu-item cancel">Cancel</div>
-            </div>
-          </div>
-          <div class="submenu-item">Network Switches</div>
-          <div class="submenu-item">Router/Firewall</div>
-          <div class="submenu-item">Engineering PC</div>
-          <div class="submenu-item">GPS</div>
-          <div class="submenu-item danger">Cancel</div>
-        </div>
-      </li>
+      <li @click="emitAction('addDevice')">+ Add Device</li>
       <li>Copy</li>
       <li>Cut</li>
       <li @click="emitAction('edit')">Rename</li>
@@ -66,6 +41,21 @@
     <!-- Menu cho parameter -->
     <ul ul v-else-if="nodeMode === 'settingFunction'">
       <li @click="emitAction('parameterValue')">Open</li>
+      <li class="danger" @click="emitAction('delete')">Delete</li>
+    </ul>
+    <!-- Menu cho protectionFunction -->
+    <ul ul v-else-if="nodeMode === 'protectionFunction'">
+      <li @click="emitAction('protectionFunction')">Open</li>
+      <li class="danger" @click="emitAction('delete')">Delete</li>
+    </ul>
+    <!-- Menu cho protectionLevel -->
+    <ul ul v-else-if="nodeMode === 'protectionLevel'">
+      <li @click="emitAction('protectionLevel')">Open</li>
+      <li class="danger" @click="emitAction('delete')">Delete</li>
+    </ul>
+    <!-- Menu cho protectionGroup -->
+    <ul ul v-else-if="nodeMode === 'protectionGroup'">
+      <li @click="emitAction('protectionGroup')">Open</li>
       <li class="danger" @click="emitAction('delete')">Delete</li>
     </ul>
     <!-- Menu cho owner -->
@@ -183,7 +173,26 @@ export default {
         tab.name = `${this.selectedNode.name}`;
         tab.component = "SystemSettingTab";
       }
-
+      if (action === "protectionFunction") {
+        tab.id = `${this.selectedNode.id}`;
+        tab.name = `${this.selectedNode.name}`;
+        tab.component = "TestManagementTab";
+      }
+      if (action === "protectionLevel") {
+        tab.id = `${this.selectedNode.id}`;
+        tab.name = `${this.selectedNode.name}`;
+        tab.component = "TestManagementTab";
+      }
+      if (action === "protectionGroup") {
+        tab.id = `${this.selectedNode.id}`;
+        tab.name = `${this.selectedNode.name}`;
+        tab.component = "TestManagementTab";
+      }
+      if (action === "addDevice") {
+        this.$emit("open-add-device-dialog", this.selectedNode.id);
+        this.$emit("close");
+        return;
+      }
       if (tab.id) {
         const parentArr = [];
 

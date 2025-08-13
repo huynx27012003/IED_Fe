@@ -9,7 +9,7 @@
         <img
           v-if="
             node.mode !== 'settingFunction' &&
-            node.mode !== 'protectionFunction' &&
+            node.mode !== 'protectionLevel' &&
             node.children &&
             node.children.length > 0
           "
@@ -33,7 +33,14 @@
         </template>
         <template v-if="node.mode === 'settingFunction'">
           <img
-            :src="require('@/assets/parameter.png')"
+            :src="require('@/assets/new.png')"
+            alt="Parameter"
+            style="width: 16px; height: 16px"
+          />
+        </template>
+        <template v-if="node.mode === 'protectionLevel'">
+          <img
+            :src="require('@/assets/protectionLevel.png')"
             alt="Parameter"
             style="width: 16px; height: 16px"
           />
@@ -151,7 +158,7 @@ export default {
 
         if (
           this.node.mode === "settingFunction" ||
-          this.node.mode === "protectionFunction"
+          this.node.mode === "protectionLevel"
         ) {
           this.$emit("select-parameter", this.node);
           return;

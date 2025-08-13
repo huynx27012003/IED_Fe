@@ -1,5 +1,5 @@
 // src/api/treenode/index.js
-const URL = 'http://192.168.4.56:8082/api/entity-tree';
+const URL = 'http://192.168.4.48:8082/api/entity-tree';
 
 export async function getEntityTreeRaw() {
   const r = await fetch(URL, { headers: { accept: 'application/json' } });
@@ -177,8 +177,24 @@ export async function getAncestorByModeAsync(nodeId, targetMode) {
   const tree = await getEntityTree();
   return getAncestorByMode(tree, nodeId, targetMode);
 }
+export function getGroupByIedId(tree = [], iedId) {
+  const t = String(iedId);
+  const normalized = Array.isArray(tree) ? tree.map(normalizeNode) : [];
+  const iedNode = findNodeById(normalized, t);
+
+  if (!iedNode || iedNode.mode !== 'ied') {
+    console.warn("Không tìm thấy IED node với id:", t);
+    return null;
+  }
+
+  return {
+    ...iedNode,
+    children: (iedNode.children || []).filter(c => c.mode === 'protectionGroup')
+  };
+}
 
 export default {
+  getGroupByIedId,
   getEntityTreeRaw,
   getEntityTree,
   normalizeNode,

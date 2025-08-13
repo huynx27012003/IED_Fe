@@ -1,9 +1,6 @@
 <template>
   <div class="system-setting-tab">
-    <h3>{{ ownerData.id }}</h3>
-    <h3>System Setting: {{ ownerData.node.name }}</h3>
-    <h3>{{ ownerData.node.mode }}</h3>
-
+    <h3>{{ ownerData.name }}</h3>
     <table class="parameter-table">
       <thead>
         <tr>
@@ -15,88 +12,71 @@
           <th>Description</th>
         </tr>
       </thead>
-
-      <!-- System Setting Mode -->
-      <tbody v-show="ownerData.node.name === 'System Setting'">
-        <template v-for="group in parameterGroups" :key="group.id">
-          <tr class="group-header">
-            <td :colspan="6">{{ group.name }}</td>
+      <tbody v-if="rowsToRender.length">
+        <template v-for="row in rowsToRender" :key="row.key">
+          <!-- Group header -->
+          <tr v-if="row.isGroup" class="paramgroup-header">
+            <td
+              colspan="6"
+              :style="{ paddingLeft: row.padding + 'px', fontWeight: 'bold' }"
+            >
+              {{ row.name }}
+            </td>
           </tr>
-          <tr v-for="param in group.children" :key="param.id">
-            <td>{{ param.name }}</td>
-            <td>
-              <div v-if="!editStates[param.id]?.editing">
-                {{ param.value }}
-                <i
-                  class="fa-solid fa-pen"
-                  @click="enterEdit(param)"
-                  style="cursor: pointer; margin-left: 10px"
-                ></i>
-              </div>
-              <div v-else>
-                <input
-                  v-model="editStates[param.id].tempValue"
-                  style="width: 60px; margin-right: 6px"
-                />
-                <i
-                  class="fa-solid fa-check"
-                  @click="requestSave(param)"
-                  style="cursor: pointer; margin: 6px; color: #01d552"
-                ></i>
-                <i
-                  class="fa-solid fa-x"
-                  @click="cancelEdit(param)"
-                  style="cursor: pointer; color: #ff0000; margin: 6px"
-                ></i>
+
+          <!-- Parameter row -->
+          <tr v-else class="param-row">
+            <td class="param-name" :style="{ paddingLeft: row.padding + 'px' }">
+              {{ row.name }}
+            </td>
+            <td :class="['value-col', cellClass(row.value)]">
+              <div class="cell">
+                <template v-if="!editStates[row.id]?.editing">
+                  <span class="cell-text">{{ displayValue(row.value) }}</span>
+                  <i
+                    class="fa-solid fa-pen cell-icon"
+                    @click="enterEdit(row)"
+                  ></i>
+                </template>
+                <template v-else>
+                  <input
+                    v-model="editStates[row.id].tempValue"
+                    class="cell-input"
+                  />
+                  <span class="cell-icons">
+                    <i class="fa-solid fa-check" @click="requestSave(row)"></i>
+                    <i class="fa-solid fa-x" @click="cancelEdit(row)"></i>
+                  </span>
+                </template>
               </div>
             </td>
-            <td>{{ param.unit }}</td>
-            <td>{{ param.minVal }}</td>
-            <td>{{ param.maxVal }}</td>
-            <td>{{ param.description }}</td>
+            <td :class="cellClass(row.unit)">
+              <div class="cell">
+                <span class="cell-text">{{ displayValue(row.unit) }}</span>
+              </div>
+            </td>
+            <td :class="cellClass(row.minVal)">
+              <div class="cell">
+                <span class="cell-text">{{ displayValue(row.minVal) }}</span>
+              </div>
+            </td>
+            <td :class="cellClass(row.maxVal)">
+              <div class="cell">
+                <span class="cell-text">{{ displayValue(row.maxVal) }}</span>
+              </div>
+            </td>
+            <td :class="cellClass(row.description)">
+              <div class="cell">
+                <span class="cell-text">{{
+                  displayValue(row.description)
+                }}</span>
+              </div>
+            </td>
           </tr>
         </template>
       </tbody>
-
-      <!-- Other Mode -->
-      <tbody v-show="ownerData.node.name !== 'System Setting'">
-        <tr v-for="param in parameterGroups" :key="param.id">
-          <td>{{ param.name }}</td>
-          <td>
-            <div v-if="!editStates[param.id]?.editing">
-              {{ param.value }}
-              <i
-                class="fa-solid fa-pen"
-                @click="enterEdit(param)"
-                style="cursor: pointer; margin-left: 6px"
-              ></i>
-            </div>
-            <div v-else>
-              <input
-                v-model="editStates[param.id].tempValue"
-                style="width: 60px; margin-right: 6px"
-              />
-              <i
-                class="fa-solid fa-check"
-                @click="requestSave(param)"
-                style="cursor: pointer; margin-right: 4px; color: #01d552"
-              ></i>
-              <i
-                class="fa-solid fa-x"
-                @click="cancelEdit(param)"
-                style="cursor: pointer; color: #ff0000"
-              ></i>
-            </div>
-          </td>
-          <td>{{ param.unit }}</td>
-          <td>{{ param.minVal }}</td>
-          <td>{{ param.maxVal }}</td>
-          <td>{{ param.description }}</td>
-        </tr>
-      </tbody>
     </table>
 
-    <!-- Xác nhận lưu -->
     <el-dialog
       v-model="confirmDialogVisible"
       title="Xác nhận lưu"
@@ -118,64 +98,96 @@
 </template>
 
 <script>
+import {
+  getAncestorByMode,
+  getGroupByIedId,
+  getEntityTree,
+} from "@/api/treenode";
+
 export default {
   name: "TestManagementTab",
   props: {
-    ownerData: {
-      type: Object,
-      required: true,
-    },
-    expandedGroup: {
-      type: String,
-      default: null,
-    },
-    tree: {
-      type: Array,
-      default: () => [],
-    },
+    ownerData: { type: Object, required: true },
   },
   data() {
     return {
+      parameterGroups: [],
       editStates: {},
       confirmDialogVisible: false,
       confirmTargetParam: null,
     };
   },
   computed: {
-    parameterGroups() {
-      return this.ownerData.node?.children || [];
-    },
-    parentName() {
-      const node = this.ownerData?.node || {};
-      const parentArr = node.parentArr || [];
-
-      if (parentArr.length >= 1) {
-        const last = parentArr[parentArr.length - 1];
-        return last.name || last.parent || "(unnamed parent)";
+    rowsToRender() {
+      const mode = this.ownerData.node.mode;
+      if (mode === "systemSetting") {
+        return this.parameterGroups.flatMap((group) => [
+          {
+            key: "group-" + group.id,
+            isGroup: true,
+            name: group.name,
+            padding: 0,
+          },
+          ...this.renderParamRows(group.children, 1),
+        ]);
       }
-
-      if (this.ownerData.parent?.name) {
-        return this.ownerData.parent.name;
+      if (
+        mode === "protectionFunction" ||
+        mode === "protectionLevel" ||
+        mode === "protectionGroup"
+      ) {
+        return this.renderParamRows(this.ownerData.node.children, 1);
       }
-
-      if (node.parentNode?.name) {
-        return node.parentNode.name;
-      }
-
-      return "(no parent)";
+      return [];
     },
   },
   methods: {
+    renderParamRows(children, level) {
+      const rows = [];
+      const padding = level * 20;
+      children?.forEach((child) => {
+        if (child.children && child.children.length > 0) {
+          rows.push({
+            key: "group-" + child.id,
+            isGroup: true,
+            name: child.name,
+            padding,
+          });
+          rows.push(...this.renderParamRows(child.children, level + 1));
+        } else {
+          rows.push({
+            key: "param-" + child.id,
+            isGroup: false,
+            ...child,
+            padding,
+          });
+        }
+      });
+      return rows;
+    },
+    displayValue(v) {
+      return v === null || v === undefined ? "" : v;
+    },
+    isNullish(v) {
+      return (
+        v === null ||
+        v === undefined ||
+        (typeof v === "string" && v.trim() === "")
+      );
+    },
+    cellClass(v) {
+      return this.isNullish(v) ? "null-cell" : "";
+    },
     enterEdit(param) {
       this.editStates[param.id] = {
         editing: true,
-        tempValue: param.value,
+        tempValue: this.displayValue(param.value),
       };
     },
     cancelEdit(param) {
       this.editStates[param.id] = {
         editing: false,
-        tempValue: param.value,
+        tempValue: this.displayValue(param.value),
       };
     },
     requestSave(param) {
@@ -186,12 +198,7 @@ export default {
       const param = this.confirmTargetParam;
       const updatedValue = this.editStates[param.id].tempValue;
       param.value = updatedValue;
-
-      this.editStates[param.id] = {
-        editing: false,
-        tempValue: updatedValue,
-      };
-
+      this.editStates[param.id] = { editing: false, tempValue: updatedValue };
       this.confirmDialogVisible = false;
       this.confirmTargetParam = null;
     },
@@ -201,7 +208,14 @@ export default {
     },
   },
   mounted() {
-    console.log("✅ Mounted with ownerData:", this.ownerData);
+    getEntityTree().then((tree) => {
+      const iedNode = getAncestorByMode(tree, this.ownerData.node.id, "ied");
+      if (!iedNode) return;
+      const groupTree = getGroupByIedId(tree, iedNode.id);
+      if (groupTree?.children) {
+        this.parameterGroups = groupTree.children;
+      }
+    });
   },
 };
 </script>
@@ -213,31 +227,55 @@ export default {
   font-size: 13px;
   margin-bottom: 30px;
 }
-
 .parameter-table th,
 .parameter-table td {
   border: 1px solid #ccc;
   padding: 6px;
   text-align: left;
 }
+thead {
+  background-color: #e1e1e1;
+}
 .group-header {
   background-color: #d9e3f0;
   font-weight: bold;
-}
-thead {
-  background-color: #e1e1e1;
 }
 .group-header td {
   background-color: #eaf4ff;
 }
 .value-col {
-  width: 60px;
-  max-width: 60px;
+  width: 120px;
+  max-width: 160px;
   white-space: nowrap;
 }
-.parameter-table td:nth-child(2) {
-  white-space: nowrap;
+.cell {
+  display: flex;
+  align-items: center;
+  min-height: 22px;
+  position: relative;
+}
+.cell-text {
+  flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cell-icon {
+  margin-left: auto;
+  cursor: pointer;
+}
+.cell-icons {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 8px;
+}
+.cell-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.null-cell {
+  background-color: #f3f3f3;
+  color: #666;
+  font-style: italic;
 }
 </style>
