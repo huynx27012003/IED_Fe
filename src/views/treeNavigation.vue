@@ -672,12 +672,8 @@
       :tree="ownerServerList"
       @close="closeContextMenu"
       @open-tab="handleOpenTab"
-      @open-add-device-dialog="handleOpenAddDeviceDialog"
     />
   </div>
-  <el-dialog v-model="addDeviceDialogVisible" title="Add Device">
-    <p>Đây là dialog của node: {{ currentNodeId }}</p>
-  </el-dialog>
 </template>
 
 <script>
@@ -700,6 +696,7 @@ export default {
     TreeNode,
     Tabs,
     ContextMenu,
+    // AddDeviceDialog,
   },
   computed: {
     selectedId() {
@@ -714,6 +711,12 @@ export default {
 
   data() {
     return {
+      menuVisible: false,
+      menuPosition: { x: 0, y: 0 },
+      selectedNode: {},
+      tree: [],
+      addDeviceDialogVisible: false,
+      currentNodeId: null,
       activeTab: {},
       tabs: [],
       rightClickNode: null,
@@ -874,11 +877,10 @@ export default {
   },
 
   methods: {
-    methods: {
-      handleSelectParameter(node) {
-        this.selectedParameterId = node.id;
-      },
+    handleSelectParameter(node) {
+      this.selectedParameterId = node.id;
     },
+
     handleToggleNode(node) {
       node.expanded = !node.expanded;
     },
@@ -981,15 +983,38 @@ export default {
       event.preventDefault();
 
       if (!node || !node.id) {
-        console.warn(" Không thể mở context menu: node không hợp lệ", node);
+        console.warn("Không thể mở context menu: node không hợp lệ", node);
         return;
       }
 
-      this.contextMenuVisible = true;
-      this.contextMenuPosition = { x: event.clientX, y: event.clientY };
       this.rightClickNode = node;
-      console.log("Right clicked node:", node);
-      document.addEventListener("click", this.handleOutsideClick);
+      this.contextMenuVisible = true;
+
+      // Đặt vị trí ban đầu
+      let posX = event.clientX;
+      let posY = node.mode === "ied" ? event.clientY - 180 : event.clientY;
+
+      this.contextMenuPosition = { x: posX, y: posY };
+
+      this.$nextTick(() => {
+        const menuEl = this.$refs.contextMenu;
+        if (menuEl) {
+          const menuRect = menuEl.getBoundingClientRect();
+
+          // Nếu menu bị tràn sang phải
+          if (menuRect.right > window.innerWidth) {
+            posX = window.innerWidth - menuRect.width - 10;
+          }
+          // Nếu menu bị tràn xuống dưới
+          if (menuRect.bottom > window.innerHeight) {
+            posY = window.innerHeight - menuRect.height - 10;
+          }
+          // Cập nhật lại vị trí sau khi tính toán
+          this.contextMenuPosition = { x: posX, y: posY };
+        }
+      });
+
+      document.addEventListener("click", this.handleOutsideClick.bind(this));
     },
     closeContextMenu() {
       this.contextMenuVisible = false;
@@ -998,6 +1023,11 @@ export default {
     },
 
     handleOutsideClick(e) {
+      if (!this.$el) {
+        console.warn("this.$el is not available");
+        this.closeContextMenu();
+        return;
+      }
       const menu = this.$el.querySelector(".context-menu");
       if (menu && !menu.contains(e.target)) {
         this.closeContextMenu();

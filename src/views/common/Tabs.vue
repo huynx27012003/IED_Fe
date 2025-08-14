@@ -73,12 +73,14 @@
 /* eslint-disable */
 import SystemSettingTab from "@/views/common/SystemSettingTab.vue";
 import TestManagementTab from "@/views/common/TestManagementTab.vue";
+import AddDevice from "@/views/common/AddDevice.vue";
 
 export default {
   name: "Tabs",
   components: {
     SystemSettingTab,
     TestManagementTab,
+    AddDevice,
   },
   model: {
     prop: "value",
@@ -250,6 +252,9 @@ export default {
       }
       if (tab?.component === "TestManagementTab") {
         return "TestManagementTab";
+      }
+      if (tab?.component === "AddDevice") {
+        return "AddDevice";
       }
       if (this.dataType.includes(tab?.mode)) {
         return "LocationViewData";

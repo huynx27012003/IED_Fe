@@ -6,55 +6,62 @@
   >
     <!-- Menu cho feeder -->
     <ul v-if="nodeMode === 'bay'">
-      <li @click="emitAction('addDevice')">+ Add Device</li>
+      <li @mouseenter="openSub(0, 'addDevices')">
+        + Add Devices <span class="arrow">▶</span>
+        <div v-if="isOpen(0, 'addDevices')" class="submenu">
+          <div class="submenu-item" @click="emitAction('addDevice')">
+            IEC 61850 IEDs
+          </div>
+          <div class="submenu-item">Network Switches</div>
+          <div class="submenu-item">Router/Firewall</div>
+          <div class="submenu-item">Engineering PC</div>
+          <div class="submenu-item">GPS</div>
+          <div class="submenu-item danger">Cancel</div>
+        </div>
+      </li>
       <li>Copy</li>
       <li>Cut</li>
       <li @click="emitAction('edit')">Rename</li>
-      <li>Import</li>
+      <li @click="triggerFileInput">Import</li>
       <li>Export</li>
       <li>Sync</li>
       <li class="danger" @click="emitAction('delete')">Delete</li>
     </ul>
 
     <!-- Menu cho systemsetting -->
-    <ul v-else-if="nodeMode === 'systemSetting'">
+    <ul v-else-if="nodeMode === 'ied'">
       <li @click="emitAction('parameter')">Parameter Settings</li>
-
       <li>System Integration Design</li>
       <li>SCL Management</li>
       <li @click="emitAction('test')">Test Management</li>
-
       <li>Event Management</li>
       <li>Add Setting Group</li>
       <li>Copy</li>
       <li>Cut</li>
       <li>Move</li>
       <li @click="emitAction('edit')">Rename</li>
-      <li>Expand</li>
-      <li>Collapse</li>
-      <li>Import</li>
+      <li @click="triggerFileInput">Import</li>
       <li>Export</li>
-      <li>Properties</li>
       <li>Sync</li>
       <li class="danger" @click="emitAction('delete')">Delete</li>
     </ul>
     <!-- Menu cho parameter -->
-    <ul ul v-else-if="nodeMode === 'settingFunction'">
+    <ul v-else-if="nodeMode === 'settingFunction'">
       <li @click="emitAction('parameterValue')">Open</li>
       <li class="danger" @click="emitAction('delete')">Delete</li>
     </ul>
     <!-- Menu cho protectionFunction -->
-    <ul ul v-else-if="nodeMode === 'protectionFunction'">
+    <ul v-else-if="nodeMode === 'protectionFunction'">
       <li @click="emitAction('protectionFunction')">Open</li>
       <li class="danger" @click="emitAction('delete')">Delete</li>
     </ul>
     <!-- Menu cho protectionLevel -->
-    <ul ul v-else-if="nodeMode === 'protectionLevel'">
+    <ul v-else-if="nodeMode === 'protectionLevel'">
       <li @click="emitAction('protectionLevel')">Open</li>
       <li class="danger" @click="emitAction('delete')">Delete</li>
     </ul>
     <!-- Menu cho protectionGroup -->
-    <ul ul v-else-if="nodeMode === 'protectionGroup'">
+    <ul v-else-if="nodeMode === 'protectionGroup'">
       <li @click="emitAction('protectionGroup')">Open</li>
       <li class="danger" @click="emitAction('delete')">Delete</li>
     </ul>
@@ -68,16 +75,34 @@
       <li>Sync</li>
       <li class="danger" @click="emitAction('delete')">Delete</li>
     </ul>
+
+    <input
+      ref="fileInput"
+      type="file"
+      style="display: none"
+      @change="handleFileSelect"
+    />
+
+    <el-dialog
+      v-model="showImportDialog"
+      title="Confirm Import"
+      width="30%"
+      :before-close="cancelImport"
+    >
+      <span>Do you want to import for IED ID: {{ selectedNode.id }}?</span>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="cancelImport">Cancel</el-button>
+          <el-button type="primary" @click="confirmImport">Confirm</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import {
-  getParentById,
-  // getAncestorsById,
-  getAncestorByMode,
-} from "@/api/treenode";
-
+import { getParentById, getAncestorByMode } from "@/api/treenode";
+import { importDevice } from "@/api/device";
 export default {
   props: {
     visible: Boolean,
@@ -92,6 +117,8 @@ export default {
     return {
       activePath: [],
       ownerModes: ["organisation"],
+      showImportDialog: false,
+      selectedFile: null,
     };
   },
   computed: {
@@ -110,7 +137,6 @@ export default {
       }
     },
   },
-
   methods: {
     handleClickOutside(e) {
       if (!this.$el.contains(e.target)) this.$emit("close");
@@ -145,10 +171,8 @@ export default {
             getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
         }
 
-        const parentName = parent?.name || this.selectedNode.name || "Unknown";
-
         tab.id = `${this.selectedNode.id}-parameter`;
-        tab.name = `${parentName} - Parameter Settings`;
+        tab.name = `${this.selectedNode.name} - Parameter Settings`;
         tab.component = "SystemSettingTab";
       }
 
@@ -162,10 +186,8 @@ export default {
             getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
         }
 
-        const parentName = parent?.name || this.selectedNode.name || "Unknown";
-
         tab.id = `${this.selectedNode.id}-testManagement`;
-        tab.name = `${parentName} - Test Management`;
+        tab.name = `${this.selectedNode.name} - Test Management`;
         tab.component = "TestManagementTab";
       }
       if (action === "parameterValue") {
@@ -189,9 +211,9 @@ export default {
         tab.component = "TestManagementTab";
       }
       if (action === "addDevice") {
-        this.$emit("open-add-device-dialog", this.selectedNode.id);
-        this.$emit("close");
-        return;
+        tab.id = `${this.selectedNode.id}-addDevice`;
+        tab.name = `${this.selectedNode.name}- Add Device`;
+        tab.component = "AddDevice";
       }
       if (tab.id) {
         const parentArr = [];
@@ -216,7 +238,41 @@ export default {
 
       this.$emit("close");
     },
+    triggerFileInput() {
+      this.$refs.fileInput.click();
+    },
+    handleFileSelect(event) {
+      this.selectedFile = event.target.files[0];
+      if (this.selectedFile) {
+        this.showImportDialog = true;
+      }
+    },
+    cancelImport() {
+      this.showImportDialog = false;
+      this.selectedFile = null;
+      this.$refs.fileInput.value = "";
+    },
+    async confirmImport() {
+      if (!this.selectedFile || !this.selectedNode.id) {
+        this.$message.error("No file selected or invalid node ID");
+        return;
+      }
 
+      try {
+        await importDevice(this.selectedFile, this.selectedNode.id);
+        this.$message.success(
+          `Successfully imported for IED ID: ${this.selectedNode.id}`
+        );
+      } catch (error) {
+        this.$message.error(`Failed to import: ${error.message}`);
+        console.error("Import error:", error);
+      } finally {
+        this.showImportDialog = false;
+        this.selectedFile = null;
+        this.$refs.fileInput.value = "";
+        this.$emit("close");
+      }
+    },
     openParameterSettings() {
       this.$emit("open-tab", this.selectedNode);
       this.$emit("close");
@@ -264,7 +320,6 @@ export default {
   color: #999;
 }
 
-/* Submenu */
 .submenu {
   position: absolute;
   top: 0;
@@ -278,7 +333,6 @@ export default {
   z-index: 1001;
 }
 
-/* Submenu item */
 .submenu-item {
   padding: 10px 16px;
   cursor: pointer;
@@ -293,7 +347,6 @@ export default {
   background-color: #f5f5f5;
 }
 
-/* Danger styles */
 .danger {
   color: red;
   font-weight: 500;
@@ -305,7 +358,6 @@ export default {
   color: #d60000;
 }
 
-/* Cancel style */
 .cancel {
   color: red;
   font-weight: 500;

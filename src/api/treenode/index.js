@@ -1,5 +1,5 @@
 // src/api/treenode/index.js
-const URL = 'http://192.168.4.48:8082/api/entity-tree';
+const URL = 'http://192.168.4.50:8082/api/entity-tree';
 
 export async function getEntityTreeRaw() {
   const r = await fetch(URL, { headers: { accept: 'application/json' } });

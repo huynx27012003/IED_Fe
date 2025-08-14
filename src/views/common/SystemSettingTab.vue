@@ -12,146 +12,68 @@
           <th>Description</th>
         </tr>
       </thead>
-
-      <!-- System Setting Mode -->
-      <tbody v-show="ownerData.node.mode === 'systemSetting'">
-        <template v-for="group in parameterGroups" :key="group.id">
-          <tr class="group-header">
-            <td :colspan="6">{{ group.name }}</td>
+      <tbody v-if="rowsToRender.length">
+        <template v-for="row in rowsToRender" :key="row.key">
+          <!-- Group header -->
+          <tr v-if="row.isGroup" class="paramgroup-header">
+            <td
+              colspan="6"
+              :style="{ paddingLeft: row.padding + 'px', fontWeight: 'bold' }"
+            >
+              {{ row.name }}
+            </td>
           </tr>
 
-          <tr v-for="param in group.children" :key="param.id" class="param-row">
-            <!-- Parameter name-->
-            <td class="param-name">
-              <span class="indent-20">{{ param.name }}</span>
+          <!-- Parameter row -->
+          <tr v-else class="param-row">
+            <td class="param-name" :style="{ paddingLeft: row.padding + 'px' }">
+              {{ row.name }}
             </td>
-
-            <!-- Value -->
-            <td :class="['value-col', cellClass(param.value)]">
+            <td :class="['value-col', cellClass(row.value)]">
               <div class="cell">
-                <template v-if="!editStates[param.id]?.editing">
-                  <span class="cell-text">{{ displayValue(param.value) }}</span>
+                <template v-if="!editStates[row.id]?.editing">
+                  <span class="cell-text">{{ displayValue(row.value) }}</span>
                   <i
                     class="fa-solid fa-pen cell-icon"
-                    @click="enterEdit(param)"
-                    title="Edit"
+                    @click="enterEdit(row)"
                   ></i>
                 </template>
                 <template v-else>
                   <input
-                    v-model="editStates[param.id].tempValue"
+                    v-model="editStates[row.id].tempValue"
                     class="cell-input"
                   />
                   <span class="cell-icons">
-                    <i
-                      class="fa-solid fa-check"
-                      @click="requestSave(param)"
-                      title="Save"
-                    ></i>
-                    <i
-                      class="fa-solid fa-x"
-                      @click="cancelEdit(param)"
-                      title="Cancel"
-                    ></i>
+                    <i class="fa-solid fa-check" @click="requestSave(row)"></i>
+                    <i class="fa-solid fa-x" @click="cancelEdit(row)"></i>
                   </span>
                 </template>
               </div>
             </td>
-
-            <!-- Unit -->
-            <td :class="cellClass(param.unit)">
+            <td :class="cellClass(row.unit)">
               <div class="cell">
-                <span class="cell-text">{{ displayValue(param.unit) }}</span>
+                <span class="cell-text">{{ displayValue(row.unit) }}</span>
               </div>
             </td>
-
-            <!-- Min -->
-            <td :class="cellClass(param.minVal)">
+            <td :class="cellClass(row.minVal)">
               <div class="cell">
-                <span class="cell-text">{{ displayValue(param.minVal) }}</span>
+                <span class="cell-text">{{ displayValue(row.minVal) }}</span>
               </div>
             </td>
-
-            <!-- Max -->
-            <td :class="cellClass(param.maxVal)">
+            <td :class="cellClass(row.maxVal)">
               <div class="cell">
-                <span class="cell-text">{{ displayValue(param.maxVal) }}</span>
+                <span class="cell-text">{{ displayValue(row.maxVal) }}</span>
               </div>
             </td>
-
-            <!-- Description -->
-            <td :class="cellClass(param.description)">
+            <td :class="cellClass(row.description)">
               <div class="cell">
                 <span class="cell-text">{{
-                  displayValue(param.description)
+                  displayValue(row.description)
                 }}</span>
               </div>
             </td>
           </tr>
         </template>
-      </tbody>
-
-      <!-- Other Mode -->
-      <tbody v-show="ownerData.node.mode !== 'systemSetting'">
-        <tr v-for="param in parameterGroups" :key="param.id">
-          <td class="param-name">
-            <span class="indent-20">{{ param.name }}</span>
-          </td>
-
-          <td :class="['value-col', cellClass(param.value)]">
-            <div class="cell">
-              <template v-if="!editStates[param.id]?.editing">
-                <span class="cell-text">{{ displayValue(param.value) }}</span>
-                <i
-                  class="fa-solid fa-pen cell-icon"
-                  @click="enterEdit(param)"
-                  title="Edit"
-                ></i>
-              </template>
-              <template v-else>
-                <input
-                  v-model="editStates[param.id].tempValue"
-                  class="cell-input"
-                />
-                <span class="cell-icons">
-                  <i
-                    class="fa-solid fa-check"
-                    @click="requestSave(param)"
-                    title="Save"
-                  ></i>
-                  <i
-                    class="fa-solid fa-x"
-                    @click="cancelEdit(param)"
-                    title="Cancel"
-                  ></i>
-                </span>
-              </template>
-            </div>
-          </td>
-
-          <td :class="cellClass(param.unit)">
-            <div class="cell">
-              <span class="cell-text">{{ displayValue(param.unit) }}</span>
-            </div>
-          </td>
-          <td :class="cellClass(param.minVal)">
-            <div class="cell">
-              <span class="cell-text">{{ displayValue(param.minVal) }}</span>
-            </div>
-          </td>
-          <td :class="cellClass(param.maxVal)">
-            <div class="cell">
-              <span class="cell-text">{{ displayValue(param.maxVal) }}</span>
-            </div>
-          </td>
-          <td :class="cellClass(param.description)">
-            <div class="cell">
-              <span class="cell-text">{{
-                displayValue(param.description)
-              }}</span>
-            </div>
-          </td>
-        </tr>
       </tbody>
     </table>
 
@@ -176,36 +98,74 @@
 </template>
 
 <script>
+import {
+  getAncestorByMode,
+  getGroupByIedId,
+  getEntityTree,
+} from "@/api/treenode";
+
 export default {
   name: "SystemSettingTab",
   props: {
     ownerData: { type: Object, required: true },
-    expandedGroup: { type: String, default: null },
   },
   data() {
     return {
+      parameterGroups: [],
       editStates: {},
       confirmDialogVisible: false,
       confirmTargetParam: null,
     };
   },
   computed: {
-    parameterGroups() {
-      return this.ownerData.node?.children || [];
-    },
-    parentName() {
-      const node = this.ownerData?.node || {};
-      const parentArr = node.parentArr || [];
-      if (parentArr.length >= 1) {
-        const last = parentArr[parentArr.length - 1];
-        return last.name || last.parent || "(unnamed parent)";
+    rowsToRender() {
+      const mode = this.ownerData.node.mode;
+
+      if (mode === "ied") {
+        const protectionGroups =
+          this.ownerData.node.children?.filter(
+            (c) => c.mode === "systemSetting"
+          ) || [];
+        return this.renderParamRows(protectionGroups, 1);
       }
-      if (this.ownerData.parent?.name) return this.ownerData.parent.name;
-      if (node.parentNode?.name) return node.parentNode.name;
-      return "(no parent)";
+
+      if (
+        mode === "protectionFunction" ||
+        mode === "protectionLevel" ||
+        mode === "protectionGroup" ||
+        mode === "settingFunction" ||
+        mode === "systemSetting"
+      ) {
+        return this.renderParamRows(this.ownerData.node.children, 1);
+      }
+
+      return [];
     },
   },
   methods: {
+    renderParamRows(children, level) {
+      const rows = [];
+      const padding = level * 20;
+      children?.forEach((child) => {
+        if (child.children && child.children.length > 0) {
+          rows.push({
+            key: "group-" + child.id,
+            isGroup: true,
+            name: child.name,
+            padding,
+          });
+          rows.push(...this.renderParamRows(child.children, level + 1));
+        } else {
+          rows.push({
+            key: "param-" + child.id,
+            isGroup: false,
+            ...child,
+            padding,
+          });
+        }
+      });
+      return rows;
+    },
     displayValue(v) {
       return v === null || v === undefined ? "" : v;
     },
@@ -219,7 +179,6 @@ export default {
     cellClass(v) {
       return this.isNullish(v) ? "null-cell" : "";
     },
-
     enterEdit(param) {
       this.editStates[param.id] = {
         editing: true,
@@ -240,7 +199,6 @@ export default {
       const param = this.confirmTargetParam;
       const updatedValue = this.editStates[param.id].tempValue;
       param.value = updatedValue;
-
       this.editStates[param.id] = { editing: false, tempValue: updatedValue };
       this.confirmDialogVisible = false;
       this.confirmTargetParam = null;
@@ -251,17 +209,19 @@ export default {
     },
   },
   mounted() {
-    console.log("Mounted with ownerData:", this.ownerData);
+    getEntityTree().then((tree) => {
+      const iedNode = getAncestorByMode(tree, this.ownerData.node.id, "ied");
+      if (!iedNode) return;
+      const groupTree = getGroupByIedId(tree, iedNode.id);
+      if (groupTree?.children) {
+        this.parameterGroups = groupTree.children;
+      }
+    });
   },
 };
 </script>
 
 <style scoped>
-.param-row .indent-20 {
-  display: inline-block;
-  margin-left: 20px;
-}
-
 .parameter-table {
   width: 100%;
   border-collapse: collapse;
@@ -284,13 +244,11 @@ thead {
 .group-header td {
   background-color: #eaf4ff;
 }
-
 .value-col {
   width: 120px;
   max-width: 160px;
   white-space: nowrap;
 }
-
 .cell {
   display: flex;
   align-items: center;
@@ -316,7 +274,6 @@ thead {
   flex: 1 1 auto;
   min-width: 0;
 }
-
 .null-cell {
   background-color: #f3f3f3;
   color: #666;

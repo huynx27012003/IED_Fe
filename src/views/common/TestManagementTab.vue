@@ -120,17 +120,15 @@ export default {
   computed: {
     rowsToRender() {
       const mode = this.ownerData.node.mode;
-      if (mode === "systemSetting") {
-        return this.parameterGroups.flatMap((group) => [
-          {
-            key: "group-" + group.id,
-            isGroup: true,
-            name: group.name,
-            padding: 0,
-          },
-          ...this.renderParamRows(group.children, 1),
-        ]);
+
+      if (mode === "ied") {
+        const protectionGroups =
+          this.ownerData.node.children?.filter(
+            (c) => c.mode === "protectionGroup"
+          ) || [];
+        return this.renderParamRows(protectionGroups, 1);
       }
+
       if (
         mode === "protectionFunction" ||
         mode === "protectionLevel" ||
@@ -138,6 +136,7 @@ export default {
       ) {
         return this.renderParamRows(this.ownerData.node.children, 1);
       }
+
       return [];
     },
   },
