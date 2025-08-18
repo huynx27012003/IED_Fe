@@ -65,6 +65,11 @@
       <li @click="emitAction('protectionGroup')">Open</li>
       <li class="danger" @click="emitAction('delete')">Delete</li>
     </ul>
+    <!-- Menu cho systemSetting -->
+    <ul v-else-if="nodeMode === 'systemSetting'">
+      <li @click="emitAction('systemSetting')">Open</li>
+      <li class="danger" @click="emitAction('delete')">Delete</li>
+    </ul>
     <!-- Menu cho owner -->
     <ul v-else-if="ownerModes.includes(nodeMode)">
       <li>Open</li>
@@ -214,6 +219,11 @@ export default {
         tab.id = `${this.selectedNode.id}-addDevice`;
         tab.name = `${this.selectedNode.name}- Add Device`;
         tab.component = "AddDevice";
+      }
+      if (action === "systemSetting") {
+        tab.id = `${this.selectedNode.id}`;
+        tab.name = `${this.selectedNode.name}`;
+        tab.component = "SystemSettingTab";
       }
       if (tab.id) {
         const parentArr = [];
