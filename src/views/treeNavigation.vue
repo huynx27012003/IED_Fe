@@ -99,6 +99,7 @@
                 :tree="ownerServerList"
                 v-model="activeTab"
                 :tabs="tabs"
+                @refresh-tree="reloadTree"
                 @close-tab="removeTab"
               />
             </div>
@@ -320,6 +321,7 @@
                 v-model="activeTab"
                 :tabs="tabs"
                 :tree="ownerServerList"
+                @refresh-tree="reloadTree"
                 @close-tab="removeTab"
               />
             </div>
@@ -670,6 +672,7 @@
       :position="contextMenuPosition"
       :selectedNode="rightClickNode"
       :tree="ownerServerList"
+      @refresh-tree="reloadTree"
       @close="closeContextMenu"
       @open-tab="handleOpenTab"
     />
@@ -786,7 +789,7 @@ export default {
         country: "",
       },
       showOwner: true,
-
+      expandedNodes: new Set(),
       jobPropertiesClient: {
         name: "",
         work_order: "",
@@ -877,6 +880,63 @@ export default {
   },
 
   methods: {
+    saveExpandedState() {
+      this.expandedNodes.clear();
+      const traverse = (nodes) => {
+        nodes.forEach((node) => {
+          if (node.expanded) {
+            console.log("🔖 Save expanded:", node.id, node.name);
+            this.expandedNodes.add(node.id);
+          }
+          if (node.children && node.children.length) {
+            traverse(node.children);
+          }
+        });
+      };
+      traverse(this.ownerServerList);
+    },
+
+    restoreExpandedState(nodes) {
+      nodes.forEach((node) => {
+        if (this.expandedNodes.has(node.id)) {
+          console.log("♻️ Restore expand:", node.id, node.name);
+          node.expanded = true; // 👈 thay vì this.$set
+        }
+        if (node.children && node.children.length) {
+          this.restoreExpandedState(node.children);
+        }
+      });
+    },
+    async reloadTree() {
+      try {
+        console.log("🚀 Start reloadTree");
+        this.saveExpandedState();
+        console.log("Expanded nodes saved:", Array.from(this.expandedNodes));
+
+        const data = await getEntityTreeRaw();
+        console.log("📥 API data loaded:", data);
+
+        this.ownerServerList = data;
+        this.restoreExpandedState(this.ownerServerList);
+
+        console.log("✅ Tree reloaded, expanded restored");
+      } catch (e) {
+        console.error("reloadTree failed:", e);
+      }
+    },
+    // async reloadTree() {
+    //   try {
+    //     const data = await getEntityTreeRaw();
+    //     if (Array.isArray(data)) {
+    //       this.ownerServerList = data;
+    //       return this.ownerServerList;
+    //     }
+    //     return [];
+    //   } catch (err) {
+    //     console.error("Reload tree error:", err);
+    //     return [];
+    //   }
+    // },
     handleSelectParameter(node) {
       this.selectedParameterId = node.id;
     },

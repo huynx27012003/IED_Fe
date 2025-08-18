@@ -259,10 +259,33 @@ export default {
       }
 
       try {
+        // Gọi API import
         await importDevice(this.selectedFile, this.selectedNode.id);
         this.$message.success(
           `Successfully imported for IED ID: ${this.selectedNode.id}`
         );
+
+        // 1. Lưu danh sách các node đang expand
+        const expandedIds = [];
+        const collectExpanded = (nodes) => {
+          nodes.forEach((n) => {
+            if (n.expanded) expandedIds.push(n.id);
+            if (n.children) collectExpanded(n.children);
+          });
+        };
+        collectExpanded(this.tree);
+
+        // 2. Yêu cầu cha (TreeNavigation.vue) reload lại cây
+        const newTree = await this.$emit("refresh-tree");
+
+        // 3. Restore trạng thái expand
+        const restoreExpanded = (nodes) => {
+          nodes.forEach((n) => {
+            if (expandedIds.includes(n.id)) n.expanded = true;
+            if (n.children) restoreExpanded(n.children);
+          });
+        };
+        if (newTree) restoreExpanded(newTree);
       } catch (error) {
         this.$message.error(`Failed to import: ${error.message}`);
         console.error("Import error:", error);
@@ -273,6 +296,7 @@ export default {
         this.$emit("close");
       }
     },
+
     openParameterSettings() {
       this.$emit("open-tab", this.selectedNode);
       this.$emit("close");

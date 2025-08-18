@@ -63,6 +63,7 @@
           :tree="tree"
           :expandedGroup="item.node?.id"
           @edit-start="handleEditStart"
+          @device-created="$emit('refresh-tree')"
         ></component>
       </div>
     </div>
@@ -196,14 +197,14 @@ export default {
               this.$emit("input", this.activeTab);
               console.log("Retrying scroll for activeTab:", this.activeTab.id);
               this.$nextTick(() => {
-                this.scrollToActiveTab(); // Retry
+                this.scrollToActiveTab();
               });
             } else if (this.tabs.length > 0) {
               this.activeTab = { ...this.tabs[this.tabs.length - 1] };
               this.$emit("input", this.activeTab);
               console.log("Fallback to last tab:", this.activeTab.id);
               this.$nextTick(() => {
-                this.scrollToActiveTab(); // Retry
+                this.scrollToActiveTab();
               });
             }
           }
