@@ -684,7 +684,11 @@
 import TreeNode from "./common/TreeNode.vue";
 import Tabs from "./common/Tabs.vue";
 import ContextMenu from "./common/ContextMenu.vue";
-import { getEntityTreeRaw, getPropertiesById } from "@/api/treenode";
+import {
+  getEntityTreeRaw,
+  getPropertiesById,
+  getAncestorsById,
+} from "@/api/treenode";
 const EMPTY_PROPS = () => ({
   Owner1: "",
   Owner2: "",
@@ -1241,7 +1245,7 @@ export default {
     async fetchChildren(node) {
       if (node.children && node.children.length > 0) return;
 
-      const children = node.childrenFromData || []; // hoặc node._rawChildren nếu có
+      const children = node.childrenFromData || [];
 
       Vue.$set(node, "children", children);
 
@@ -1264,35 +1268,24 @@ export default {
       }
     },
     async fetchChildrenServer(node) {
-      console.log("Fetching children for node:");
-      console.log("ID: ", node);
-      console.log("Name: ", node.name);
-      console.log("Mode: ", node.mode);
-      console.log(
-        "ParentArr: ",
-        node.parentArr?.map((p) => p.name)
-      );
-      console.log(" ParentNode: ", node.parentNode?.name || "None");
+      console.log("Fetching children for node:", node.id, node.name, node.mode);
+
       if (node.children && node.children.length > 0) return;
 
       const children = node.childrenFromData || [];
-      Vue.$set(node, "children", children);
+      this.$set(node, "children", children);
+
       for (const child of children) {
         child.parentNode = node;
 
-        let parentArr = [];
-        if (node.parentArr) {
-          parentArr = [...node.parentArr];
-        } else {
-          let current = node.parentNode;
-          while (current) {
-            parentArr.unshift(current);
-            current = current.parentNode;
-          }
-        }
+        try {
+          const ancestors = getAncestorsById(this.ownerServerList, child.id);
 
-        parentArr.push(node);
-        child.parentArr = parentArr;
+          child.parentArr = [...ancestors, node];
+        } catch (e) {
+          console.error("Không lấy được parentArr từ API:", e);
+          child.parentArr = [node];
+        }
       }
     },
     async hideProperties() {
@@ -1568,7 +1561,7 @@ export default {
 }
 .child-nav {
   overflow-y: hidden;
-  height: calc(100vh - 125px);
+  height: calc(100vh - 147px);
   box-sizing: border-box;
 }
 .child-nav:hover {

@@ -15,7 +15,11 @@
       <tbody v-if="rowsToRender.length">
         <template v-for="row in rowsToRender" :key="row.key">
           <!-- Group header -->
-          <tr v-if="row.isGroup" class="paramgroup-header">
+          <tr
+            v-if="row.isGroup"
+            class="paramgroup-header"
+            :class="row.mode ? 'row-' + row.mode : ''"
+          >
             <td
               colspan="6"
               :style="{ paddingLeft: row.padding + 'px', fontWeight: 'bold' }"
@@ -25,7 +29,11 @@
           </tr>
 
           <!-- Parameter row -->
-          <tr v-else class="param-row">
+          <tr
+            v-else
+            class="param-row"
+            :class="row.mode ? 'row-' + row.mode : ''"
+          >
             <td class="param-name" :style="{ paddingLeft: row.padding + 'px' }">
               {{ row.name }}
             </td>
@@ -152,6 +160,7 @@ export default {
             key: "group-" + child.id,
             isGroup: true,
             name: child.name,
+            mode: child.mode,
             padding,
           });
           rows.push(...this.renderParamRows(child.children, level + 1));
@@ -166,6 +175,7 @@ export default {
       });
       return rows;
     },
+
     displayValue(v) {
       return v === null || v === undefined ? "" : v;
     },
@@ -222,6 +232,14 @@ export default {
 </script>
 
 <style scoped>
+.row-ied,
+.row-systemSetting {
+  background-color: #b3c7f2;
+}
+
+.row-settingFunction {
+  background-color: #b0dce8;
+}
 .parameter-table {
   width: 100%;
   border-collapse: collapse;

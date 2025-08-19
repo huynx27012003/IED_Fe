@@ -143,7 +143,6 @@ export async function getPropertiesByIdAsync(nodeId) {
   return getPropertiesById(tree, nodeId);
 }
 
-/** node cha trực tiếp */
 export function getParentById(tree = [], nodeId) {
   const normalized = Array.isArray(tree) ? tree.map(normalizeNode) : [];
   const path = findPathById(normalized, nodeId);

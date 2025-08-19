@@ -43,7 +43,7 @@
     </ul>
     <!-- Menu cho parameter -->
     <ul v-else-if="nodeMode === 'settingFunction'">
-      <li @click="emitAction('parameterValue')">Open</li>
+      <li @click="emitAction('settingFunction')">Open</li>
       <li class="danger" @click="emitAction('delete')">Delete</li>
     </ul>
     <!-- Menu cho protectionFunction -->
@@ -68,7 +68,7 @@
     </ul>
     <!-- Menu cho owner -->
     <ul v-else-if="ownerModes.includes(nodeMode)">
-      <li>Open</li>
+      <li @click="emitAction('open')">Open</li>
       <li @click="emitAction('add')">Add</li>
       <li>Copy</li>
       <li>Cut</li>
@@ -214,14 +214,38 @@ export default {
         tab.name = `${this.selectedNode.name}`;
         tab.component = "TestManagementTab";
       }
-      if (action === "protectionLevel") {
-        tab.id = `${this.selectedNode.id}`;
-        tab.name = `${this.selectedNode.name}`;
-        tab.component = "TestManagementTab";
+      if (action === "settingFunction") {
+        let parent = this.tree?.length
+          ? getParentById(this.tree, this.selectedNode.id)
+          : null;
+        console.log("getParentById(...) =>", parent);
+        if (this.selectedNode.mode === "settingFunction") {
+          parent =
+            getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
+        }
+
+        tab.id = `${parent.id}`;
+        tab.name = `${parent.name}- ${this.selectedNode.name}`;
+        tab.component = "SystemSettingTab";
       }
-      if (action === "protectionGroup") {
-        tab.id = `${this.selectedNode.id}`;
-        tab.name = `${this.selectedNode.name}`;
+
+      if (
+        action === "protectionGroup" ||
+        action === "protectionLevel" ||
+        action === "protectionFunction"
+      ) {
+        let parent = this.tree?.length
+          ? getParentById(this.tree, this.selectedNode.id)
+          : null;
+        console.log("getParentById(...) =>", parent);
+        if (this.selectedNode.mode === "protectionGroup") {
+          parent =
+            getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
+        }
+
+        console.log("Tree", this.tree);
+        tab.id = `${parent.id}`;
+        tab.name = `${parent.name}- ${this.selectedNode.name}`;
         tab.component = "TestManagementTab";
       }
       if (action === "addDevice") {
@@ -229,10 +253,26 @@ export default {
         tab.name = `${this.selectedNode.name}- Add Device`;
         tab.component = "AddDevice";
       }
+
       if (action === "systemSetting") {
+        let parent = this.tree?.length
+          ? getParentById(this.tree, this.selectedNode.id)
+          : null;
+        console.log("getParentById(...) =>", parent);
+        if (this.selectedNode.mode === "systemSetting") {
+          parent =
+            getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
+        }
+
+        tab.id = `${parent.id}-parameter`;
+        tab.name = `${parent.name} - Parameter Settings`;
+        tab.component = "SystemSettingTab";
+      }
+      if (action === "open" && this.ownerModes.includes(this.nodeMode)) {
         tab.id = `${this.selectedNode.id}`;
         tab.name = `${this.selectedNode.name}`;
-        tab.component = "SystemSettingTab";
+        tab.component = "OwnerView";
+        tab.nodeData = this.selectedNode;
       }
       if (tab.id) {
         const parentArr = [];

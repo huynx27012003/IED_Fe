@@ -75,13 +75,14 @@
 import SystemSettingTab from "@/views/common/SystemSettingTab.vue";
 import TestManagementTab from "@/views/common/TestManagementTab.vue";
 import AddDevice from "@/views/common/AddDevice.vue";
-
+import OwnerView from "@/views/OwnerView/index.vue";
 export default {
   name: "Tabs",
   components: {
     SystemSettingTab,
     TestManagementTab,
     AddDevice,
+    OwnerView,
   },
   model: {
     prop: "value",
@@ -259,7 +260,7 @@ export default {
       }
       if (this.dataType.includes(tab?.mode)) {
         return "LocationViewData";
-      } else if (this.dataTypeOwner.includes(tab?.mode)) {
+      } else if (tab?.component === "OwnerView") {
         return "OwnerView";
       } else {
         if (tab?.asset !== undefined) {
