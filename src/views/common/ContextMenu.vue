@@ -1,9 +1,5 @@
 <template>
-  <div
-    v-if="visible"
-    class="context-menu"
-    :style="{ top: `${position.y - 32}px`, left: `${position.x}px` }"
-  >
+  <div v-if="visible" class="context-menu" ref="menu">
     <!-- Menu cho feeder -->
     <ul v-if="nodeMode === 'bay'">
       <li @mouseenter="openSub(0, 'addDevices')">
@@ -134,11 +130,24 @@ export default {
   watch: {
     visible(val) {
       if (val) {
-        console.log("👉 Context menu opened for node:", this.selectedNode);
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.adjustMenuPosition();
+          }, 0);
+        });
         document.addEventListener("click", this.handleClickOutside);
       } else {
         document.removeEventListener("click", this.handleClickOutside);
         this.activePath = [];
+      }
+    },
+    position() {
+      if (this.visible) {
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.adjustMenuPosition();
+          }, 0);
+        });
       }
     },
   },
@@ -269,13 +278,11 @@ export default {
       }
 
       try {
-        // Gọi API import
         await importDevice(this.selectedFile, this.selectedNode.id);
         this.$message.success(
           `Successfully imported for IED ID: ${this.selectedNode.id}`
         );
 
-        // 1. Lưu danh sách các node đang expand
         const expandedIds = [];
         const collectExpanded = (nodes) => {
           nodes.forEach((n) => {
@@ -285,10 +292,8 @@ export default {
         };
         collectExpanded(this.tree);
 
-        // 2. Yêu cầu cha (TreeNavigation.vue) reload lại cây
         const newTree = await this.$emit("refresh-tree");
 
-        // 3. Restore trạng thái expand
         const restoreExpanded = (nodes) => {
           nodes.forEach((n) => {
             if (expandedIds.includes(n.id)) n.expanded = true;
@@ -311,25 +316,32 @@ export default {
       this.$emit("open-tab", this.selectedNode);
       this.$emit("close");
     },
+    adjustMenuPosition() {
+      const menuEl = this.$refs.menu;
+      if (!menuEl) return;
+
+      let newTop = this.position.y;
+      let newLeft = this.position.x;
+
+      const menuRect = menuEl.getBoundingClientRect();
+
+      if (newTop + menuRect.height > window.innerHeight) {
+        newTop = window.innerHeight - menuRect.height - 10;
+        if (newTop < 10) newTop = 10;
+      }
+      if (newLeft + menuRect.width > window.innerWidth) {
+        newLeft = window.innerWidth - menuRect.width - 10;
+        if (newLeft < 10) newLeft = 10;
+      }
+
+      menuEl.style.top = `${newTop}px`;
+      menuEl.style.left = `${newLeft}px`;
+    },
   },
 };
 </script>
 
 <style scoped>
-/* .context-menu {
-  position: fixed;
-  z-index: 1000;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.1);
-  font-size: 14px;
-  min-width: 220px;
-  padding: 8px 0;
-  font-family: "Segoe UI", sans-serif;
-  max-height: 80vh;
-} */
-
 .context-menu ul {
   list-style: none;
   margin: 0;
@@ -337,7 +349,7 @@ export default {
 }
 
 .context-menu li {
-  padding: 10px 16px;
+  padding: 10px 10px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;

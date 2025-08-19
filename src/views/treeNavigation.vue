@@ -3,7 +3,7 @@
     <!-- Thanh công cụ -->
     <div v-show="!clientSlide" class="toolbar">
       <div style="display: flex; align-items: center">
-        <div @click="resetAllServer" class="path-hover">Database manage</div>
+        <div @click="resetAllServer" class="path-hover">Home</div>
         <i style="margin-left: 10px" class="fa-solid fa-angle-right"></i>
       </div>
       <div
@@ -1053,14 +1053,17 @@ export default {
         const menuEl = document.querySelector(".context-menu");
         if (menuEl) {
           const menuRect = menuEl.getBoundingClientRect();
-          if (menuRect.right > window.innerWidth) {
+          const maxHeight = window.innerHeight * 0.8;
+          const menuHeight = Math.min(menuRect.height, maxHeight);
+
+          if (posY + menuHeight > window.innerHeight) {
+            posY = 70;
+          }
+          if (posX + menuRect.width > window.innerWidth) {
             posX = window.innerWidth - menuRect.width - 10;
           }
-          if (menuRect.bottom > window.innerHeight) {
-            posY = window.innerHeight - menuRect.height - 50;
-          }
-          if (posY < 0) posY = 10;
-          if (posX < 0) posX = 10;
+          if (posY < 10) posY = 10;
+          if (posX < 10) posX = 10;
           this.contextMenuPosition = { x: posX, y: posY };
         } else {
           this.contextMenuPosition = { x: posX, y: posY };
@@ -1142,7 +1145,6 @@ export default {
       const maxWidth = parentWidth * 0.4;
       newWidth = Math.max(minWidth, Math.min(newWidth, maxWidth));
       newWidth = (newWidth / parentWidth) * 100;
-      // Cập nhật width của sidebar và context-data
       this.$refs.properties.style.width = `${newWidth}%`;
       this.$refs.content.style.width = `${100 - newWidth}%`;
     },
@@ -1237,34 +1239,19 @@ export default {
     },
 
     async fetchChildren(node) {
-      // console.log("📥 Fetching children for node:");
-      // console.log("🆔 ID: ", node.id);
-      // console.log("📛 Name: ", node.name);
-      // console.log("📦 Mode: ", node.mode);
-      // console.log(
-      //   "🔗 ParentArr: ",
-      //   node.parentArr?.map((p) => p.name)
-      // );
-      // console.log("↩️ ParentNode: ", node.parentNode?.name || "None");
-      // Nếu đã có children, không fetch lại
       if (node.children && node.children.length > 0) return;
 
-      // Ví dụ lấy children từ tree (tuỳ logic bạn dùng, có thể dùng API hoặc clone)
       const children = node.childrenFromData || []; // hoặc node._rawChildren nếu có
 
-      // Gán mảng children vào node
       Vue.$set(node, "children", children);
 
       for (const child of children) {
-        // Gán cha trực tiếp
         child.parentNode = node;
 
-        // Gán mảng tổ tiên
         let parentArr = [];
         if (node.parentArr) {
           parentArr = [...node.parentArr];
         } else {
-          // Nếu chưa có parentArr, build từ parentNode
           let current = node.parentNode;
           while (current) {
             parentArr.unshift(current);
@@ -1272,23 +1259,11 @@ export default {
           }
         }
 
-        // Thêm node hiện tại vào mảng tổ tiên
         parentArr.push(node);
         child.parentArr = parentArr;
-
-        // Đệ quy nếu cần preload
-        // this.fetchChildren(child); // nếu bạn muốn gán sẵn hết cây
       }
     },
     async fetchChildrenServer(node) {
-      // if (!node.children || node.children.length === 0) {
-      //   // Tìm các phần tử con từ ownerServerList theo id node cha:
-      //   const childNodes = this.ownerServerList.filter(
-      //     (item) => item.parentId === node.id
-      //   );
-      //   // Gán các node con này vào node.children một cách reactive:
-      //   Vue.set(node, "children", childNodes);
-      // }
       console.log("Fetching children for node:");
       console.log("ID: ", node);
       console.log("Name: ", node.name);
@@ -1316,12 +1291,8 @@ export default {
           }
         }
 
-        // Thêm node hiện tại vào mảng tổ tiên
         parentArr.push(node);
         child.parentArr = parentArr;
-
-        // Đệ quy nếu cần preload
-        // this.fetchChildren(child); // nếu bạn muốn gán sẵn hết cây
       }
     },
     async hideProperties() {
@@ -1491,7 +1462,8 @@ export default {
   min-width: 220px;
   padding: 8px 0;
   font-family: "Segoe UI", sans-serif;
-  /* max-height: 80vh; */
+  max-height: 80vh;
+  /* overflow-y: auto; */
 }
 
 .explorer {
