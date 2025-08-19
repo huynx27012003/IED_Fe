@@ -1,10 +1,8 @@
-import axios from 'axios';
-
-const API_BASE_URL = 'http://222.252.22.158:8087/api';
+import client from '@/api/client'
 
 export async function getVendors() {
   try {
-    const response = await axios.get(`${API_BASE_URL}/ied/get-vendor`);
+    const response = await client.get('/api/ied/get-vendor');
     return response.data;
   } catch (error) {
     console.error('Error fetching vendors:', error);
@@ -14,7 +12,7 @@ export async function getVendors() {
 
 export async function getDeviceTypes() {
   try {
-    const response = await axios.get(`${API_BASE_URL}/ied/get-type`);
+    const response = await client.get('/api/ied/get-type');
     return response.data;
   } catch (error) {
     console.error('Error fetching device types:', error);
@@ -24,7 +22,7 @@ export async function getDeviceTypes() {
 
 export async function getModel(vendorCode, typeCode) {
   try {
-    const response = await axios.get(`${API_BASE_URL}/ied/get-model`, {
+    const response = await client.get('/api/ied/get-model', {
       params: { vendorCode, typeCode }
     });
     return response.data;
@@ -33,12 +31,13 @@ export async function getModel(vendorCode, typeCode) {
     throw error;
   }
 }
+
 export async function importDevice(file, iedId) {
   const formData = new FormData();
   formData.append('file', file);
 
   try {
-    const response = await axios.post(`${API_BASE_URL}/ied/import`, formData, {
+    const response = await client.post('/api/ied/import', formData, {
       params: { iedId },
       headers: { 'Content-Type': 'multipart/form-data' }
     });
@@ -49,9 +48,10 @@ export async function importDevice(file, iedId) {
     throw error;
   }
 }
+
 export async function createDevice(deviceData) {
   try {
-    const response = await axios.post(`${API_BASE_URL}/ied/create`, deviceData, {
+    const response = await client.post('/api/ied/create', deviceData, {
       headers: {
         'accept': '*/*',
         'Content-Type': 'application/json'

@@ -1,10 +1,10 @@
-// src/api/treenode/index.js
-const URL = 'http://222.252.22.158:8087/api/entity-tree';
+import client from '@/api/client'
 
 export async function getEntityTreeRaw() {
-  const r = await fetch(URL, { headers: { accept: 'application/json' } });
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
+  const response = await client.get('/api/entity-tree', {
+    headers: { accept: 'application/json' }
+  });
+  return response.data;
 }
 
 export async function getEntityTree() {
