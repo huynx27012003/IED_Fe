@@ -848,7 +848,6 @@ export default {
       ],
       LocationType: ["location", "voltage", "feeder"],
       contextMenuVisible: false,
-      contextMenuPosition: { x: 0, y: 0 },
       rightClickNode: null,
     };
   },
@@ -885,7 +884,7 @@ export default {
       const traverse = (nodes) => {
         nodes.forEach((node) => {
           if (node.expanded) {
-            console.log("🔖 Save expanded:", node.id, node.name);
+            console.log("Save expanded:", node.id, node.name);
             this.expandedNodes.add(node.id);
           }
           if (node.children && node.children.length) {
@@ -899,8 +898,8 @@ export default {
     restoreExpandedState(nodes) {
       nodes.forEach((node) => {
         if (this.expandedNodes.has(node.id)) {
-          console.log("♻️ Restore expand:", node.id, node.name);
-          node.expanded = true; // 👈 thay vì this.$set
+          console.log(" Restore expand:", node.id, node.name);
+          node.expanded = true;
         }
         if (node.children && node.children.length) {
           this.restoreExpandedState(node.children);
@@ -1042,34 +1041,28 @@ export default {
     openContextMenu(event, node) {
       event.preventDefault();
 
-      if (!node || !node.id) {
-        console.warn("Không thể mở context menu: node không hợp lệ", node);
-        return;
-      }
+      if (!node || !node.id) return;
 
       this.rightClickNode = node;
       this.contextMenuVisible = true;
 
-      // Đặt vị trí ban đầu
       let posX = event.clientX;
-      let posY = node.mode === "ied" ? event.clientY - 180 : event.clientY;
-
-      this.contextMenuPosition = { x: posX, y: posY };
+      let posY = event.clientY;
 
       this.$nextTick(() => {
-        const menuEl = this.$refs.contextMenu;
+        const menuEl = document.querySelector(".context-menu");
         if (menuEl) {
           const menuRect = menuEl.getBoundingClientRect();
-
-          // Nếu menu bị tràn sang phải
           if (menuRect.right > window.innerWidth) {
             posX = window.innerWidth - menuRect.width - 10;
           }
-          // Nếu menu bị tràn xuống dưới
           if (menuRect.bottom > window.innerHeight) {
-            posY = window.innerHeight - menuRect.height - 10;
+            posY = window.innerHeight - menuRect.height - 50;
           }
-          // Cập nhật lại vị trí sau khi tính toán
+          if (posY < 0) posY = 10;
+          if (posX < 0) posX = 10;
+          this.contextMenuPosition = { x: posX, y: posY };
+        } else {
           this.contextMenuPosition = { x: posX, y: posY };
         }
       });
@@ -1102,7 +1095,7 @@ export default {
         } else {
           this.activeTab = {};
         }
-        this.$emit("input", this.activeTab); // Emit để child đồng bộ
+        this.$emit("input", this.activeTab);
       }
     },
     hideLogBar(sign) {
@@ -1455,7 +1448,6 @@ export default {
       this.$message.success("Asset đã được xóa thành công (mock)");
     },
     async removeLocation(node) {
-      // Xóa location khỏi children của parent
       this.ownerServerList.forEach((owner) => {
         if (owner.children) {
           owner.children = owner.children.filter((c) => c.id !== node.id);
@@ -1487,6 +1479,19 @@ export default {
   padding: 0;
   background-color: #f5f5f5;
   font-size: 12px;
+}
+.context-menu {
+  position: fixed;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  min-width: 220px;
+  padding: 8px 0;
+  font-family: "Segoe UI", sans-serif;
+  /* max-height: 80vh; */
 }
 
 .explorer {

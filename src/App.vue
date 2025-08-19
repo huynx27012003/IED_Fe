@@ -23,3 +23,8 @@ export default {
   },
 };
 </script>
+<style>
+.el-message {
+  top: 60px !important;
+}
+</style>

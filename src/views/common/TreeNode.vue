@@ -6,24 +6,30 @@
       @click="toggle"
     >
       <div class="icon-wrapper">
-        <img
+        <template
           v-if="
-            node.mode !== 'settingFunction' &&
-            node.mode !== 'protectionLevel' &&
-            node.children &&
-            node.children.length > 0
+            node.mode !== 'settingFunction' && node.mode !== 'protectionLevel'
           "
-          :src="
-            !node.expanded
-              ? require('@/assets/colapse.png')
-              : require('@/assets/expand.png')
-          "
-          alt="toggle"
-          style="width: 16px; height: 20px"
-          @click.stop="toggle"
-        />
+        >
+          <template v-if="node.children && node.children.length > 0">
+            <img
+              :src="
+                !node.expanded
+                  ? require('@/assets/colapse.png')
+                  : require('@/assets/expand.png')
+              "
+              alt="toggle"
+              style="width: 16px; height: 20px"
+              @click.stop="toggle"
+            />
+          </template>
+          <template v-else>
+            <span
+              style="display: inline-block; width: 16px; height: 20px"
+            ></span>
+          </template>
+        </template>
 
-        <!-- Icons theo mode -->
         <template v-if="node.mode === 'voltageLevel'">
           <img
             :src="require('@/assets/Voltage_Level.png')"
@@ -200,7 +206,7 @@ export default {
   font-size: 12px;
 }
 .folder:hover {
-  background-color: #555;
+  background-color: #8f8d8d;
   color: white;
 }
 ul {

@@ -316,7 +316,7 @@ export default {
 </script>
 
 <style scoped>
-.context-menu {
+/* .context-menu {
   position: fixed;
   z-index: 1000;
   background: #fff;
@@ -327,7 +327,8 @@ export default {
   min-width: 220px;
   padding: 8px 0;
   font-family: "Segoe UI", sans-serif;
-}
+  max-height: 80vh;
+} */
 
 .context-menu ul {
   list-style: none;
