@@ -197,7 +197,7 @@
                   class="fa-solid fa-chevron-down"
                   style="padding-right: 5px; font-size: 10px"
                 ></i>
-                Information
+                Device Information
               </div>
               <div v-if="assetPropertySign" class="content-properties-table">
                 <div class="content-properties-table-flex">
@@ -319,360 +319,6 @@
           ></div>
         </div>
       </div>
-      <!-- Sidebar Client -->
-      <div ref="contextDataClient" v-show="clientSlide" class="context-data">
-        <div ref="contentDataClient" class="content-data">
-          <div ref="contentClient" class="content">
-            <div class="title-content"></div>
-            <div class="content-content">
-              <Tabs
-                :side="'client'"
-                v-model="activeTab"
-                :tabs="tabs"
-                :tree="ownerServerList"
-                @refresh-tree="reloadTree"
-                @close-tab="removeTab"
-              />
-            </div>
-          </div>
-          <div
-            @mousedown="startResizeContentClient"
-            ref="resizerContentClient"
-            class="resizer"
-          ></div>
-          <div
-            v-if="propertiesSignClient"
-            ref="propertiesClient"
-            class="properties"
-          >
-            <!-- Form hiển thị thông tin client -->
-            <div class="title-properties">
-              <div class="title-wrapper">
-                <div class="title-name">Object Properties</div>
-                <div style="margin-right: 5px">
-                  <i
-                    @click="hidePropertiesClient"
-                    class="fa-solid fa-square-caret-right"
-                  ></i>
-                </div>
-              </div>
-            </div>
-            <div class="content-properties">
-              <div class="content-properties-header">
-                <i
-                  class="fa-solid fa-chevron-down"
-                  style="padding-right: 5px; font-size: 10px"
-                ></i>
-                Owner & Position
-              </div>
-              <div class="content-properties-table">
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Name</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ propertiesClient.name }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Region</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ propertiesClient.region }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Plant</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ propertiesClient.plant }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Address</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ propertiesClient.address }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">City</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ propertiesClient.city }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">
-                    State/Province
-                  </div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ propertiesClient.state_province }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Postal code</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ propertiesClient.postal_code }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Country</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ propertiesClient.country }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">
-                    Geo coordinates
-                  </div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  ></div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">
-                    Phone number
-                  </div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ propertiesClient.phone_no }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Email</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ propertiesClient.email }}
-                  </div>
-                </div>
-              </div>
-              <div
-                v-if="assetPropertySignClient"
-                class="content-properties-header"
-              >
-                <i
-                  class="fa-solid fa-chevron-down"
-                  style="padding-right: 5px; font-size: 10px"
-                ></i>
-                Asset Properties
-              </div>
-              <div
-                v-if="assetPropertySignClient"
-                class="content-properties-table"
-              >
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Asset</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ assetPropertiesClient.asset }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Asset type</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ assetPropertiesClient.asset_type }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">
-                    Serial number
-                  </div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ assetPropertiesClient.serial_no }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">
-                    Manufacturer
-                  </div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ assetPropertiesClient.manufacturer }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">
-                    Manufacturer type
-                  </div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ assetPropertiesClient.manufacturer_type }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">
-                    Manufacturing year
-                  </div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ assetPropertiesClient.manufacturing_year }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Country</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ assetPropertiesClient.country }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">
-                    Apparatus id
-                  </div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ assetPropertiesClient.apparatus_id }}
-                  </div>
-                </div>
-              </div>
-              <div
-                v-if="jobPropertySignClient"
-                class="content-properties-header"
-              >
-                <i
-                  class="fa-solid fa-chevron-down"
-                  style="padding-right: 5px; font-size: 10px"
-                ></i>
-                Job Properties
-              </div>
-              <div
-                v-if="jobPropertySignClient"
-                class="content-properties-table"
-              >
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Name</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ jobPropertiesClient.name }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Work order</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ jobPropertiesClient.work_order }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">
-                    Creation date
-                  </div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ jobPropertiesClient.creation_date }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">
-                    Execution date
-                  </div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ jobPropertiesClient.execution_date }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Tested by</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ jobPropertiesClient.tested_by }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Approved by</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ jobPropertiesClient.approved_by }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">
-                    Ambient condition
-                  </div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ jobPropertiesClient.ambient_condition }}
-                  </div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Standard</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  >
-                    {{ jobPropertiesClient.standard }}
-                  </div>
-                </div>
-              </div>
-              <div class="content-properties-header">
-                <i
-                  class="fa-solid fa-chevron-down"
-                  style="padding-right: 5px; font-size: 10px"
-                ></i>
-                Configuration Version
-              </div>
-              <div class="content-properties-table">
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">
-                    Last Modified
-                  </div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  ></div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Author</div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  ></div>
-                </div>
-                <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">
-                    Last Saved By
-                  </div>
-                  <div
-                    class="content-properties-table-content fixed-box pl10 break-word"
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div
-            v-if="!propertiesSignClient"
-            @click="showPropertiesClient"
-            class="trapezoid"
-          ></div>
-        </div>
-      </div>
     </div>
     <ContextMenu
       v-if="contextMenuVisible"
@@ -697,7 +343,10 @@ import {
   getEntityTreeRaw,
   getPropertiesById,
   getAncestorsById,
+  getAncestorByMode,
 } from "@/api/treenode";
+import { getIedInfoById } from "@/api/device";
+
 const EMPTY_PROPS = () => ({
   Owner1: "",
   Owner2: "",
@@ -759,15 +408,15 @@ export default {
       },
       contextMenuPosition: { x: 0, y: 0 },
       Information: {
-        name: "Test",
-        description: "Test Description",
-        vendor: "Test Vendor",
-        model: " Test Model",
-        serialNumber: " Test Serial Number",
-        hardwareVersion: " Test Hardware Version",
-        softwareVersion: " Test Software Version",
-        orderCode: " Test Order Code",
-        roles: " Test Roles",
+        name: "",
+        description: "",
+        vendor: "",
+        model: "",
+        serialNumber: "",
+        hardwareVersion: "",
+        softwareVersion: "",
+        orderCode: "",
+        roles: "",
       },
       jobProperties: {
         name: "",
@@ -923,9 +572,9 @@ export default {
           if (node.children && node.children.length > 0) {
             node.children.forEach((child) => {
               if (!("expanded" in child)) {
-                this.$set(child, "expanded", false);
+                child.expanded = false;
               } else {
-                this.$set(child, "expanded", false);
+                child.expanded = false;
               }
               collapseChildren(child);
             });
@@ -1023,12 +672,12 @@ export default {
         console.log("Expanded nodes saved:", Array.from(this.expandedNodes));
 
         const data = await getEntityTreeRaw();
-        console.log("📥 API data loaded:", data);
+        console.log("API data loaded:", data);
 
         this.ownerServerList = data;
         this.restoreExpandedState(this.ownerServerList);
 
-        console.log("✅ Tree reloaded, expanded restored");
+        console.log("Tree reloaded, expanded restored");
       } catch (e) {
         console.error("reloadTree failed:", e);
       }
@@ -1049,14 +698,16 @@ export default {
       if (!payload || !payload.id || !payload.node) return;
 
       const newTab = { ...payload };
-      console.log("Payload received:", payload);
+      console.log("Payload received:", newTab);
 
       const exists = this.tabs.find((t) => t.id === newTab.id);
       if (!exists) {
         this.tabs.push(newTab);
         this.activeTab = { ...newTab };
+        console.log("New activeTab set:", this.activeTab.id);
       } else {
         this.activeTab = { ...exists };
+        console.log("Existing activeTab set:", this.activeTab.id);
       }
 
       if (newTab.node.mode === "parameter") {
@@ -1067,15 +718,22 @@ export default {
         }
       }
 
+      this.$emit("input", this.activeTab);
       this.$nextTick(() => {
-        console.log(
-          "Tabs after push:",
-          this.tabs.map((t) => t.id)
-        );
-        console.log("ActiveTab after push:", this.activeTab?.id);
-        if (this.$refs.tabsServer) {
-          this.$refs.tabsServer.scrollToActiveTab();
-        }
+        console.log("After first $nextTick, activeTab.id:", this.activeTab.id);
+        this.$nextTick(() => {
+          if (this.activeTab.id && this.$refs.tabsServer) {
+            console.log(
+              "Calling scrollToActiveTab with activeTab.id:",
+              this.activeTab.id
+            );
+            this.$refs.tabsServer.scrollToActiveTab();
+          } else {
+            console.warn(
+              "activeTab.id still undefined or tabsServer not ready"
+            );
+          }
+        });
       });
     },
     scrollToActiveTab() {
@@ -1363,24 +1021,9 @@ export default {
       }
     },
     async fetchChildrenServer(node) {
-      console.log(
-        "fetchChildrenServer: Result for node:",
-        node.id,
-        node.name,
-        node.mode
-      );
       try {
         const ancestors = await getAncestorsById(this.ownerServerList, node.id);
         node.parentArr = [...ancestors];
-        console.log(
-          "fetchChildrenServer: ancestors for node:",
-          node.id,
-          JSON.stringify(
-            ancestors.map((a) => ({ id: a.id, name: a.name })),
-            null,
-            2
-          )
-        );
       } catch (e) {
         console.error(
           "fetchChildrenServer: Error fetching ancestors for node:",
@@ -1391,10 +1034,7 @@ export default {
 
       if (node.children && node.children.length > 0) return;
       const children = node.childrenFromData || [];
-      console.log(
-        "fetchChildrenServer: Children result:",
-        JSON.stringify(children, null, 2)
-      );
+
       node.children = children;
       for (const child of children) {
         child.parentNode = node;
@@ -1507,38 +1147,60 @@ export default {
       this.refreshProps();
       this.assetPropertySign = true;
       this.jobPropertySign = true;
-      this.Information = {
-        name: node.name || "",
-        description: node.description || "",
-        vendor: node.vendor || "",
-        model: node.model || "",
-        serialNumber: node.serialNumber || "",
-        hardwareVersion: node.hardwareVersion || "",
-        softwareVersion: node.softwareVersion || "",
-        orderCode: node.orderCode || "",
-        roles: node.roles || "",
-      };
+
+      let iedId = null;
+      if (node.mode === "ied") {
+        iedId = node.id;
+      } else if (
+        node.mode === "protectionFunction" ||
+        node.mode === "protectionLevel" ||
+        node.mode === "protectionGroup" ||
+        node.mode === "settingFunction" ||
+        node.mode === "systemSetting"
+      ) {
+        const ancestorIed = getAncestorByMode(
+          this.ownerServerList,
+          node.id,
+          "ied"
+        );
+        if (ancestorIed) {
+          iedId = ancestorIed.id;
+        }
+      }
+
+      if (iedId) {
+        try {
+          const deviceInfo = await getIedInfoById(iedId);
+
+          this.Information = {
+            name: deviceInfo.name || "",
+            description: deviceInfo.description || "",
+            vendor: deviceInfo.vendor || "",
+            model: deviceInfo.model || "",
+            serialNumber: deviceInfo.serialNumber || "",
+            hardwareVersion: deviceInfo.hardwareVersion || "",
+            softwareVersion: deviceInfo.softwareVersion || "",
+            orderCode: deviceInfo.orderCode || "",
+            roles: deviceInfo.role || "",
+          };
+        } catch (err) {
+          console.error("Không lấy được thông tin device:", err);
+          this.Information = {
+            name: node.name || "",
+            description: node.description || "",
+            vendor: node.vendor || "",
+            model: node.model || "",
+            serialNumber: node.serialNumber || "",
+            hardwareVersion: node.hardwareVersion || "",
+            softwareVersion: node.softwareVersion || "",
+            orderCode: node.orderCode || "",
+            roles: node.roles || "",
+          };
+        }
+      }
+
       this.properties = await getPropertiesById(this.ownerServerList, node.id);
-      this.assetProperties = {
-        asset: node.name || "Mock Asset",
-        asset_type: node.asset || "Mock Type",
-        serial_no: node.serial_no || "SN-001",
-        manufacturer: "Mock Manufacturer",
-        manufacturer_type: "Mock Type",
-        manufacturing_year: "2020",
-        apparatus_id: "AP-001",
-        country: "VN",
-      };
-      this.jobProperties = {
-        name: "Job 1",
-        work_order: "WO-001",
-        creation_date: "2024-01-01",
-        execution_date: "2024-01-02",
-        tested_by: "Tester",
-        approved_by: "Manager",
-        ambient_condition: "Normal",
-        standard: "IEC",
-      };
+
       if (!node.parentArr) {
         try {
           const ancestors = await getAncestorsById(
@@ -1782,14 +1444,14 @@ export default {
   padding: 10px;
   border: 1px solid #ddd;
   cursor: pointer;
-  font-size: 12px; /* Cỡ chữ cho các mục trong nội dung */
+  font-size: 12px;
 }
 
 .folder-item:hover {
   background-color: #f0f0f0;
 }
 .child-nav {
-  overflow-y: auto;
+  overflow-y: hidden;
   height: calc(100vh - 147px);
   box-sizing: border-box;
 }

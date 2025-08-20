@@ -5,6 +5,7 @@
       <div class="scroll-btn left" @click="scrollLeft">
         <i class="fa-solid fa-chevron-left"></i>
       </div>
+
       <div class="tabs-header-data" ref="tabsHeader" @scroll="checkScroll">
         <div
           v-for="(tab, index) in tabs"
@@ -13,13 +14,16 @@
           @mouseover="hoveredTab = tab?.id"
           @mouseleave="hoveredTab = null"
           class="tab-item"
-          :class="{ active: activeTab?.id === tab?.id }"
+          :class="{ active: modelActive?.id === tab?.id }"
           ref="tabItems"
+          :data-tabid="String(tab?.id)"
         >
           <i
             style="color: #fdd835; margin-right: 8px"
             class="fa-solid fa-folder-open mgr-10 mgl-10"
           ></i>
+
+          <!-- label -->
           <span v-if="dataTypeOwner.includes(tab?.mode)" class="tab-label">
             {{ tab?.name }}
           </span>
@@ -29,33 +33,37 @@
           <span v-else-if="assetType.includes(tab?.asset)" class="tab-label">
             {{ tab?.serial_no }}
           </span>
-          <span v-else-if="tab?.type === 'job'" class="tab-label">{{
-            tab?.name
-          }}</span>
-          <span v-else-if="tab?.type === 'test'" class="tab-label">{{
-            tab?.name
-          }}</span>
+          <span v-else-if="tab?.type === 'job'" class="tab-label">
+            {{ tab?.name }}
+          </span>
+          <span v-else-if="tab?.type === 'test'" class="tab-label">
+            {{ tab?.name }}
+          </span>
           <span v-else class="tab-label">
             {{ tab?.name || "Untitled" }}
           </span>
+
+          <!-- close icon -->
           <span
             class="close-icon mgr-10 mgl-10"
             :class="{
-              visible: hoveredTab === tab?.id || activeTab?.id === tab?.id,
+              visible: hoveredTab === tab?.id || modelActive?.id === tab?.id,
             }"
             @click.stop="closeTab(index)"
             >✖</span
           >
         </div>
       </div>
+
       <div class="scroll-btn right" @click="scrollRight">
         <i class="fa-solid fa-angle-right"></i>
       </div>
     </div>
+
     <div class="tabs-content">
-      <div v-for="item in tabs" :key="item?.id || 'tab-' + index">
+      <div v-for="(item, idx) in tabs" :key="item?.id || 'tab-' + idx">
         <component
-          v-show="activeTab?.id === item?.id"
+          v-show="modelActive?.id === item?.id"
           ref="componentLoadData"
           :sideData="sideSign"
           :is="checkTab(item)"
@@ -72,34 +80,25 @@
 
 <script>
 /* eslint-disable */
-import SystemSettingTab from "@/views/common/SystemSettingTab.vue";
-import TestManagementTab from "@/views/common/TestManagementTab.vue";
-import AddDevice from "@/views/common/AddDevice.vue";
-import OwnerView from "@/views/OwnerView/index.vue";
+import SystemSettingTab from "@/views/ParameterSettingView/SystemSettingTab.vue";
+import TestManagementTab from "@/views/GroupView/TestManagementTab.vue";
+import AddDevice from "@/views/AddDeviceView/AddDevice.vue";
+import OwnerView from "@/views/OrganisationView/index.vue";
+
 export default {
   name: "Tabs",
-  components: {
-    SystemSettingTab,
-    TestManagementTab,
-    AddDevice,
-    OwnerView,
-  },
-  model: {
-    prop: "value",
-    event: "input",
-  },
+  components: { SystemSettingTab, TestManagementTab, AddDevice, OwnerView },
+
   props: {
-    value: Object,
+    modelValue: { type: Object, default: () => ({}) },
     tabs: Array,
-    side: {
-      type: String,
-      required: true,
-    },
+    side: { type: String, required: true },
     tree: { type: Array, default: () => [] },
   },
+  emits: ["update:modelValue", "close-tab", "refresh-tree"],
+
   data() {
     return {
-      activeTab: this.value || {},
       sideSign: this.side,
       hoveredTab: null,
       canScrollLeft: false,
@@ -117,173 +116,123 @@ export default {
       ],
     };
   },
-  watch: {
-    value(newVal) {
-      if (newVal && newVal.id) {
-        this.activeTab = { ...newVal };
-        console.log("Watch value: Set activeTab to", this.activeTab.id);
-        this.$nextTick(() => {
-          this.scrollToActiveTab();
-        });
-      } else {
-        console.warn("Watch value: Received invalid newVal", newVal);
-      }
-    },
-    tabs(newVal, oldVal) {
-      console.log(
-        "Watch tabs: New tabs",
-        newVal.map((t) => t.id)
-      );
-      if (newVal.length > oldVal.length) {
-        this.$nextTick(() => {
-          const newTab = newVal[newVal.length - 1];
-          this.activeTab = { ...newTab };
-          console.log("Watch tabs: Set activeTab to new tab", newTab.id);
-          this.$emit("input", newTab);
-          this.$nextTick(() => {
-            this.scrollToActiveTab();
-          });
-        });
-      } else if (
-        newVal.length > 0 &&
-        !newVal.find((tab) => tab.id === this.activeTab?.id)
-      ) {
-        this.$nextTick(() => {
-          const lastTab = newVal[newVal.length - 1];
-          this.activeTab = { ...lastTab };
-          console.log("Watch tabs: Set activeTab to last tab", lastTab.id);
-          this.$emit("input", this.activeTab);
-          this.$nextTick(() => {
-            this.scrollToActiveTab();
-          });
-        });
-      }
-      this.checkScroll();
+
+  computed: {
+    modelActive: {
+      get() {
+        return this.modelValue || {};
+      },
+      set(v) {
+        this.$emit("update:modelValue", v);
+      },
     },
   },
-  methods: {
-    async selectTab(tab, index) {
-      if (tab && tab.id !== this.activeTab?.id) {
-        this.activeTab = { ...tab };
-        this.$emit("input", tab);
-        console.log("🖱️ Tabs.vue selectTab:", tab.id);
-        this.$nextTick(() => {
-          this.scrollToActiveTab();
-        });
-      }
+
+  watch: {
+    modelValue: {
+      handler() {
+        this.$nextTick(() => this.scrollToActiveTab());
+      },
+      immediate: true,
     },
+    tabs() {
+      this.$nextTick(() => this.checkScroll());
+    },
+  },
+
+  mounted() {
+    this.$nextTick(() => this.scrollToActiveTab());
+  },
+
+  methods: {
+    selectTab(tab) {
+      this.modelActive = tab;
+    },
+
     scrollToActiveTab() {
       this.$nextTick(() => {
-        const tabItems = this.$refs.tabItems;
-        if (tabItems && this.activeTab?.id) {
-          const activeTabElement = Array.from(tabItems).find((el) =>
-            el.classList.contains("active")
-          );
-          if (activeTabElement) {
-            activeTabElement.scrollIntoView({
-              behavior: "smooth",
-              inline: "center",
-            });
-            console.log("Scrolled to active tab:", this.activeTab.id);
-          } else {
-            console.warn(
-              "No active tab element found for ID:",
-              this.activeTab.id
-            );
-            const matchingTab = this.tabs.find(
-              (t) => t.id === this.activeTab.id
-            );
-            if (matchingTab) {
-              this.activeTab = { ...matchingTab };
-              this.$emit("input", this.activeTab);
-              console.log("Retrying scroll for activeTab:", this.activeTab.id);
-              this.$nextTick(() => {
-                this.scrollToActiveTab();
-              });
-            } else if (this.tabs.length > 0) {
-              this.activeTab = { ...this.tabs[this.tabs.length - 1] };
-              this.$emit("input", this.activeTab);
-              console.log("Fallback to last tab:", this.activeTab.id);
-              this.$nextTick(() => {
-                this.scrollToActiveTab();
-              });
-            }
-          }
-        } else {
-          console.warn("No tabItems or activeTab.id:", {
-            tabItems,
-            activeTabId: this.activeTab?.id,
-          });
+        const tabsHeader = this.$refs.tabsHeader;
+        let tabItems = this.$refs.tabItems;
+        if (!Array.isArray(tabItems)) tabItems = tabItems ? [tabItems] : [];
+
+        const activeId =
+          this.modelActive?.id != null ? String(this.modelActive.id) : "";
+        // console.log("scrollToActiveTab: Checking", {
+        //   tabsHeader,
+        //   tabItemsCount: tabItems.length,
+        //   activeTabId: activeId || undefined,
+        // });
+
+        if (!tabsHeader || !tabItems.length || !activeId) return;
+
+        let activeEl =
+          tabItems.find((el) => el?.dataset?.tabid === activeId) ||
+          tabsHeader.querySelector(`[data-tabid="${activeId}"]`);
+
+        if (activeEl) {
+          activeEl.scrollIntoView({ behavior: "smooth", inline: "center" });
+          // console.log("Scrolled to active tab:", activeId);
         }
       });
     },
+
     closeTab(index) {
       this.$emit("close-tab", index);
     },
+
     checkScroll() {
       this.$nextTick(() => {
         const header = this.$refs.tabsHeader;
-        if (header) {
-          this.canScrollLeft = header.scrollLeft > 0;
-          this.canScrollRight =
-            header.scrollLeft + header.clientWidth < header.scrollWidth;
-        }
+        if (!header) return;
+        this.canScrollLeft = header.scrollLeft > 0;
+        this.canScrollRight =
+          header.scrollLeft + header.clientWidth < header.scrollWidth;
       });
     },
+
     scrollLeft() {
       this.scrollTabs(-2);
     },
     scrollRight() {
       this.scrollTabs(2);
     },
+
     scrollTabs(step) {
       this.$nextTick(() => {
         const header = this.$refs.tabsHeader;
         const tabItems = this.$refs.tabItems;
-        if (!header || !tabItems || tabItems.length === 0) return;
-        const moveBy = step * (tabItems[0].offsetWidth || 50);
-        if (moveBy) {
-          header.scrollBy({ left: moveBy, behavior: "smooth" });
-          setTimeout(this.checkScroll, 300);
-        }
+        const first = Array.isArray(tabItems) ? tabItems[0] : tabItems;
+        if (!header || !first) return;
+        header.scrollBy({
+          left: step * (first.offsetWidth || 50),
+          behavior: "smooth",
+        });
+        setTimeout(this.checkScroll, 300);
       });
     },
+
     checkTab(tab) {
-      if (tab?.component === "SystemSettingTab") {
-        return "SystemSettingTab";
+      if (tab?.component === "SystemSettingTab") return "SystemSettingTab";
+      if (tab?.component === "TestManagementTab") return "TestManagementTab";
+      if (tab?.component === "AddDevice") return "AddDevice";
+      if (this.dataType.includes(tab?.mode)) return "LocationViewData";
+      if (tab?.component === "OwnerView") return "OwnerView";
+      if (tab?.asset !== undefined) {
+        if (tab.asset === "Transformer") return "Transformer";
+        if (tab.asset === "Circuit breaker") return "CircuitBreaker";
+        return "Transformer";
       }
-      if (tab?.component === "TestManagementTab") {
-        return "TestManagementTab";
-      }
-      if (tab?.component === "AddDevice") {
-        return "AddDevice";
-      }
-      if (this.dataType.includes(tab?.mode)) {
-        return "LocationViewData";
-      } else if (tab?.component === "OwnerView") {
-        return "OwnerView";
-      } else {
-        if (tab?.asset !== undefined) {
-          if (tab.asset === "Transformer") {
-            return "Transformer";
-          } else if (tab.asset === "Circuit breaker") {
-            return "CircuitBreaker";
-          } else {
-            return "Transformer";
-          }
-        } else {
-          return "LocationViewData";
-        }
-      }
+      return "LocationViewData";
     },
+
     handleEditStart() {
-      const currentComponent = this.$refs.componentLoadData.find(
-        (comp) => comp?.$vnode?.key === this.activeTab?.id
+      const comps = this.$refs.componentLoadData || [];
+      const current = comps.find(
+        (c) => c?.$vnode?.key === this.modelActive?.id
       );
-      if (currentComponent) {
-        currentComponent.isEditing = true;
-      }
+      if (current) current.isEditing = true;
     },
+
     verifyActiveTab() {
       this.scrollToActiveTab();
     },
@@ -292,15 +241,10 @@ export default {
 </script>
 
 <style scoped>
-/* CSS giữ nguyên không đổi */
-</style>
-
-<style scoped>
 .custom-tabs {
   box-sizing: border-box;
   width: 100%;
   height: 100%;
-
   padding-bottom: 30px;
 }
 .tabs-header {
@@ -312,26 +256,25 @@ export default {
 .tabs-header-data {
   display: flex;
   height: 100%;
-  padding: 3px;
-  gap: 8px;
   box-sizing: border-box;
   width: calc(100% - 40px);
   border-bottom: 1px rgb(224, 222, 222) solid;
-  flex-wrap: nowrap; /* Không cho xuống dòng */
+  flex-wrap: nowrap;
   overflow-x: hidden;
   overflow-y: hidden;
-  padding: 0px 10px;
-  margin: 0px 10px;
+  padding: 0 10px;
+  margin: 0 10px;
+  gap: 8px;
 }
 .tab-item {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 10px; /* Khoảng trống trái, phải cho nút tab */
-  cursor: pointer; /* Dấu hiệu có thể bấm được */
-  transition: all 0.3s; /* Tạo hiệu ứng mượt mà khi hover hoặc active */
-  white-space: nowrap; /* Giữ nội dung tab trên một dòng */
-  position: relative; /* Giúp ta can thiệp một số phần tử pseudo (nếu cần) */
+  padding: 0 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+  position: relative;
   border-radius: 4px;
   border-right: 0.5px solid #f4f4f4;
 }
@@ -342,14 +285,11 @@ export default {
   background-color: #efefef;
 }
 .tab-item.active {
-  background-color: rgb(255, 255, 255);
-  border-bottom: 3px solid #012596; /* Màu xanh đặc trưng của Google, có thể đổi */
+  background-color: #fff;
+  border-bottom: 3px solid #012596;
   font-weight: bold;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-}
-.close-icon:hover {
-  background-color: #e8e8e8;
 }
 .close-icon {
   cursor: pointer;
@@ -357,20 +297,22 @@ export default {
   font-size: 10px;
   visibility: hidden;
   width: 20px;
-  height: 20px; /* Đảm bảo chiều cao bằng với chiều rộng để hiển thị hình tròn */
+  height: 20px;
   text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  border: 1px solid transparent; /* Thêm đường viền */
+  border: 1px solid transparent;
   border-radius: 50%;
 }
 .close-icon.visible {
   visibility: visible;
 }
+.close-icon:hover {
+  background-color: #e8e8e8;
+}
 .scroll-btn {
-  box-sizing: border-box;
   display: flex;
   height: 100%;
   cursor: pointer;
@@ -380,7 +322,6 @@ export default {
   justify-content: center;
   width: 20px;
 }
-
 .tabs-content {
   width: calc(100% - 50px);
   height: calc(100% - 15px);
@@ -389,9 +330,7 @@ export default {
   scrollbar-width: none;
   margin-left: 20px;
   padding-top: 10px;
-  /* margin-right: 10px; */
 }
-
 .tabs-content::-webkit-scrollbar {
   width: 0;
 }

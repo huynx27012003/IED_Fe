@@ -2,7 +2,7 @@
   <div v-if="visible" class="context-menu" ref="menu">
     <!-- Menu cho feeder -->
     <ul v-if="nodeMode === 'bay'">
-      <li @mouseenter="openSub(0, 'addDevices')">
+      <li @click="openSub(0, 'addDevices')">
         + Add Devices <span class="arrow">▶</span>
         <div v-if="isOpen(0, 'addDevices')" class="submenu">
           <div class="submenu-item" @click="emitAction('addDevice')">

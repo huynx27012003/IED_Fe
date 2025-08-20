@@ -63,3 +63,14 @@ export async function createDevice(deviceData) {
     throw error;
   }
 }
+export async function getIedInfoById(iedId) {
+  try {
+    const response = await client.get('/api/ied-info/by-ied', {
+      params: { iedId }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching IED info for id=${iedId}:`, error);
+    throw error;
+  }
+}

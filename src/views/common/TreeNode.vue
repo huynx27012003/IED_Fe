@@ -15,8 +15,8 @@
             <img
               :src="
                 !node.expanded
-                  ? require('@/assets/colapse.png')
-                  : require('@/assets/expand.png')
+                  ? require('@/assets/images/colapse.png')
+                  : require('@/assets/images/expand.png')
               "
               alt="toggle"
               style="width: 16px; height: 20px"
@@ -32,56 +32,56 @@
 
         <template v-if="node.mode === 'voltageLevel'">
           <img
-            :src="require('@/assets/Voltage_Level.png')"
+            :src="require('@/assets/images/Voltage_Level.png')"
             alt="Voltage"
             style="width: 16px; height: 16px"
           />
         </template>
         <template v-if="node.mode === 'settingFunction'">
           <img
-            :src="require('@/assets/new.png')"
+            :src="require('@/assets/images/new.png')"
             alt="Parameter"
             style="width: 16px; height: 16px"
           />
         </template>
         <template v-if="node.mode === 'protectionLevel'">
           <img
-            :src="require('@/assets/protectionLevel.png')"
+            :src="require('@/assets/images/protectionLevel.png')"
             alt="Parameter"
             style="width: 16px; height: 16px"
           />
         </template>
         <template v-else-if="node.mode === 'systemSetting'">
           <img
-            :src="require('@/assets/systemSetting.png')"
+            :src="require('@/assets/images/systemSetting.png')"
             alt="System Setting"
             style="width: 16px; height: 16px"
           />
         </template>
         <template v-else-if="node.mode === 'protectionFunction'">
           <img
-            :src="require('@/assets/protection.png')"
+            :src="require('@/assets/images/protection.png')"
             alt="Protection"
             style="width: 16px; height: 16px"
           />
         </template>
         <template v-else-if="node.mode === 'protectionGroup'">
           <img
-            :src="require('@/assets/group.png')"
+            :src="require('@/assets/images/group.png')"
             alt="Group"
             style="width: 16px; height: 16px"
           />
         </template>
         <template v-else-if="node.mode === 'bay'">
           <img
-            :src="require('@/assets/feeder.png')"
+            :src="require('@/assets/images/feeder.png')"
             alt="Feeder"
             style="width: 16px; height: 16px"
           />
         </template>
         <template v-else-if="node.mode === 'ied'">
           <img
-            :src="require('@/assets/IED.png')"
+            :src="require('@/assets/images/IED.png')"
             alt="IED"
             style="width: 16px; height: 16px"
           />

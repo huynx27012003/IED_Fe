@@ -8,7 +8,7 @@
           style="user-select: none"
         >
           <img
-            src="@/assets/images/IED.png"
+            src="@/assets/logo.png"
             alt="Logo"
             style="
               height: 25px;
