@@ -199,7 +199,7 @@ export default {
   width: 100%;
   z-index: 9999;
   font-size: 12px;
-  height: 3vh !important;
+  height: 3.5vh !important;
 }
 
 .log-list {
@@ -295,7 +295,7 @@ export default {
   border-top: 1px solid #eee;
   font-size: 11px;
   color: #555;
-  height: 3.5vh;
+  height: 3.7vh;
   display: flex;
   align-items: center;
   justify-content: flex-end;

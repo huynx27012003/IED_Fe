@@ -119,7 +119,7 @@ export default {
       url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       attribution: "&copy; OpenStreetMap contributors",
       zoom: 13,
-      center: [21.0278, 105.8342], // Hà Nội mock
+      center: [21.0278, 105.8342],
     };
   },
 };

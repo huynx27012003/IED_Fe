@@ -1,19 +1,29 @@
-import client from '@/api/client'
+import client from '@/api/client';
 
 export async function getEntityTreeRaw() {
-  const response = await client.get('/api/entity-tree', {
-    headers: { accept: 'application/json' }
-  });
-  return response.data;
+  try {
+    const response = await client.get('/api/entity-tree', {
+      headers: { accept: 'application/json' }
+    });
+    // console.log('getEntityTreeRaw: Result:', JSON.stringify(response.data, null, 2));
+    return response.data;
+  } catch (error) {
+    console.error('getEntityTreeRaw: Error:', error.message, error.response?.data);
+    throw error;
+  }
 }
 
+// chẩn hóa cây
 export async function getEntityTree() {
   const data = await getEntityTreeRaw();
-  return Array.isArray(data) ? data.map(normalizeNode) : [];
+  const result = Array.isArray(data) ? data.map(normalizeNode) : [];
+  // console.log('getEntityTree: Result:', JSON.stringify(result, null, 2));
+  return result;
 }
 
+// chuẩn hóa node
 export function normalizeNode(n = {}) {
-  return {
+  const normalized = {
     id: n.id ?? null,
     name: n.name ?? '',
     mode: n.mode ?? '',
@@ -24,6 +34,7 @@ export function normalizeNode(n = {}) {
     maxVal: n.maxVal ?? null,
     children: Array.isArray(n.children) ? n.children.map(normalizeNode) : [],
   };
+  return normalized;
 }
 
 export function findNodeById(tree = [], id) {
@@ -32,12 +43,17 @@ export function findNodeById(tree = [], id) {
   while (stack.length) {
     const n = stack.pop();
     if (!n) continue;
-    if (String(n.id) === t) return n;
+    if (String(n.id) === t) {
+      // console.log('findNodeById: Result:', JSON.stringify(n, null, 2));
+      return n;
+    }
     if (n.children?.length) stack.push(...n.children);
   }
+  // console.log('findNodeById: Result: null');
   return null;
 }
 
+// Làm phẳng cây
 export function flattenTree(tree = []) {
   const out = [];
   (function walk(arr) {
@@ -47,6 +63,7 @@ export function flattenTree(tree = []) {
       if (n?.children?.length) walk(n.children);
     }
   })(tree);
+  // console.log('flattenTree: Result:', JSON.stringify(out, null, 2));
   return out;
 }
 
@@ -63,9 +80,9 @@ export function filterTreeByName(tree = [], keyword = '') {
     const n = dfs(r);
     if (n) res.push(n);
   }
+  // console.log('filterTreeByName: Result:', JSON.stringify(res, null, 2));
   return res;
 }
-
 
 function findPathById(tree = [], id) {
   const target = String(id);
@@ -75,7 +92,10 @@ function findPathById(tree = [], id) {
   function dfs(n) {
     if (!n || ok) return;
     path.push(n);
-    if (String(n.id) === target) { ok = true; return; }
+    if (String(n.id) === target) {
+      ok = true;
+      return;
+    }
     for (const k of n.children || []) {
       dfs(k);
       if (ok) return;
@@ -87,19 +107,11 @@ function findPathById(tree = [], id) {
     if (ok) break;
     dfs(root);
   }
+  // console.log('findPathById: Result:', ok ? JSON.stringify(path.map(p => ({ id: p.id, name: p.name })), null, 2) : null);
   return ok ? path : null;
 }
 
-
-/**
- * Trả về object:
- * {
- *   Owner1, Owner2, Owner3,  // các level 'organisation' từ root xuống
- *   Location,                // 'substation'
- *   VoltageLevel,            // 'voltageLevel'
- *   Feeder                   // 'bay'
- * }
- */
+// get properties by ID
 export function getPropertiesById(tree = [], nodeId) {
   const props = {
     Owner1: '',
@@ -112,7 +124,10 @@ export function getPropertiesById(tree = [], nodeId) {
 
   const normalized = Array.isArray(tree) ? tree.map(normalizeNode) : [];
   const path = findPathById(normalized, nodeId);
-  if (!path) return props;
+  if (!path) {
+    // console.log('getPropertiesById: Result:', JSON.stringify(props, null, 2));
+    return props;
+  }
 
   let ownerIdx = 0;
   for (const n of path) {
@@ -134,62 +149,93 @@ export function getPropertiesById(tree = [], nodeId) {
         break;
     }
   }
+  // console.log('getPropertiesById: Result:', JSON.stringify(props, null, 2));
   return props;
 }
 
-// fetch cây và trả về object properties
+
 export async function getPropertiesByIdAsync(nodeId) {
-  const tree = await getEntityTree(); // normalize sẵn
-  return getPropertiesById(tree, nodeId);
+  const tree = await getEntityTree();
+  const props = getPropertiesById(tree, nodeId);
+  // console.log('getPropertiesByIdAsync: Result:', JSON.stringify(props, null, 2));
+  return props;
 }
 
 export function getParentById(tree = [], nodeId) {
   const normalized = Array.isArray(tree) ? tree.map(normalizeNode) : [];
   const path = findPathById(normalized, nodeId);
-  if (!path || path.length < 2) return null;
-  return path[path.length - 2];
+  const parent = (!path || path.length < 2) ? null : path[path.length - 2];
+  // console.log('getParentById: Result:', JSON.stringify(parent, null, 2));
+  return parent;
 }
 
-/**  danh sách tổ tiên */
 export function getAncestorsById(tree = [], nodeId) {
   const normalized = Array.isArray(tree) ? tree.map(normalizeNode) : [];
   const path = findPathById(normalized, nodeId);
-  return Array.isArray(path) && path.length > 1 ? path.slice(0, -1) : [];
+  const ancestors = Array.isArray(path) && path.length > 1 ? path.slice(0, -1) : [];
+  // console.log('getAncestorsById: Result:', JSON.stringify(ancestors.map(a => ({ id: a.id, name: a.name })), null, 2));
+  return ancestors;
 }
 
-/** ancestor gần nhất có mode = targetMode */
 export function getAncestorByMode(tree = [], nodeId, targetMode) {
   const ancestors = getAncestorsById(tree, nodeId);
   for (let i = ancestors.length - 1; i >= 0; i--) {
-    if (ancestors[i]?.mode === targetMode) return ancestors[i];
+    if (ancestors[i]?.mode === targetMode) {
+      // console.log('getAncestorByMode: Result:', JSON.stringify(ancestors[i], null, 2));
+      return ancestors[i];
+    }
   }
+  // console.log('getAncestorByMode: Result: null');
   return null;
 }
 
-// Bản async
 export async function getParentByIdAsync(nodeId) {
   const tree = await getEntityTree();
-  return getParentById(tree, nodeId);
+  const parent = getParentById(tree, nodeId);
+  // console.log('getParentByIdAsync: Result:', JSON.stringify(parent, null, 2));
+  return parent;
 }
 
 export async function getAncestorByModeAsync(nodeId, targetMode) {
   const tree = await getEntityTree();
-  return getAncestorByMode(tree, nodeId, targetMode);
+  const ancestor = getAncestorByMode(tree, nodeId, targetMode);
+  // console.log('getAncestorByModeAsync: Result:', JSON.stringify(ancestor, null, 2));
+  return ancestor;
 }
+
 export function getGroupByIedId(tree = [], iedId) {
   const t = String(iedId);
   const normalized = Array.isArray(tree) ? tree.map(normalizeNode) : [];
   const iedNode = findNodeById(normalized, t);
-
   if (!iedNode || iedNode.mode !== 'ied') {
-    console.warn("Không tìm thấy IED node với id:", t);
+    // console.log('getGroupByIedId: Result: null');
     return null;
   }
-
-  return {
+  const result = {
     ...iedNode,
     children: (iedNode.children || []).filter(c => c.mode === 'protectionGroup')
   };
+  // console.log('getGroupByIedId: Result:', JSON.stringify(result, null, 2));
+  return result;
+}
+
+export function findSubPathById(tree = [], nodeId, targetMode) {
+  const normalized = Array.isArray(tree) ? tree.map(normalizeNode) : [];
+  const fullPath = findPathById(normalized, nodeId);
+  if (!fullPath) {
+    // console.log('findSubPathById: Result: null');
+    return null;
+  }
+  let startIdx = -1;
+  for (let i = fullPath.length - 1; i >= 0; i--) {
+    if (fullPath[i]?.mode === targetMode) {
+      startIdx = i;
+      break;
+    }
+  }
+  const result = startIdx === -1 ? null : fullPath.slice(startIdx);
+  // console.log('findSubPathById: Result:', result ? JSON.stringify(result.map(p => ({ id: p.id, name: p.name })), null, 2) : null);
+  return result;
 }
 
 export default {
@@ -207,4 +253,5 @@ export default {
   getAncestorByMode,
   getParentByIdAsync,
   getAncestorByModeAsync,
+  findSubPathById,
 };

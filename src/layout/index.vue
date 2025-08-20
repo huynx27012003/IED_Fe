@@ -69,7 +69,7 @@ body,
   left: 0;
   bottom: 0;
   width: 100%;
-  height: 4vh;
+  height: 3.5vh !important;
   z-index: 9999;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
   background: #fff;

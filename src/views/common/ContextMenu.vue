@@ -102,7 +102,11 @@
 </template>
 
 <script>
-import { getParentById, getAncestorByMode } from "@/api/treenode";
+import {
+  getParentById,
+  getAncestorByMode,
+  findSubPathById,
+} from "@/api/treenode";
 import { importDevice } from "@/api/device";
 export default {
   props: {
@@ -209,45 +213,75 @@ export default {
         tab.name = `${this.selectedNode.name}`;
         tab.component = "SystemSettingTab";
       }
-      if (action === "protectionFunction") {
-        tab.id = `${this.selectedNode.id}`;
-        tab.name = `${this.selectedNode.name}`;
-        tab.component = "TestManagementTab";
-      }
-      if (action === "settingFunction") {
-        let parent = this.tree?.length
-          ? getParentById(this.tree, this.selectedNode.id)
-          : null;
-        console.log("getParentById(...) =>", parent);
-        if (this.selectedNode.mode === "settingFunction") {
-          parent =
-            getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
-        }
+      // if (action === "protectionFunction") {
+      //   tab.id = `${this.selectedNode.id}`;
+      //   tab.name = `${this.selectedNode.name}`;
+      //   tab.component = "TestManagementTab";
+      // }
+      // if (action === "settingFunction") {
+      //   let parent = this.tree?.length
+      //     ? getParentById(this.tree, this.selectedNode.id)
+      //     : null;
+      //   console.log("getParentById(...) =>", parent);
+      //   if (this.selectedNode.mode === "settingFunction") {
+      //     parent =
+      //       getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
+      //   }
 
-        tab.id = `${parent.id}`;
-        tab.name = `${parent.name}- ${this.selectedNode.name}`;
-        tab.component = "SystemSettingTab";
-      }
+      //   tab.id = `${this.selectedNode.id}`;
+      //   tab.name = `${parent.name}- ${this.selectedNode.name}`;
+      //   tab.component = "SystemSettingTab";
+      // }
 
+      // if (
+      //   action === "protectionGroup" ||
+      //   action === "protectionLevel" ||
+      //   action === "protectionFunction"
+      // ) {
+      //   let parent = this.tree?.length
+      //     ? getParentById(this.tree, this.selectedNode.id)
+      //     : null;
+      //   console.log("getParentById(...) =>", parent);
+      //   if (this.selectedNode.mode === "protectionGroup") {
+      //     parent =
+      //       getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
+      //   }
+      //   const subPath = findSubPathById(this.tree, this.selectedNode.id, "ied");
+      //   console.log(
+      //     "SubPath from IED -> selected:",
+      //     subPath ? subPath.map((n) => `${n.mode}:${n.name}`) : null
+      //   );
+
+      //   console.log("Tree", this.tree);
+      //   tab.id = `${this.selectedNode.id}`;
+      //   tab.name = `${parent.name}- ${this.selectedNode.name}`;
+      //   tab.component = "TestManagementTab";
+      // }
       if (
         action === "protectionGroup" ||
         action === "protectionLevel" ||
-        action === "protectionFunction"
+        action === "protectionFunction" ||
+        action === "systemSetting" ||
+        action === "settingFunction"
       ) {
-        let parent = this.tree?.length
-          ? getParentById(this.tree, this.selectedNode.id)
-          : null;
-        console.log("getParentById(...) =>", parent);
-        if (this.selectedNode.mode === "protectionGroup") {
-          parent =
-            getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
-        }
+        const subPath = findSubPathById(this.tree, this.selectedNode.id, "ied");
+        const pathNames = subPath
+          ? subPath.map((n) => n.name)
+          : [this.selectedNode.name];
 
-        console.log("Tree", this.tree);
-        tab.id = `${parent.id}`;
-        tab.name = `${parent.name}- ${this.selectedNode.name}`;
-        tab.component = "TestManagementTab";
+        console.log(
+          "SubPath from IED -> selected:",
+          subPath ? subPath.map((n) => `${n.mode}:${n.name}`) : null
+        );
+
+        tab.id = `${this.selectedNode.id}`;
+        tab.name = pathNames.join(" - ");
+        tab.component =
+          action === "systemSetting" || action === "settingFunction"
+            ? "SystemSettingTab"
+            : "TestManagementTab";
       }
+
       if (action === "addDevice") {
         tab.id = `${this.selectedNode.id}-addDevice`;
         tab.name = `${this.selectedNode.name}- Add Device`;

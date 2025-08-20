@@ -1,11 +1,16 @@
 <template>
   <div class="explorer">
-    <!-- Thanh công cụ -->
     <div v-show="!clientSlide" class="toolbar">
       <div style="display: flex; align-items: center">
         <div @click="resetAllServer" class="path-hover">Home</div>
-        <i style="margin-left: 10px" class="fa-solid fa-angle-right"></i>
+        <i
+          v-if="pathMapServer.length"
+          style="margin-left: 10px"
+          class="fa-solid fa-angle-right"
+        ></i>
       </div>
+
+      <!-- Path items -->
       <div
         style="display: flex; align-items: center"
         v-for="(item, index) in pathMapServer"
@@ -14,7 +19,11 @@
         <div @click="resetPathServer(index)" class="path-hover">
           {{ item.parent }}
         </div>
-        <i style="margin-left: 10px" class="fa-solid fa-angle-right"></i>
+        <i
+          v-if="index < pathMapServer.length - 1"
+          style="margin-left: 10px"
+          class="fa-solid fa-angle-right"
+        ></i>
       </div>
     </div>
 
@@ -883,6 +892,103 @@ export default {
   },
 
   methods: {
+    async resetAllServer() {
+      this.pathMapServer = [];
+      this.selectedNode = null;
+
+      const collapseNodes = (nodes) => {
+        if (!Array.isArray(nodes)) return;
+        nodes.forEach((node) => {
+          node.expanded = false;
+          if (node.children && node.children.length > 0) {
+            collapseNodes(node.children);
+          }
+        });
+      };
+      collapseNodes(this.ownerServerList);
+    },
+
+    async resetPathServer(index) {
+      if (index === 0) {
+        let currentNode = this.ownerServerList.find(
+          (node) => node.id === this.pathMapServer[0]?.id
+        );
+        if (!currentNode) {
+          return;
+        }
+        await this.clearSelection();
+        await this.showPropertiesData(currentNode);
+
+        const collapseChildren = (node) => {
+          if (node.children && node.children.length > 0) {
+            node.children.forEach((child) => {
+              if (!("expanded" in child)) {
+                this.$set(child, "expanded", false);
+              } else {
+                this.$set(child, "expanded", false);
+              }
+              collapseChildren(child);
+            });
+          }
+        };
+        collapseChildren(currentNode);
+
+        if (!("expanded" in currentNode)) {
+          currentNode.expanded = true;
+        } else {
+          currentNode.expanded = !currentNode.expanded;
+        }
+      } else {
+        let currentNode = this.ownerServerList.find(
+          (node) => node.id === this.pathMapServer[0]?.id
+        );
+        if (!currentNode) {
+          return;
+        }
+        for (let i = 1; i <= index; i++) {
+          if (!currentNode.children) return;
+          currentNode = currentNode.children.find(
+            (child) => child.id === this.pathMapServer[i]?.id
+          );
+          if (!currentNode) {
+            return;
+          }
+        }
+        await this.clearSelection();
+        await this.showPropertiesData(currentNode);
+
+        const collapseChildren = (node) => {
+          if (node.children && node.children.length > 0) {
+            node.children.forEach((child) => {
+              if (!("expanded" in child)) {
+                child.expanded = false;
+              } else {
+                child.expanded = false;
+              }
+              collapseChildren(child);
+            });
+          }
+        };
+        collapseChildren(currentNode);
+
+        if (!("expanded" in currentNode)) {
+          currentNode.expanded = true;
+        } else {
+          currentNode.expanded = !currentNode.expanded;
+        }
+      }
+    },
+
+    findNodeById(nodes, id) {
+      for (const n of nodes) {
+        if (n.id === id) return n;
+        if (n.children) {
+          const found = this.findNodeById(n.children, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    },
     saveExpandedState() {
       this.expandedNodes.clear();
       const traverse = (nodes) => {
@@ -927,25 +1033,14 @@ export default {
         console.error("reloadTree failed:", e);
       }
     },
-    // async reloadTree() {
-    //   try {
-    //     const data = await getEntityTreeRaw();
-    //     if (Array.isArray(data)) {
-    //       this.ownerServerList = data;
-    //       return this.ownerServerList;
-    //     }
-    //     return [];
-    //   } catch (err) {
-    //     console.error("Reload tree error:", err);
-    //     return [];
-    //   }
-    // },
+
     handleSelectParameter(node) {
       this.selectedParameterId = node.id;
     },
 
     handleToggleNode(node) {
       node.expanded = !node.expanded;
+      this.pathMapServer = node.parentArr || [];
     },
     fetchParent(node) {
       return "setting1";
@@ -1125,7 +1220,7 @@ export default {
       const containerWidth = this.$refs.sidebarServer.offsetParent.clientWidth;
 
       let percentWidth = (newWidth / containerWidth) * 100;
-      let finalWidth = Math.max(10, Math.min(40, percentWidth)); // giới hạn trong khoảng 10–40%
+      let finalWidth = Math.max(10, Math.min(40, percentWidth));
 
       this.$refs.sidebarServer.style.width = finalWidth + "%";
       this.$refs.contextDataServer.style.width = 100 - finalWidth + "%";
@@ -1268,24 +1363,83 @@ export default {
       }
     },
     async fetchChildrenServer(node) {
-      console.log("Fetching children for node:", node.id, node.name, node.mode);
+      console.log(
+        "fetchChildrenServer: Result for node:",
+        node.id,
+        node.name,
+        node.mode
+      );
+      try {
+        const ancestors = await getAncestorsById(this.ownerServerList, node.id);
+        node.parentArr = [...ancestors];
+        console.log(
+          "fetchChildrenServer: ancestors for node:",
+          node.id,
+          JSON.stringify(
+            ancestors.map((a) => ({ id: a.id, name: a.name })),
+            null,
+            2
+          )
+        );
+      } catch (e) {
+        console.error(
+          "fetchChildrenServer: Error fetching ancestors for node:",
+          e
+        );
+        node.parentArr = node.parentNode ? [node.parentNode] : [];
+      }
 
       if (node.children && node.children.length > 0) return;
-
       const children = node.childrenFromData || [];
-      this.$set(node, "children", children);
-
+      console.log(
+        "fetchChildrenServer: Children result:",
+        JSON.stringify(children, null, 2)
+      );
+      node.children = children;
       for (const child of children) {
         child.parentNode = node;
-
         try {
-          const ancestors = getAncestorsById(this.ownerServerList, child.id);
-
+          const ancestors = await getAncestorsById(
+            this.ownerServerList,
+            child.id
+          );
           child.parentArr = [...ancestors, node];
+          console.log(
+            "fetchChildrenServer: parentArr for child:",
+            child.id,
+            JSON.stringify(
+              child.parentArr.map((a) => ({ id: a.id, name: a.name })),
+              null,
+              2
+            )
+          );
         } catch (e) {
-          console.error("Không lấy được parentArr từ API:", e);
+          console.error(
+            "fetchChildrenServer: Error fetching ancestors for child:",
+            e
+          );
           child.parentArr = [node];
         }
+      }
+
+      if (
+        this.nextSelectedNode?.id === node.id ||
+        this.selectedOwnerNodes[0]?.id === node.id ||
+        this.selectedLocationNodes[0]?.id === node.id
+      ) {
+        this.pathMapServer = node.parentArr
+          ? [
+              ...node.parentArr.map((parent) => ({
+                id: parent.id,
+                parent: parent.name,
+              })),
+              { id: node.id, parent: node.name },
+            ]
+          : [{ id: node.id, parent: node.name }];
+        console.log(
+          "fetchChildrenServer: pathMapServer result:",
+          JSON.stringify(this.pathMapServer, null, 2)
+        );
       }
     },
     async hideProperties() {
@@ -1354,27 +1508,17 @@ export default {
       this.assetPropertySign = true;
       this.jobPropertySign = true;
       this.Information = {
-        name: node.name,
-        description: node.description,
-        vendor: node.vendor,
-        model: node.model,
-        serialNumber: node.serialNumber,
-        hardwareVersion: node.hardwareVersion,
-        softwareVersion: node.softwareVersion,
-        orderCode: node.orderCode,
-        roles: node.roles,
+        name: node.name || "",
+        description: node.description || "",
+        vendor: node.vendor || "",
+        model: node.model || "",
+        serialNumber: node.serialNumber || "",
+        hardwareVersion: node.hardwareVersion || "",
+        softwareVersion: node.softwareVersion || "",
+        orderCode: node.orderCode || "",
+        roles: node.roles || "",
       };
-      this.properties = {
-        name: node.name || "Mock Name",
-        region: "Mock Region",
-        address: "Mock Address",
-        city: "Mock City",
-        state_province: "Mock State",
-        postal_code: "12345",
-        country: "Mock Country",
-        phone_no: "0123456789",
-        email: "mock@email.com",
-      };
+      this.properties = await getPropertiesById(this.ownerServerList, node.id);
       this.assetProperties = {
         asset: node.name || "Mock Asset",
         asset_type: node.asset || "Mock Type",
@@ -1395,6 +1539,79 @@ export default {
         ambient_condition: "Normal",
         standard: "IEC",
       };
+      if (!node.parentArr) {
+        try {
+          const ancestors = await getAncestorsById(
+            this.ownerServerList,
+            node.id
+          );
+          node.parentArr = [...ancestors];
+        } catch (e) {
+          console.error("showPropertiesData: Error fetching ancestors:", e);
+          node.parentArr = [];
+        }
+      }
+      this.pathMapServer = node.parentArr
+        ? [
+            ...node.parentArr.map((parent) => ({
+              id: parent.id,
+              parent: parent.name,
+            })),
+            { id: node.id, parent: node.name },
+          ]
+        : [{ id: node.id, parent: node.name }];
+    },
+
+    updateSelectionOwner(node) {
+      console.log("updateSelectionOwner: Processing node:", node.id, node.name);
+      this.selectedOwnerNodes = [node];
+      if (!node.parentArr) {
+        try {
+          const ancestors = getAncestorsById(this.ownerServerList, node.id);
+          node.parentArr = [...ancestors];
+        } catch (e) {
+          console.error("updateSelectionOwner: Error fetching ancestors:", e);
+          node.parentArr = [];
+        }
+      }
+      this.pathMapServer = node.parentArr
+        ? [
+            ...node.parentArr.map((parent) => ({
+              id: parent.id,
+              parent: parent.name,
+            })),
+            { id: node.id, parent: node.name },
+          ]
+        : [{ id: node.id, parent: node.name }];
+    },
+
+    updateSelectionLocation(node) {
+      this.selectedLocationNodes = [node];
+      if (!node.parentArr) {
+        try {
+          const ancestors = getAncestorsById(this.ownerServerList, node.id);
+          node.parentArr = [...ancestors];
+        } catch (e) {
+          console.error(
+            "updateSelectionLocation: Error fetching ancestors:",
+            e
+          );
+          node.parentArr = [];
+        }
+      }
+      this.pathMapServer = node.parentArr
+        ? [
+            ...node.parentArr.map((parent) => ({
+              id: parent.id,
+              parent: parent.name,
+            })),
+            { id: node.id, parent: node.name },
+          ]
+        : [{ id: node.id, parent: node.name }];
+      console.log(
+        "updateSelectionLocation: pathMapServer result:",
+        JSON.stringify(this.pathMapServer, null, 2)
+      );
     },
 
     async removeOwner(node) {
@@ -1427,9 +1644,21 @@ export default {
 
     updateSelectionOwner(node) {
       this.selectedOwnerNodes = [node];
+      this.pathMapServer = node.parentArr
+        ? node.parentArr.map((parent) => ({
+            id: parent.id,
+            parent: parent.name,
+          }))
+        : [];
     },
     updateSelectionLocation(node) {
       this.selectedLocationNodes = [node];
+      this.pathMapServer = node.parentArr
+        ? node.parentArr.map((parent) => ({
+            id: parent.id,
+            parent: parent.name,
+          }))
+        : [];
     },
   },
 };
@@ -1560,7 +1789,7 @@ export default {
   background-color: #f0f0f0;
 }
 .child-nav {
-  overflow-y: hidden;
+  overflow-y: auto;
   height: calc(100vh - 147px);
   box-sizing: border-box;
 }
