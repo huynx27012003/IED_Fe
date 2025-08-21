@@ -9,7 +9,7 @@ const store = createStore({
     return {
       isAuthenticated: !!savedToken,
       user: savedUser || null,
-      serverAddr: localStorage.getItem('SERVER_ADDR') || 'http://localhost:8000',
+      serverAddr: localStorage.getItem('SERVER_ADDR') || 'http://222.252.22.158:8087',
       selectedOwner: null,
     }
   },
