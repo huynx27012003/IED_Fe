@@ -1,6 +1,16 @@
 <template>
   <div class="system-setting-tab">
     <h3>{{ ownerData.name }}</h3>
+    <div class="toolbar">
+      <el-button v-if="!isEditing" type="primary" @click="enterEditMode">
+        Edit
+      </el-button>
+      <template v-else>
+        <el-button type="success" @click="saveAll">Save</el-button>
+        <el-button type="danger" @click="cancelAll">Cancel</el-button>
+      </template>
+    </div>
+
     <table class="parameter-table">
       <thead>
         <tr>
@@ -37,71 +47,76 @@
             <td class="param-name" :style="{ paddingLeft: row.padding + 'px' }">
               {{ row.name }}
             </td>
+
+            <!-- Value -->
             <td :class="['value-col', cellClass(row.value)]">
               <div class="cell">
-                <template v-if="!editStates[row.id]?.editing">
-                  <span class="cell-text">{{ displayValue(row.value) }}</span>
-                  <i
-                    class="fa-solid fa-pen cell-icon"
-                    @click="enterEdit(row)"
-                  ></i>
+                <template v-if="!isEditing">
+                  <el-switch
+                    v-if="isOnOff(row)"
+                    v-model="dummySwitch[row.id]"
+                    disabled
+                  />
+                  <span v-else class="cell-text">{{
+                    displayValue(row.value)
+                  }}</span>
                 </template>
+
+                <!-- Edit mode -->
                 <template v-else>
+                  <el-select
+                    v-if="row.options && !isOnOff(row)"
+                    v-model="editStates[row.id]"
+                    placeholder="Select"
+                    style="width: 100%"
+                  >
+                    <el-option
+                      v-for="opt in row.options"
+                      :key="opt"
+                      :label="opt"
+                      :value="opt"
+                    />
+                  </el-select>
+
+                  <el-switch
+                    v-else-if="isOnOff(row)"
+                    v-model="editStates[row.id]"
+                    active-value="On"
+                    inactive-value="Off"
+                  />
+
                   <input
-                    v-model="editStates[row.id].tempValue"
+                    v-else
+                    v-model="editStates[row.id]"
                     class="cell-input"
                   />
-                  <span class="cell-icons">
-                    <i class="fa-solid fa-check" @click="requestSave(row)"></i>
-                    <i class="fa-solid fa-x" @click="cancelEdit(row)"></i>
-                  </span>
                 </template>
               </div>
             </td>
+
+            <!-- Unit -->
             <td :class="cellClass(row.unit)">
-              <div class="cell">
-                <span class="cell-text">{{ displayValue(row.unit) }}</span>
-              </div>
+              <span class="cell-text">{{ displayValue(row.unit) }}</span>
             </td>
+
+            <!-- Min -->
             <td :class="cellClass(row.minVal)">
-              <div class="cell">
-                <span class="cell-text">{{ displayValue(row.minVal) }}</span>
-              </div>
+              <span class="cell-text">{{ displayValue(row.minVal) }}</span>
             </td>
+
+            <!-- Max -->
             <td :class="cellClass(row.maxVal)">
-              <div class="cell">
-                <span class="cell-text">{{ displayValue(row.maxVal) }}</span>
-              </div>
+              <span class="cell-text">{{ displayValue(row.maxVal) }}</span>
             </td>
+
+            <!-- Description -->
             <td :class="cellClass(row.description)">
-              <div class="cell">
-                <span class="cell-text">{{
-                  displayValue(row.description)
-                }}</span>
-              </div>
+              <span class="cell-text">{{ displayValue(row.description) }}</span>
             </td>
           </tr>
         </template>
       </tbody>
     </table>
-
-    <el-dialog
-      v-model="confirmDialogVisible"
-      title="Xác nhận lưu"
-      width="300px"
-      :close-on-click-modal="false"
-    >
-      <p>
-        Lưu giá trị mới cho:
-        <strong
-          >{{ confirmTargetParam?.mode }} - {{ confirmTargetParam?.id }}</strong
-        >
-      </p>
-      <template #footer>
-        <el-button @click="cancelDialog">Huỷ</el-button>
-        <el-button type="primary" @click="confirmSave">Lưu</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -120,45 +135,63 @@ export default {
   data() {
     return {
       parameterGroups: [],
+      isEditing: false,
       editStates: {},
-      confirmDialogVisible: false,
-      confirmTargetParam: null,
+      changedValues: [],
+      dummySwitch: {}, // hiển thị switch khi !isEditing
     };
   },
   computed: {
     rowsToRender() {
       const mode = this.ownerData.node.mode;
-
       if (mode === "ied") {
-        const protectionGroups =
+        const groups =
           this.ownerData.node.children?.filter(
             (c) => c.mode === "protectionGroup"
           ) || [];
-        return this.renderParamRows(protectionGroups, 1);
+        return this.renderParamRows(groups, 1);
       }
-
       if (
-        mode === "protectionFunction" ||
-        mode === "protectionLevel" ||
-        mode === "protectionGroup"
+        ["protectionFunction", "protectionLevel", "protectionGroup"].includes(
+          mode
+        )
       ) {
         return this.renderParamRows(this.ownerData.node.children, 1);
       }
-
       return [];
     },
   },
   methods: {
+    isOnOff(row) {
+      return (
+        row.options &&
+        row.options.length === 2 &&
+        row.options.includes("On") &&
+        row.options.includes("Off")
+      );
+    },
+    displayValue(v) {
+      return v == null ? "" : v;
+    },
+    isNullish(v) {
+      return (
+        v === null ||
+        v === undefined ||
+        (typeof v === "string" && v.trim() === "")
+      );
+    },
+    cellClass(v) {
+      return this.isNullish(v) ? "null-cell" : "";
+    },
     renderParamRows(children, level) {
       const rows = [];
       const padding = level * 20;
       children?.forEach((child) => {
-        if (child.children && child.children.length > 0) {
+        if (child.children?.length) {
           rows.push({
             key: "group-" + child.id,
             isGroup: true,
-            name: child.name,
-            mode: child.mode,
+            ...child,
             padding,
           });
           rows.push(...this.renderParamRows(child.children, level + 1));
@@ -174,46 +207,39 @@ export default {
       return rows;
     },
 
-    displayValue(v) {
-      return v === null || v === undefined ? "" : v;
+    enterEditMode() {
+      this.isEditing = true;
+      this.editStates = {};
+      this.rowsToRender.forEach((row) => {
+        if (!row.isGroup) {
+          this.editStates[row.id] = row.value;
+          this.dummySwitch[row.id] = row.value === "On";
+        }
+      });
     },
-    isNullish(v) {
-      return (
-        v === null ||
-        v === undefined ||
-        (typeof v === "string" && v.trim() === "")
-      );
+
+    cancelAll() {
+      this.isEditing = false;
+      this.editStates = {};
+      this.changedValues = [];
     },
-    cellClass(v) {
-      return this.isNullish(v) ? "null-cell" : "";
-    },
-    enterEdit(param) {
-      this.editStates[param.id] = {
-        editing: true,
-        tempValue: this.displayValue(param.value),
-      };
-    },
-    cancelEdit(param) {
-      this.editStates[param.id] = {
-        editing: false,
-        tempValue: this.displayValue(param.value),
-      };
-    },
-    requestSave(param) {
-      this.confirmTargetParam = param;
-      this.confirmDialogVisible = true;
-    },
-    confirmSave() {
-      const param = this.confirmTargetParam;
-      const updatedValue = this.editStates[param.id].tempValue;
-      param.value = updatedValue;
-      this.editStates[param.id] = { editing: false, tempValue: updatedValue };
-      this.confirmDialogVisible = false;
-      this.confirmTargetParam = null;
-    },
-    cancelDialog() {
-      this.confirmDialogVisible = false;
-      this.confirmTargetParam = null;
+
+    saveAll() {
+      this.changedValues = [];
+      this.rowsToRender.forEach((row) => {
+        if (!row.isGroup && this.editStates[row.id] !== undefined) {
+          const newVal = this.editStates[row.id];
+          if (row.value !== newVal) {
+            this.changedValues.push({ id: row.id, newValue: newVal });
+            row.value = newVal;
+          }
+        }
+      });
+
+      console.log("Các giá trị thay đổi:", JSON.stringify(this.changedValues));
+
+      this.isEditing = false;
+      this.editStates = {};
     },
   },
   mounted() {
@@ -230,11 +256,17 @@ export default {
 </script>
 
 <style scoped>
+.toolbar {
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .row-ied,
 .row-protectionGroup {
   background-color: #b3c7f2;
 }
-
 .row-protectionFunction {
   background-color: #b0dce8;
 }
@@ -256,13 +288,6 @@ export default {
 thead {
   background-color: #e1e1e1;
 }
-.group-header {
-  background-color: #d9e3f0;
-  font-weight: bold;
-}
-.group-header td {
-  background-color: #eaf4ff;
-}
 .value-col {
   width: 120px;
   max-width: 160px;
@@ -280,15 +305,6 @@ thead {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.cell-icon {
-  margin-left: auto;
-  cursor: pointer;
-}
-.cell-icons {
-  margin-left: auto;
-  display: inline-flex;
-  gap: 8px;
-}
 .cell-input {
   flex: 1 1 auto;
   min-width: 0;
@@ -297,5 +313,8 @@ thead {
   background-color: #f3f3f3;
   color: #666;
   font-style: italic;
+}
+.cell .el-switch {
+  margin: 0 auto;
 }
 </style>

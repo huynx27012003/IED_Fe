@@ -11,7 +11,16 @@
             node.mode !== 'settingFunction' && node.mode !== 'protectionLevel'
           "
         >
-          <template v-if="node.children && node.children.length > 0">
+          <template
+            v-if="
+              node.children &&
+              node.children.length > 0 &&
+              !(
+                node.mode === 'protectionFunction' &&
+                !node.children.some((c) => c.name && c.name.startsWith('Level'))
+              )
+            "
+          >
             <img
               :src="
                 !node.expanded
@@ -41,7 +50,7 @@
           <img
             :src="require('@/assets/images/new.png')"
             alt="Parameter"
-            style="width: 16px; height: 16px"
+            style="width: 16px; height: 16px; margin-left: 5px"
           />
         </template>
         <template v-if="node.mode === 'protectionLevel'">
@@ -164,7 +173,12 @@ export default {
 
         if (
           this.node.mode === "settingFunction" ||
-          this.node.mode === "protectionLevel"
+          this.node.mode === "protectionLevel" ||
+          (this.node.mode === "protectionFunction" &&
+            (!this.node.children ||
+              !this.node.children.some(
+                (c) => c.name && c.name.startsWith("Level")
+              )))
         ) {
           this.$emit("select-parameter", this.node);
           return;
@@ -173,7 +187,6 @@ export default {
         if (!this.node.expanded) {
           this.isLoading = true;
           this.$emit("fetch-children", this.node);
-
           this.isLoading = false;
         }
 

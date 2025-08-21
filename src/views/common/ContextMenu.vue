@@ -208,11 +208,7 @@ export default {
         tab.name = `${this.selectedNode.name} - Test Management`;
         tab.component = "TestManagementTab";
       }
-      if (action === "parameterValue") {
-        tab.id = `${this.selectedNode.id}`;
-        tab.name = `${this.selectedNode.name}`;
-        tab.component = "SystemSettingTab";
-      }
+
       // if (action === "protectionFunction") {
       //   tab.id = `${this.selectedNode.id}`;
       //   tab.name = `${this.selectedNode.name}`;
@@ -276,10 +272,7 @@ export default {
 
         tab.id = `${this.selectedNode.id}`;
         tab.name = pathNames.join(" - ");
-        tab.component =
-          action === "systemSetting" || action === "settingFunction"
-            ? "SystemSettingTab"
-            : "TestManagementTab";
+        tab.component = "SystemSettingTab";
       }
 
       if (action === "addDevice") {

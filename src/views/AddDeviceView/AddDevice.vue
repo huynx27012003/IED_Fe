@@ -79,23 +79,23 @@
           disabled
         />
       </el-form-item>
-      <el-form-item label="Asset Datasheet" prop="assetDatasheet">
+      <!-- <el-form-item label="Asset Datasheet" prop="assetDatasheet">
         <el-input-number v-model="deviceForm.assetDatasheet" :min="0" />
-      </el-form-item>
-      <el-form-item label="Bay ID" prop="bayId">
+      </el-form-item> -->
+      <!-- <el-form-item label="Bay ID" prop="bayId">
         <el-input
           v-model="deviceForm.bayId"
           placeholder="Bay ID (auto-filled)"
           disabled
         />
-      </el-form-item>
-      <el-form-item label="Aggregate" prop="aggregate">
+      </el-form-item> -->
+      <!-- <el-form-item label="Aggregate" prop="aggregate">
         <el-switch v-model="deviceForm.aggregate" />
-      </el-form-item>
+      </el-form-item> -->
       <el-form-item label="In Service" prop="inService">
         <el-switch v-model="deviceForm.inService" />
       </el-form-item>
-      <el-form-item label="Normally In Service" prop="normallyInService">
+      <!-- <el-form-item label="Normally In Service" prop="normallyInService">
         <el-switch v-model="deviceForm.normallyInService" />
       </el-form-item>
       <el-form-item label="Relay Delay Time" prop="relayDelayTime">
@@ -104,28 +104,28 @@
           :min="0"
           :step="0.1"
         />
-      </el-form-item>
-      <el-form-item label="Unit Multiplier" prop="unitMultiplier">
+      </el-form-item> -->
+      <!-- <el-form-item label="Unit Multiplier" prop="unitMultiplier">
         <el-input
           v-model="deviceForm.unitMultiplier"
           placeholder="Enter unit multiplier"
         />
-      </el-form-item>
-      <el-form-item label="Unit Symbol" prop="unitSymbol">
+      </el-form-item> -->
+      <!-- <el-form-item label="Unit Symbol" prop="unitSymbol">
         <el-input
           v-model="deviceForm.unitSymbol"
           placeholder="Enter unit symbol"
         />
-      </el-form-item>
-      <el-form-item label="High Limit" prop="highLimit">
+      </el-form-item> -->
+      <!-- <el-form-item label="High Limit" prop="highLimit">
         <el-input-number v-model="deviceForm.highLimit" :min="0" :step="0.1" />
       </el-form-item>
       <el-form-item label="Low Limit" prop="lowLimit">
         <el-input-number v-model="deviceForm.lowLimit" :min="0" :step="0.1" />
-      </el-form-item>
-      <el-form-item label="Power Direction Flag" prop="powerDirectionFlag">
+      </el-form-item> -->
+      <!-- <el-form-item label="Power Direction Flag" prop="powerDirectionFlag">
         <el-switch v-model="deviceForm.powerDirectionFlag" />
-      </el-form-item>
+      </el-form-item> -->
       <el-form-item>
         <el-button type="primary" @click="handleSave">Save</el-button>
         <el-button @click="handleCancel">Cancel</el-button>
@@ -263,19 +263,15 @@ export default {
     async fetchVendors() {
       try {
         this.vendors = await getVendors();
-        console.log("Loaded vendors:", this.vendors);
       } catch (error) {
         this.$message.error("Failed to load vendors");
-        console.error("Fetch vendors error:", error);
       }
     },
     async fetchDeviceTypes() {
       try {
         this.deviceTypes = await getDeviceTypes();
-        console.log("Loaded device types:", this.deviceTypes);
       } catch (error) {
         this.$message.error("Failed to load device types");
-        console.error("Fetch device types error:", error);
       }
     },
     fetchModels: debounce(async function () {
@@ -287,16 +283,11 @@ export default {
       }
       this.modelLoading = true;
       try {
-        console.log(
-          `Calling getModel with vendorCode=${this.deviceForm.vendor}, typeCode=${this.deviceForm.deviceType}`
-        );
         const models = await getModel(
           this.deviceForm.vendor,
           this.deviceForm.deviceType
         );
-        console.log("Raw models data from API:", models);
         this.models = Array.isArray(models) ? models : [];
-        console.log("Processed models array:", this.models);
         if (this.models.length === 0) {
           this.$message.warning(
             "No models available for the selected vendor and device type"
@@ -329,12 +320,7 @@ export default {
         this.deviceTypes.find(
           (type) => type.code === this.deviceForm.deviceType
         )?.roleCode || "";
-      console.log(
-        "Selected device type:",
-        this.deviceForm.deviceType,
-        "Role:",
-        this.deviceForm.role
-      );
+
       this.fetchModels();
     },
     handleSave() {
@@ -352,7 +338,7 @@ export default {
           ...this.deviceForm,
           type: this.deviceForm.deviceType,
         };
-        console.log("Submitting device data:", deviceData);
+
         await createDevice(deviceData);
         this.$message.success("Device created successfully");
         this.resetForm();
