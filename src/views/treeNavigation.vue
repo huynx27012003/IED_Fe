@@ -364,7 +364,6 @@ export default {
     TreeNode,
     Tabs,
     ContextMenu,
-    // AddDeviceDialog,
   },
   computed: {
     selectedId() {
@@ -513,7 +512,6 @@ export default {
       ],
       LocationType: ["location", "voltage", "feeder"],
       contextMenuVisible: false,
-      rightClickNode: null,
     };
   },
   async mounted() {
@@ -571,12 +569,20 @@ export default {
         this.handleOpenTab(tab);
       }
     },
-    handleUpdateFocus({ iedId, focusNode }) {
+    handleUpdateFocus(payload) {
+      if (!payload || !payload.iedId) {
+        console.warn("handleUpdateFocus: payload invalid", payload);
+        return;
+      }
+
+      const { iedId, focusNode } = payload;
       this.closeContextMenu();
+
       const tab = this.tabs.find((t) => t.node?.id === iedId);
       if (tab) {
         tab.focusNode = focusNode;
-        if (this.modelActive.id === tab.id) {
+
+        if (this.modelActive && this.modelActive.id === tab.id) {
           this.modelActive = { ...tab };
         }
       }
@@ -706,9 +712,7 @@ export default {
     async reloadTree() {
       try {
         this.saveExpandedState();
-
         const data = await getEntityTreeRaw();
-
         this.ownerServerList = data;
         this.restoreExpandedState(this.ownerServerList);
       } catch (e) {
@@ -822,6 +826,7 @@ export default {
       if (!node || !node.id) return;
 
       this.rightClickNode = node;
+      console.log("Right-clicked node:", node);
       this.contextMenuVisible = true;
 
       let posX = event.clientX;
@@ -1054,17 +1059,42 @@ export default {
       }
 
       if (node.children && node.children.length > 0) return;
-      const children = node.childrenFromData || [];
+
+      let children = node.childrenFromData || [];
+
+      const seen = new Set();
+      children = children.filter((c) => {
+        const id = String(c.id).trim();
+        if (seen.has(id)) return false;
+        seen.add(id);
+        c.id = id;
+        return true;
+      });
 
       node.children = children;
-      for (const child of children) {
+
+      for (const child of node.children) {
         child.parentNode = node;
         try {
           const ancestors = await getAncestorsById(
             this.ownerServerList,
             child.id
           );
-          child.parentArr = [...ancestors, node];
+          const merged = [...ancestors, node];
+          const uniqParentArr = merged.filter(
+            (p, idx, arr) => arr.findIndex((x) => x.id === p.id) === idx
+          );
+          child.parentArr = uniqParentArr;
+
+          console.log(
+            "fetchChildrenServer: parentArr for child:",
+            child.id,
+            JSON.stringify(
+              uniqParentArr.map((a) => ({ id: a.id, name: a.name })),
+              null,
+              2
+            )
+          );
         } catch (e) {
           console.error(
             "fetchChildrenServer: Error fetching ancestors for child:",
@@ -1088,6 +1118,11 @@ export default {
               { id: node.id, parent: node.name },
             ]
           : [{ id: node.id, parent: node.name }];
+
+        console.log(
+          "fetchChildrenServer: pathMapServer result:",
+          JSON.stringify(this.pathMapServer, null, 2)
+        );
       }
     },
     async hideProperties() {

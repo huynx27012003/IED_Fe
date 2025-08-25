@@ -304,10 +304,11 @@ export default {
     },
 
     async saveAll() {
+      console.log("🔹 saveAll bắt đầu");
+
       this.changedValues = [];
       const groupChanges = new Map();
       const processedKeys = new Set();
-      const originalValues = new Map();
 
       this.rowsToRender.forEach((row) => {
         if (
@@ -329,41 +330,51 @@ export default {
             });
 
             processedKeys.add(row.id);
-            originalValues.set(row.id, row.value);
+
             row.value = newVal;
+
+            if (String(row.name).toLowerCase() === "operation") {
+              const isOff = String(newVal).toLowerCase() === "off";
+              const parentGroupId = this.findParentGroupId(row.id);
+              this.rowsToRender.forEach((r) => {
+                if (r.isGroup && r.id === parentGroupId) r.muted = isOff;
+                if (
+                  !r.isGroup &&
+                  this.findParentGroupId(r.id) === parentGroupId
+                ) {
+                  r.muted = isOff;
+                }
+              });
+            }
           }
         }
       });
 
       this.changedValues = Array.from(groupChanges.values());
 
-      if (this.changedValues.length > 0) {
-        try {
+      try {
+        if (this.changedValues.length > 0) {
           await updateDeviceParameters(this.changedValues);
           this.$message.success("Lưu thành công!");
-
-          const tree = await getEntityTree();
-          const iedNode = getAncestorByMode(
-            tree,
-            this.ownerData.node.id,
-            "ied"
-          );
-          if (iedNode) {
-            const groupTree = getGroupByIedId(tree, iedNode.id);
-            if (groupTree?.children) {
-              this.parameterGroups = groupTree.children;
-            }
-          }
-        } catch (error) {
-          console.error("Failed to update parameters:", error);
-          this.$message.error("Lưu thất bại!");
-          this.rowsToRender.forEach((row) => {
-            if (originalValues.has(row.id)) {
-              row.value = originalValues.get(row.id);
-            }
-          });
-          return;
+        } else {
+          console.log("Không có thay đổi, vẫn gọi lại entity-tree để refresh");
         }
+
+        const tree = await getEntityTree();
+        this.$emit("device-saved");
+        const iedNode = getAncestorByMode(tree, this.ownerData.node.id, "ied");
+        if (iedNode) {
+          const groupTree = getGroupByIedId(tree, iedNode.id);
+          if (groupTree?.children) {
+            this.parameterGroups = JSON.parse(
+              JSON.stringify(groupTree.children)
+            );
+            this.$nextTick(() => this.$forceUpdate());
+          }
+        }
+      } catch (error) {
+        console.error("Failed to update parameters:", error);
+        this.$message.error("Lưu thất bại!");
       }
 
       this.isEditing = false;

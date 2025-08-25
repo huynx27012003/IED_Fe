@@ -5,7 +5,7 @@ export async function getEntityTreeRaw() {
     const response = await client.get('/api/entity-tree', {
       headers: { accept: 'application/json' }
     });
-    // console.log('getEntityTreeRaw: Result:', JSON.stringify(response.data, null, 2));
+    // console.log('getEntityTreeRaw: Result:', JSON.stringify(response.data, null, 5));
     return response.data;
   } catch (error) {
     console.error('getEntityTreeRaw: Error:', error.message, error.response?.data);
@@ -173,7 +173,7 @@ export function getAncestorsById(tree = [], nodeId) {
   const normalized = Array.isArray(tree) ? tree.map(normalizeNode) : [];
   const path = findPathById(normalized, nodeId);
   const ancestors = Array.isArray(path) && path.length > 1 ? path.slice(0, -1) : [];
-  // console.log('getAncestorsById: Result:', JSON.stringify(ancestors.map(a => ({ id: a.id, name: a.name })), null, 2));
+  console.log('getAncestorsById: Result:', JSON.stringify(ancestors.map(a => ({ id: a.id, name: a.name })), null, 2));
   return ancestors;
 }
 

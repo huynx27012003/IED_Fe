@@ -72,6 +72,7 @@
           :expandedGroup="item.node?.id"
           :focusNode="item.focusNode"
           @edit-start="handleEditStart"
+          @device-saved="$emit('refresh-tree')"
           @device-created="$emit('refresh-tree')"
         ></component>
       </div>
