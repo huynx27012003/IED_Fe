@@ -4,6 +4,7 @@
       :class="{ selected: selectedNodes?.some((n) => n.id === node.id) }"
       class="folder"
       @click="toggle"
+      @dblclick.stop.prevent="handleDoubleClick"
     >
       <div class="icon-wrapper">
         <template
@@ -50,7 +51,7 @@
           <img
             :src="require('@/assets/images/new.png')"
             alt="Parameter"
-            style="width: 16px; height: 16px; margin-left: 5px"
+            style="width: 16px; height: 16px; margin-left: 25px"
           />
         </template>
         <template v-if="node.mode === 'protectionLevel'">
@@ -164,6 +165,19 @@ export default {
     };
   },
   methods: {
+    handleDoubleClick() {
+      if (
+        [
+          "protectionGroup",
+          "protectionLevel",
+          "protectionFunction",
+          "systemSetting",
+          "settingFunction",
+        ].includes(this.node.mode)
+      ) {
+        this.$emit("node-dblclick", this.node);
+      }
+    },
     toggle(event) {
       if (event.ctrlKey) {
         this.updateSelection(this.node);
@@ -237,5 +251,9 @@ ul {
 }
 .node-name {
   white-space: nowrap;
+}
+.node-name {
+  white-space: nowrap;
+  user-select: none;
 }
 </style>

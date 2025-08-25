@@ -70,6 +70,7 @@
           :ownerData="item"
           :tree="tree"
           :expandedGroup="item.node?.id"
+          :focusNode="item.focusNode"
           @edit-start="handleEditStart"
           @device-created="$emit('refresh-tree')"
         ></component>

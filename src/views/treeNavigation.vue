@@ -55,6 +55,7 @@
               @clear-selection="clearSelectionOwner"
               @open-context-menu="openContextMenu"
               @toggle-node="handleToggleNode"
+              @node-dblclick="handleNodeDblClick"
             />
           </ul>
         </div>
@@ -110,6 +111,7 @@
                 :tabs="tabs"
                 @refresh-tree="reloadTree"
                 @close-tab="removeTab"
+                @update-focus="handleUpdateFocus"
               />
             </div>
           </div>
@@ -330,6 +332,7 @@
       @refresh-tree="reloadTree"
       @close="closeContextMenu"
       @open-tab="handleOpenTab"
+      @update-focus="handleUpdateFocus"
     />
   </div>
 </template>
@@ -541,6 +544,43 @@ export default {
   },
 
   methods: {
+    handleNodeDblClick(node) {
+      const ancestorIed = getAncestorByMode(
+        this.ownerServerList,
+        node.id,
+        "ied"
+      );
+      if (!ancestorIed) return;
+
+      const existingTab = this.tabs.find((t) => t.node?.id === ancestorIed.id);
+
+      if (existingTab) {
+        this.handleUpdateFocus({
+          iedId: ancestorIed.id,
+          focusNode: node,
+        });
+      } else {
+        const tab = {
+          id: ancestorIed.id,
+          name: ancestorIed.name,
+          mode: ancestorIed.mode,
+          component: "SystemSettingTab",
+          node: ancestorIed,
+          focusNode: node,
+        };
+        this.handleOpenTab(tab);
+      }
+    },
+    handleUpdateFocus({ iedId, focusNode }) {
+      this.closeContextMenu();
+      const tab = this.tabs.find((t) => t.node?.id === iedId);
+      if (tab) {
+        tab.focusNode = focusNode;
+        if (this.modelActive.id === tab.id) {
+          this.modelActive = { ...tab };
+        }
+      }
+    },
     async resetAllServer() {
       this.pathMapServer = [];
       this.selectedNode = null;
@@ -643,7 +683,6 @@ export default {
       const traverse = (nodes) => {
         nodes.forEach((node) => {
           if (node.expanded) {
-            console.log("Save expanded:", node.id, node.name);
             this.expandedNodes.add(node.id);
           }
           if (node.children && node.children.length) {
@@ -657,7 +696,6 @@ export default {
     restoreExpandedState(nodes) {
       nodes.forEach((node) => {
         if (this.expandedNodes.has(node.id)) {
-          console.log(" Restore expand:", node.id, node.name);
           node.expanded = true;
         }
         if (node.children && node.children.length) {
@@ -667,17 +705,12 @@ export default {
     },
     async reloadTree() {
       try {
-        console.log("🚀 Start reloadTree");
         this.saveExpandedState();
-        console.log("Expanded nodes saved:", Array.from(this.expandedNodes));
 
         const data = await getEntityTreeRaw();
-        console.log("API data loaded:", data);
 
         this.ownerServerList = data;
         this.restoreExpandedState(this.ownerServerList);
-
-        console.log("Tree reloaded, expanded restored");
       } catch (e) {
         console.error("reloadTree failed:", e);
       }
@@ -695,19 +728,17 @@ export default {
       return "setting1";
     },
     handleOpenTab(payload) {
+      this.closeContextMenu();
       if (!payload || !payload.id || !payload.node) return;
 
       const newTab = { ...payload };
-      console.log("Payload received:", newTab);
 
       const exists = this.tabs.find((t) => t.id === newTab.id);
       if (!exists) {
         this.tabs.push(newTab);
         this.activeTab = { ...newTab };
-        console.log("New activeTab set:", this.activeTab.id);
       } else {
         this.activeTab = { ...exists };
-        console.log("Existing activeTab set:", this.activeTab.id);
       }
 
       if (newTab.node.mode === "parameter") {
@@ -720,13 +751,8 @@ export default {
 
       this.$emit("input", this.activeTab);
       this.$nextTick(() => {
-        console.log("After first $nextTick, activeTab.id:", this.activeTab.id);
         this.$nextTick(() => {
           if (this.activeTab.id && this.$refs.tabsServer) {
-            console.log(
-              "Calling scrollToActiveTab with activeTab.id:",
-              this.activeTab.id
-            );
             this.$refs.tabsServer.scrollToActiveTab();
           } else {
             console.warn(
@@ -750,7 +776,6 @@ export default {
               behavior: "smooth",
               inline: "center",
             });
-            console.log("Scrolled to active tab:", this.activeTab.id);
           } else {
             console.warn(
               "No active tab element found for ID:",
@@ -762,10 +787,7 @@ export default {
             if (matchingTab) {
               this.activeTab = { ...matchingTab };
               this.$emit("input", this.activeTab);
-              console.log(
-                "Forced reset and re-emitted activeTab:",
-                this.activeTab.id
-              );
+
               this.$nextTick(() => {
                 const newActiveTabElement = Array.from(tabItems).find((el) =>
                   el.classList.contains("active")
@@ -775,7 +797,6 @@ export default {
                     behavior: "smooth",
                     inline: "center",
                   });
-                  console.log(" Re-scrolled to active tab:", this.activeTab.id);
                 }
               });
             }
@@ -827,7 +848,7 @@ export default {
         }
       });
 
-      document.addEventListener("click", this.handleOutsideClick.bind(this));
+      document.addEventListener("click", this.handleOutsideClick);
     },
     closeContextMenu() {
       this.contextMenuVisible = false;
@@ -1044,15 +1065,6 @@ export default {
             child.id
           );
           child.parentArr = [...ancestors, node];
-          console.log(
-            "fetchChildrenServer: parentArr for child:",
-            child.id,
-            JSON.stringify(
-              child.parentArr.map((a) => ({ id: a.id, name: a.name })),
-              null,
-              2
-            )
-          );
         } catch (e) {
           console.error(
             "fetchChildrenServer: Error fetching ancestors for child:",
@@ -1076,10 +1088,6 @@ export default {
               { id: node.id, parent: node.name },
             ]
           : [{ id: node.id, parent: node.name }];
-        console.log(
-          "fetchChildrenServer: pathMapServer result:",
-          JSON.stringify(this.pathMapServer, null, 2)
-        );
       }
     },
     async hideProperties() {
@@ -1225,7 +1233,6 @@ export default {
     },
 
     updateSelectionOwner(node) {
-      console.log("updateSelectionOwner: Processing node:", node.id, node.name);
       this.selectedOwnerNodes = [node];
       if (!node.parentArr) {
         try {
@@ -1270,10 +1277,6 @@ export default {
             { id: node.id, parent: node.name },
           ]
         : [{ id: node.id, parent: node.name }];
-      console.log(
-        "updateSelectionLocation: pathMapServer result:",
-        JSON.stringify(this.pathMapServer, null, 2)
-      );
     },
 
     async removeOwner(node) {

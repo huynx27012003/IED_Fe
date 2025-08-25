@@ -74,3 +74,17 @@ export async function getIedInfoById(iedId) {
     throw error;
   }
 }
+export async function updateDeviceParameters(parameterGroups) {
+  try {
+    const response = await client.post('api/ied/update/parameter', parameterGroups, {
+      headers: {
+        'accept': '*/*',
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating device parameters:', error);
+    throw error;
+  }
+}

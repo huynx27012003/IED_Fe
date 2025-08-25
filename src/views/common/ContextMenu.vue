@@ -105,7 +105,7 @@
 import {
   getParentById,
   getAncestorByMode,
-  findSubPathById,
+  // findSubPathById,
 } from "@/api/treenode";
 import { importDevice } from "@/api/device";
 export default {
@@ -169,6 +169,7 @@ export default {
     emitAction(action) {
       if (!this.selectedNode || !this.selectedNode.id) {
         console.error("selectedNode không hợp lệ:", this.selectedNode);
+        this.$emit("close");
         return;
       }
 
@@ -180,14 +181,14 @@ export default {
       };
 
       if (action === "parameter") {
-        let parent = this.tree?.length
-          ? getParentById(this.tree, this.selectedNode.id)
-          : null;
-        console.log("getParentById(...) =>", parent);
-        if (this.selectedNode.mode === "settingFunction") {
-          parent =
-            getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
-        }
+        // let parent = this.tree?.length
+        //   ? getParentById(this.tree, this.selectedNode.id)
+        //   : null;
+        // console.log("getParentById(...) =>", parent);
+        // if (this.selectedNode.mode === "settingFunction") {
+        //   parent =
+        //     getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
+        // }
 
         tab.id = `${this.selectedNode.id}-parameter`;
         tab.name = `${this.selectedNode.name} - Parameter Settings`;
@@ -195,64 +196,20 @@ export default {
       }
 
       if (action === "test") {
-        let parent = this.tree?.length
-          ? getParentById(this.tree, this.selectedNode.id)
-          : null;
-        console.log("getParentById(...) =>", parent);
-        if (this.selectedNode.mode === "protectionFunction") {
-          parent =
-            getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
-        }
+        // let parent = this.tree?.length
+        //   ? getParentById(this.tree, this.selectedNode.id)
+        //   : null;
+        // console.log("getParentById(...) =>", parent);
+        // if (this.selectedNode.mode === "protectionFunction") {
+        //   parent =
+        //     getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
+        // }
 
         tab.id = `${this.selectedNode.id}-testManagement`;
         tab.name = `${this.selectedNode.name} - Test Management`;
         tab.component = "TestManagementTab";
       }
 
-      // if (action === "protectionFunction") {
-      //   tab.id = `${this.selectedNode.id}`;
-      //   tab.name = `${this.selectedNode.name}`;
-      //   tab.component = "TestManagementTab";
-      // }
-      // if (action === "settingFunction") {
-      //   let parent = this.tree?.length
-      //     ? getParentById(this.tree, this.selectedNode.id)
-      //     : null;
-      //   console.log("getParentById(...) =>", parent);
-      //   if (this.selectedNode.mode === "settingFunction") {
-      //     parent =
-      //       getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
-      //   }
-
-      //   tab.id = `${this.selectedNode.id}`;
-      //   tab.name = `${parent.name}- ${this.selectedNode.name}`;
-      //   tab.component = "SystemSettingTab";
-      // }
-
-      // if (
-      //   action === "protectionGroup" ||
-      //   action === "protectionLevel" ||
-      //   action === "protectionFunction"
-      // ) {
-      //   let parent = this.tree?.length
-      //     ? getParentById(this.tree, this.selectedNode.id)
-      //     : null;
-      //   console.log("getParentById(...) =>", parent);
-      //   if (this.selectedNode.mode === "protectionGroup") {
-      //     parent =
-      //       getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
-      //   }
-      //   const subPath = findSubPathById(this.tree, this.selectedNode.id, "ied");
-      //   console.log(
-      //     "SubPath from IED -> selected:",
-      //     subPath ? subPath.map((n) => `${n.mode}:${n.name}`) : null
-      //   );
-
-      //   console.log("Tree", this.tree);
-      //   tab.id = `${this.selectedNode.id}`;
-      //   tab.name = `${parent.name}- ${this.selectedNode.name}`;
-      //   tab.component = "TestManagementTab";
-      // }
       if (
         action === "protectionGroup" ||
         action === "protectionLevel" ||
@@ -260,19 +217,41 @@ export default {
         action === "systemSetting" ||
         action === "settingFunction"
       ) {
-        const subPath = findSubPathById(this.tree, this.selectedNode.id, "ied");
-        const pathNames = subPath
-          ? subPath.map((n) => n.name)
-          : [this.selectedNode.name];
-
-        console.log(
-          "SubPath from IED -> selected:",
-          subPath ? subPath.map((n) => `${n.mode}:${n.name}`) : null
+        const ancestorIed = getAncestorByMode(
+          this.tree,
+          this.selectedNode.id,
+          "ied"
         );
 
-        tab.id = `${this.selectedNode.id}`;
-        tab.name = pathNames.join(" - ");
-        tab.component = "SystemSettingTab";
+        if (ancestorIed) {
+          const existingTab = this.$parent.tabs.find(
+            (t) => t.node?.id === ancestorIed.id
+          );
+
+          if (existingTab) {
+            this.$emit("update-focus", {
+              iedId: ancestorIed.id,
+              focusNode: this.selectedNode,
+            });
+            this.$nextTick(() => this.$emit("close"));
+          } else {
+            const tab = {
+              id: ancestorIed.id,
+              name: ancestorIed.name,
+              mode: ancestorIed.mode,
+              component: "SystemSettingTab",
+              node: ancestorIed,
+              focusNode: this.selectedNode,
+            };
+            this.$emit("open-tab", tab);
+            this.$nextTick(() => this.$emit("close"));
+          }
+        } else {
+          console.warn(
+            "Không tìm thấy ancestor IED cho node:",
+            this.selectedNode
+          );
+        }
       }
 
       if (action === "addDevice") {
@@ -285,25 +264,27 @@ export default {
         let parent = this.tree?.length
           ? getParentById(this.tree, this.selectedNode.id)
           : null;
-        console.log("getParentById(...) =>", parent);
         if (this.selectedNode.mode === "systemSetting") {
           parent =
             getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
         }
 
-        tab.id = `${parent.id}-parameter`;
-        tab.name = `${parent.name} - Parameter Settings`;
-        tab.component = "SystemSettingTab";
+        if (parent) {
+          tab.id = `${parent.id}-parameter`;
+          tab.name = `${parent.name} - Parameter Settings`;
+          tab.component = "SystemSettingTab";
+        }
       }
+
       if (action === "open" && this.ownerModes.includes(this.nodeMode)) {
         tab.id = `${this.selectedNode.id}`;
         tab.name = `${this.selectedNode.name}`;
         tab.component = "OwnerView";
         tab.nodeData = this.selectedNode;
       }
+
       if (tab.id) {
         const parentArr = [];
-
         let current = this.selectedNode.parentNode;
         while (current) {
           parentArr.unshift(current);
@@ -322,8 +303,9 @@ export default {
         });
       }
 
-      this.$emit("close");
+      this.$nextTick(() => this.$emit("close"));
     },
+
     triggerFileInput() {
       this.$refs.fileInput.click();
     },
