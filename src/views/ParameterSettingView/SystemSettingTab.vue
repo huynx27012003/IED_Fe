@@ -255,7 +255,6 @@ export default {
             false);
 
         if (child.children?.length) {
-          // group header
           rows.push({
             key: "group-" + child.id,
             isGroup: true,
@@ -342,6 +341,19 @@ export default {
         try {
           await updateDeviceParameters(this.changedValues);
           this.$message.success("Lưu thành công!");
+
+          const tree = await getEntityTree();
+          const iedNode = getAncestorByMode(
+            tree,
+            this.ownerData.node.id,
+            "ied"
+          );
+          if (iedNode) {
+            const groupTree = getGroupByIedId(tree, iedNode.id);
+            if (groupTree?.children) {
+              this.parameterGroups = groupTree.children;
+            }
+          }
         } catch (error) {
           console.error("Failed to update parameters:", error);
           this.$message.error("Lưu thất bại!");
@@ -357,7 +369,6 @@ export default {
       this.isEditing = false;
       this.editStates = {};
     },
-
     findParentGroupId(paramId) {
       const keyStr = String(paramId);
       const firstDashIndex = keyStr.indexOf("-");
