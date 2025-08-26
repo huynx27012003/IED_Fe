@@ -87,6 +87,10 @@
                 <i style="margin-right: 8px" class="fa fa-wrench"></i>
                 Config Server
               </el-dropdown-item>
+              <el-dropdown-item command="language">
+                <i style="margin-right: 8px" class="fa-solid fa-language"></i>
+                Languages
+              </el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -144,6 +148,33 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- Dialog chọn ngôn ngữ -->
+    <el-dialog
+      v-model="dialogLanguage"
+      title="Select Language"
+      width="300px"
+      :z-index="1000"
+    >
+      <el-select
+        v-model="selectedLanguage"
+        placeholder="Choose language"
+        style="width: 100%"
+        popper-append-to-body
+        teleported
+        popper-class="language-select-dropdown"
+        :popper-options="{ strategy: 'fixed' }"
+      >
+        <el-option label="English" value="en-vi" />
+        <el-option label="Vietnamese" value="vi-vi" />
+      </el-select>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogLanguage = false">Cancel</el-button>
+          <el-button type="primary" @click="saveLanguage">Save</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -161,9 +192,11 @@ export default {
       suggestions: [],
       suggestPosition: { top: 0, left: 0, width: 0 },
       dialogConfig: false,
+      dialogLanguage: false,
       formConfig: {
         domain: "",
       },
+      selectedLanguage: this.$store.state.language,
     };
   },
   computed: {
@@ -191,6 +224,15 @@ export default {
     }
   },
   methods: {
+    saveLanguage() {
+      this.$store.commit("setLanguage", this.selectedLanguage);
+      this.$message.success(
+        this.selectedLanguage === "en"
+          ? "Language set to English"
+          : "Đã đổi sang Tiếng Việt"
+      );
+      this.dialogLanguage = false;
+    },
     expandSearch() {
       this.isExpanded = true;
       this.$nextTick(() => {
@@ -241,9 +283,13 @@ export default {
       }
       if (command === "logout") {
         this.$store.commit("logout");
-        Cookies.remove("token"); // Xóa token khỏi cookie
+        Cookies.remove("token");
         this.$router.replace({ name: "login" });
         this.$message.success("Đăng xuất thành công!");
+      }
+      if (command === "language") {
+        this.dialogLanguage = true;
+        this.selectedLanguage = this.$store.state.language;
       }
     },
     setServerAddr() {
@@ -300,6 +346,7 @@ nav {
   justify-content: flex-end;
   padding-right: 16px;
 }
+
 .logo-container {
   border-radius: 12px;
   transition: background 0.2s, box-shadow 0.2s;
@@ -352,7 +399,7 @@ nav {
 
     input {
       color: #333;
-      width: 260px; // giảm tương ứng
+      width: 260px;
       &::placeholder {
         color: #888;
       }
@@ -380,6 +427,7 @@ nav {
     }
   }
 }
+
 .greeting {
   color: #fff;
   margin-right: 20px;
@@ -388,7 +436,38 @@ nav {
   letter-spacing: 0.5px;
   white-space: nowrap;
 }
-// .top-windows {
-//   height: 5vh !important;
-// }
+</style>
+
+<style lang="scss">
+.language-select-dropdown {
+  z-index: 999999 !important;
+}
+
+.el-select-dropdown {
+  z-index: 999999 !important;
+}
+
+.el-dialog .el-select-dropdown {
+  z-index: 999999 !important;
+}
+
+.el-popper {
+  z-index: 999999 !important;
+}
+
+.language-select-dropdown .el-select-dropdown__item {
+  color: #333;
+  padding: 8px 16px;
+
+  &:hover {
+    background-color: #f5f5f5;
+    color: #333;
+  }
+
+  &.selected {
+    background-color: #409eff;
+    color: #fff;
+    font-weight: bold;
+  }
+}
 </style>

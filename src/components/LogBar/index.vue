@@ -197,7 +197,7 @@ export default {
   left: 0;
   bottom: 0;
   width: 100%;
-  z-index: 9999;
+  z-index: 999;
   font-size: 12px;
   height: 3.5vh !important;
 }
@@ -290,7 +290,7 @@ export default {
   left: 0;
   bottom: 0;
   width: 100%;
-  z-index: 9999;
+  z-index: 99;
   background: #f5f5f5;
   border-top: 1px solid #eee;
   font-size: 11px;

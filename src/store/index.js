@@ -11,6 +11,7 @@ const store = createStore({
       user: savedUser || null,
       serverAddr: localStorage.getItem('SERVER_ADDR') || 'http://222.252.22.158:8087',
       selectedOwner: null,
+      language: 'en-vi' 
     }
   },
   mutations: {
@@ -20,10 +21,15 @@ const store = createStore({
     setUser(state, user) {
       if (!user.username && user.sub) {
     user.username = user.sub
+    
   }
       state.user = user
       localStorage.setItem('user', JSON.stringify(user))
     },
+     setLanguage(state, lang) {
+    state.language = lang
+    localStorage.setItem('language', lang)
+  },
     setSelectedOwner(state, owner) {
     state.selectedOwner = owner
   },
@@ -43,6 +49,7 @@ const store = createStore({
     user: state => state.user,
     role: state => state.user?.role || null,
     selectedOwner: state => state.selectedOwner,
+    language: state => state.language
   }
 })
 

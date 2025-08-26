@@ -11,6 +11,10 @@ client.interceptors.request.use(config => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+
+  const lang = store.state.language || 'en-vi'
+  config.headers['Accept-Language'] = lang
+
   return config
 })
 

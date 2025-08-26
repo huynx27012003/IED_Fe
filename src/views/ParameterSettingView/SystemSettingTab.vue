@@ -3,28 +3,31 @@
     <h3>{{ ownerData.name }}</h3>
     <div class="toolbar">
       <el-button v-if="!isEditing" type="primary" @click="enterEditMode">
-        Chỉnh sửa
+        {{ editButtonText }}
       </el-button>
       <template v-else>
-        <el-button type="success" @click="saveAll">Lưu</el-button>
-        <el-button type="danger" @click="cancelAll">Hủy</el-button>
+        <el-button type="success" @click="saveAll">{{
+          saveButtonText
+        }}</el-button>
+        <el-button type="danger" @click="cancelAll">{{
+          cancelButtonText
+        }}</el-button>
       </template>
     </div>
 
     <table class="parameter-table">
       <thead>
         <tr>
-          <th>Tham số</th>
-          <th class="value-col">Giá trị</th>
-          <th>Đơn vị</th>
-          <th>Min</th>
-          <th>Max</th>
-          <th>Mô tả</th>
+          <th>{{ tableHeaders.parameter }}</th>
+          <th class="value-col">{{ tableHeaders.value }}</th>
+          <th>{{ tableHeaders.unit }}</th>
+          <th>{{ tableHeaders.min }}</th>
+          <th>{{ tableHeaders.max }}</th>
+          <th>{{ tableHeaders.description }}</th>
         </tr>
       </thead>
       <tbody v-if="rowsToRender.length">
         <template v-for="row in rowsToRender" :key="row.key">
-          <!-- Group header -->
           <tr
             v-if="row.isGroup"
             class="paramgroup-header"
@@ -37,8 +40,6 @@
               {{ row.name }}
             </td>
           </tr>
-
-          <!-- Parameter row -->
           <tr
             v-else
             class="param-row"
@@ -50,11 +51,12 @@
             <td class="param-name" :style="{ paddingLeft: row.padding + 'px' }">
               {{ row.name }}
             </td>
-
-            <!-- Value -->
             <td :class="['value-col', cellClass(row.value)]">
               <div class="cell">
                 <template v-if="!isEditing">
+                  <span v-if="isOnOff(row)" class="switch-label">{{
+                    getSwitchLabel(row)
+                  }}</span>
                   <el-switch
                     v-if="isOnOff(row)"
                     :model-value="getSwitchValue(row)"
@@ -62,18 +64,20 @@
                     inactive-value="Off"
                     disabled
                   />
+
                   <span v-else class="cell-text">{{
                     formatValue(row, row.value)
                   }}</span>
                 </template>
-
-                <!-- Edit mode -->
                 <template v-else>
                   <el-select
                     v-if="row.options && !isOnOff(row)"
                     v-model="editStates[row.id]"
-                    placeholder="Chọn"
+                    :placeholder="selectPlaceholder"
                     style="width: 100%"
+                    popper-append-to-body
+                    teleported
+                    popper-class="system-setting-dropdown"
                   >
                     <el-option
                       v-for="opt in row.options"
@@ -82,12 +86,16 @@
                       :value="opt"
                     />
                   </el-select>
+                  <span v-if="isOnOff(row)" class="switch-label">{{
+                    getSwitchLabel(row, editStates[row.id])
+                  }}</span>
                   <el-switch
-                    v-else-if="isOnOff(row)"
+                    v-if="isOnOff(row)"
                     v-model="editStates[row.id]"
                     active-value="On"
                     inactive-value="Off"
                   />
+
                   <input
                     v-else
                     v-model="editStates[row.id]"
@@ -96,19 +104,15 @@
                 </template>
               </div>
             </td>
-
             <td :class="cellClass(row.unit)">
               <span class="cell-text">{{ displayValue(row.unit) }}</span>
             </td>
-
             <td :class="cellClass(row.minVal)">
               <span class="cell-text">{{ displayValue(row.minVal) }}</span>
             </td>
-
             <td :class="cellClass(row.maxVal)">
               <span class="cell-text">{{ displayValue(row.maxVal) }}</span>
             </td>
-
             <td :class="cellClass(row.description)">
               <span class="cell-text">{{ displayValue(row.description) }}</span>
             </td>
@@ -118,7 +122,6 @@
     </table>
   </div>
 </template>
-
 <script>
 import {
   getAncestorByMode,
@@ -126,6 +129,8 @@ import {
   getEntityTree,
 } from "@/api/treenode";
 import { updateDeviceParameters } from "@/api/device";
+import { mapState } from "vuex";
+
 export default {
   name: "SystemSettingTab",
   props: {
@@ -141,17 +146,55 @@ export default {
     };
   },
   computed: {
+    ...mapState(["language"]),
+    tableHeaders() {
+      return this.language === "vi-vi"
+        ? {
+            parameter: "Tham số",
+            value: "Giá trị",
+            unit: "Đơn vị",
+            min: "Min",
+            max: "Max",
+            description: "Mô tả",
+          }
+        : {
+            parameter: "Parameter",
+            value: "Value",
+            unit: "Unit",
+            min: "Min",
+            max: "Max",
+            description: "Description",
+          };
+    },
+    editButtonText() {
+      return this.language === "vi-vi" ? "Chỉnh sửa" : "Edit";
+    },
+    saveButtonText() {
+      return this.language === "vi-vi" ? "Lưu" : "Save";
+    },
+    cancelButtonText() {
+      return this.language === "vi-vi" ? "Hủy" : "Cancel";
+    },
+    selectPlaceholder() {
+      return this.language === "vi-vi" ? "Chọn" : "Select";
+    },
+    successMessage() {
+      return this.language === "vi-vi"
+        ? "Lưu thành công!"
+        : "Saved successfully!";
+    },
+    failureMessage() {
+      return this.language === "vi-vi" ? "Lưu thất bại!" : "Save failed!";
+    },
     rowsToRender() {
       const node = this.focusNode || this.ownerData.node;
       const mode = node.mode;
-
       if (mode === "ied") {
         const source = this.parameterGroups.length
           ? this.parameterGroups
           : node.children || [];
         return this.renderParamRows(source, 1);
       }
-
       if (
         [
           "protectionFunction",
@@ -163,25 +206,20 @@ export default {
       ) {
         return this.renderParamRows(node.children || [], 1);
       }
-
       return [];
     },
   },
   methods: {
     hasOperationOff(node) {
       if (!node || !Array.isArray(node.children)) return false;
-
       const hasDirectOperationOff = node.children.some(
         (c) =>
           String(c?.name || "").toLowerCase() === "operation" &&
           String(c?.value || "").toLowerCase() === "off"
       );
-
       if (hasDirectOperationOff) return true;
-
       return node.children.some((child) => this.hasOperationOff(child));
     },
-
     formatValue(row, v) {
       if (
         v === null ||
@@ -190,7 +228,6 @@ export default {
       ) {
         return "";
       }
-
       if (
         row?.mode === "pcDataObject" &&
         /^(active\s*group)$/i.test(row?.name || "")
@@ -199,14 +236,11 @@ export default {
         const left = s.split(".")[0];
         return (left ?? s).trim();
       }
-
       if (this.isOnOff(row)) {
         return v === true || v === 1 || v === "On" ? "On" : "Off";
       }
-
       return v;
     },
-
     isOnOff(row) {
       return (
         row.options &&
@@ -215,7 +249,6 @@ export default {
         row.options.includes("Off")
       );
     },
-
     getSwitchValue(row) {
       const value = row.value;
       if (value === true || value === 1 || value === "On" || value === "on") {
@@ -224,7 +257,20 @@ export default {
         return "Off";
       }
     },
-
+    getSwitchLabel(row, value = this.getSwitchValue(row)) {
+      const labels = {
+        "vi-vi": {
+          On: "Bật",
+          Off: "Tắt",
+        },
+        default: {
+          On: "On",
+          Off: "Off",
+        },
+      };
+      const langConfig = labels[this.language] || labels.default;
+      return langConfig[value];
+    },
     isNullish(v) {
       return (
         v === null ||
@@ -232,19 +278,15 @@ export default {
         (typeof v === "string" && v.trim() === "")
       );
     },
-
     cellClass(v) {
       return this.isNullish(v) ? "null-cell" : "";
     },
-
     renderParamRows(children, level, inheritedMuted = false, seen = new Set()) {
       const rows = [];
       const padding = level * 20;
-
       children?.forEach((child) => {
         if (seen.has(child.id)) return;
         seen.add(child.id);
-
         const selfMuted =
           inheritedMuted ||
           (child.children?.some(
@@ -253,7 +295,6 @@ export default {
               String(c?.value || "").toLowerCase() === "off"
           ) ??
             false);
-
         if (child.children?.length) {
           rows.push({
             key: "group-" + child.id,
@@ -275,17 +316,14 @@ export default {
           });
         }
       });
-
       return rows;
     },
     displayValue(v) {
       return v == null ? "" : v;
     },
-
     enterEditMode() {
       this.isEditing = true;
       this.editStates = {};
-
       this.rowsToRender.forEach((row) => {
         if (!row.isGroup) {
           if (this.isOnOff(row)) {
@@ -296,16 +334,12 @@ export default {
         }
       });
     },
-
     cancelAll() {
       this.isEditing = false;
       this.editStates = {};
       this.changedValues = [];
     },
-
     async saveAll() {
-      console.log("🔹 saveAll bắt đầu");
-
       this.changedValues = [];
       const groupChanges = new Map();
       const processedKeys = new Set();
@@ -319,18 +353,14 @@ export default {
           const newVal = this.editStates[row.id];
           if (row.value !== newVal) {
             const groupId = this.findParentGroupId(row.id);
-
             if (!groupChanges.has(groupId)) {
               groupChanges.set(groupId, []);
             }
-
             groupChanges.get(groupId).push({
               key: row.id,
               value: newVal,
             });
-
             processedKeys.add(row.id);
-
             row.value = newVal;
 
             if (String(row.name).toLowerCase() === "operation") {
@@ -355,26 +385,39 @@ export default {
       try {
         if (this.changedValues.length > 0) {
           await updateDeviceParameters(this.changedValues);
-          this.$message.success("Lưu thành công!");
-        } else {
-          console.log("Không có thay đổi, vẫn gọi lại entity-tree để refresh");
-        }
+          this.$message.success(this.successMessage);
 
-        const tree = await getEntityTree();
-        this.$emit("device-saved");
-        const iedNode = getAncestorByMode(tree, this.ownerData.node.id, "ied");
-        if (iedNode) {
-          const groupTree = getGroupByIedId(tree, iedNode.id);
-          if (groupTree?.children) {
-            this.parameterGroups = JSON.parse(
-              JSON.stringify(groupTree.children)
-            );
-            this.$nextTick(() => this.$forceUpdate());
+          const tree = await getEntityTree();
+          this.$emit("device-saved");
+          const iedNode = getAncestorByMode(
+            tree,
+            this.ownerData.node.id,
+            "ied"
+          );
+          if (iedNode) {
+            const groupTree = getGroupByIedId(tree, iedNode.id);
+            if (groupTree?.children) {
+              this.parameterGroups = JSON.parse(
+                JSON.stringify(groupTree.children)
+              );
+              this.$nextTick(() => this.$forceUpdate());
+            }
           }
+        } else {
+          this.$message.info("Chưa có gì thay đổi!");
         }
       } catch (error) {
         console.error("Failed to update parameters:", error);
-        this.$message.error("Lưu thất bại!");
+
+        let errorMsg = this.failureMessage;
+        if (error.response && error.response.data) {
+          errorMsg =
+            error.response.data.message || JSON.stringify(error.response.data);
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        this.$message.error(errorMsg);
       }
 
       this.isEditing = false;
@@ -383,30 +426,24 @@ export default {
     findParentGroupId(paramId) {
       const keyStr = String(paramId);
       const firstDashIndex = keyStr.indexOf("-");
-
       if (firstDashIndex !== -1) {
         const prefix = keyStr.substring(0, firstDashIndex);
         if (/^\d+$/.test(prefix)) {
           return prefix;
         }
       }
-
       let foundGroup = null;
-
       for (let i = 0; i < this.rowsToRender.length; i++) {
         const row = this.rowsToRender[i];
-
         if (row.isGroup) {
           foundGroup = row.id;
         } else if (row.id === paramId) {
           break;
         }
       }
-
       return foundGroup || "ungrouped";
     },
   },
-
   mounted() {
     getEntityTree().then((tree) => {
       const iedNode = getAncestorByMode(tree, this.ownerData.node.id, "ied");
@@ -459,6 +496,7 @@ export default {
   border-collapse: collapse;
   font-size: 13px;
   margin-bottom: 30px;
+  overflow: visible;
 }
 
 .parameter-table th,
@@ -497,7 +535,69 @@ thead {
   min-width: 0;
 }
 
+.switch-label {
+  margin-right: 15px;
+  font-size: 14px;
+}
+
 .cell .el-switch {
-  margin: 0 auto;
+  margin: 0;
+}
+
+.system-setting-tab {
+  overflow: visible;
+  position: relative;
+}
+</style>
+
+<style>
+.system-setting-dropdown {
+  z-index: 999999 !important;
+}
+
+.el-select-dropdown {
+  z-index: 999999 !important;
+}
+
+.system-setting-dropdown .el-select-dropdown__item {
+  color: #333;
+  padding: 8px 16px;
+}
+
+.system-setting-dropdown .el-select-dropdown__item:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.system-setting-dropdown .el-select-dropdown__item.selected {
+  background-color: #409eff;
+  color: #fff;
+  font-weight: bold;
+}
+</style>
+<!-- Global styles for dropdown fix -->
+<style>
+.system-setting-dropdown {
+  z-index: 999999 !important;
+}
+
+.el-select-dropdown {
+  z-index: 999999 !important;
+}
+
+.system-setting-dropdown .el-select-dropdown__item {
+  color: #333;
+  padding: 8px 16px;
+}
+
+.system-setting-dropdown .el-select-dropdown__item:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.system-setting-dropdown .el-select-dropdown__item.selected {
+  background-color: #409eff;
+  color: #fff;
+  font-weight: bold;
 }
 </style>

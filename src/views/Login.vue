@@ -1,6 +1,8 @@
 <template>
   <div class="login-container">
+    <!-- gọi Loading.vue -->
     <Loading v-if="isLoading" />
+
     <el-card class="login-card">
       <h2 class="login-title">{{ isSignUp ? "Đăng ký" : "Đăng nhập" }}</h2>
       <el-form
@@ -49,11 +51,11 @@
 </template>
 
 <script>
-import Loading from "@/components/Loading.vue";
-
+import Loading from "@/views/common/Loading.vue";
 // import { login, getUserFromToken } from "@/api/auth";
 import Cookies from "js-cookie";
 import { mapMutations } from "vuex";
+
 export default {
   name: "Login",
   components: {
@@ -139,6 +141,7 @@ export default {
             await new Promise((resolve) => setTimeout(resolve, 1000)); // giả lập delay
             this.$message.success("Đăng ký thành công (giả lập)!");
             this.toggleMode();
+            this.isLoading = false;
           }
           // else {
           //   const { token } = await login(
@@ -169,6 +172,7 @@ export default {
 
             if (!matched) {
               this.$message.error("Sai tài khoản hoặc mật khẩu!");
+              this.isLoading = false;
               return;
             }
 
@@ -185,12 +189,15 @@ export default {
             localStorage.setItem("user", JSON.stringify(userData));
             this.setAuthenticated(true);
             this.setUser(userData);
-            await this.$nextTick();
-            this.$router.push({ name: "tree" });
+
+            // đợi 2s hiện loading rồi mới chuyển route
+            setTimeout(() => {
+              this.$router.push({ name: "tree" });
+              this.isLoading = false;
+            }, 2000);
           }
         } catch (err) {
           this.$message.error("Sai tài khoản hoặc mật khẩu!");
-        } finally {
           this.isLoading = false;
         }
       });

@@ -2,7 +2,7 @@
   <div class="explorer">
     <div v-show="!clientSlide" class="toolbar">
       <div style="display: flex; align-items: center">
-        <div @click="resetAllServer" class="path-hover">Home</div>
+        <div @click="resetAllServer" class="path-hover">{{ $t("home") }}</div>
         <i
           v-if="pathMapServer.length"
           style="margin-left: 10px"
@@ -32,11 +32,11 @@
       <div ref="sidebarServer" v-show="!clientSlide" class="sidebar">
         <div class="title-temp">
           <div ref="tabContainer" class="tab-container">
-            <div ref="locationRoot" @click="showLocationRoot" class="location">
-              Location
-            </div>
+            <!-- <div ref="locationRoot" @click="showLocationRoot" class="location">
+              {{ $t("location") }}
+            </div> -->
             <div ref="ownerRootServer" @click="showOwnerServerRoot" class="tab">
-              Owner
+              {{ $t("owner") }}
             </div>
           </div>
         </div>
@@ -74,7 +74,11 @@
                 font-style: italic;
               "
             >
-              Owner "{{ selectedOwnerNodes[0].name }}" has no Locations
+              {{
+                $t("ownerHasNoLocations", {
+                  ownerName: selectedOwnerNodes[0].name,
+                })
+              }}
             </p>
           </div>
           <ul v-else>
@@ -124,7 +128,7 @@
             <!-- Form hiển thị thông tin -->
             <div class="title-properties">
               <div class="title-wrapper">
-                <div class="title-name">Object Properties</div>
+                <div class="title-name">{{ $t("objectProperties") }}</div>
                 <div style="margin-right: 5px">
                   <i
                     @click="hideProperties"
@@ -139,11 +143,13 @@
                   class="fa-solid fa-chevron-down"
                   style="padding-right: 5px; font-size: 10px"
                 ></i>
-                Owner & Position
+                {{ $t("ownerAndPosition") }}
               </div>
               <div class="content-properties-table">
                 <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Owner 1</div>
+                  <div class="content-properties-table-header">
+                    {{ $t("owner1") }}
+                  </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
@@ -151,7 +157,9 @@
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Owner 2</div>
+                  <div class="content-properties-table-header">
+                    {{ $t("owner2") }}
+                  </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
@@ -159,7 +167,9 @@
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Owner 3</div>
+                  <div class="content-properties-table-header">
+                    {{ $t("owner3") }}
+                  </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
@@ -167,7 +177,9 @@
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Location</div>
+                  <div class="content-properties-table-header">
+                    {{ $t("location") }}
+                  </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
@@ -176,7 +188,7 @@
                 </div>
                 <div class="content-properties-table-flex">
                   <div class="content-properties-table-header">
-                    Voltage Level
+                    {{ $t("voltageLevel") }}
                   </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
@@ -186,7 +198,9 @@
                 </div>
 
                 <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Feeder</div>
+                  <div class="content-properties-table-header">
+                    {{ $t("feeder") }}
+                  </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
@@ -199,11 +213,13 @@
                   class="fa-solid fa-chevron-down"
                   style="padding-right: 5px; font-size: 10px"
                 ></i>
-                Device Information
+                {{ $t("deviceInformation") }}
               </div>
               <div v-if="assetPropertySign" class="content-properties-table">
                 <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Name</div>
+                  <div class="content-properties-table-header">
+                    {{ $t("name") }}
+                  </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
@@ -211,7 +227,9 @@
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Description</div>
+                  <div class="content-properties-table-header">
+                    {{ $t("description") }}
+                  </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
@@ -219,7 +237,9 @@
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Vendor</div>
+                  <div class="content-properties-table-header">
+                    {{ $t("vendor") }}
+                  </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
@@ -227,7 +247,9 @@
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Model</div>
+                  <div class="content-properties-table-header">
+                    {{ $t("model") }}
+                  </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
@@ -236,7 +258,7 @@
                 </div>
                 <div class="content-properties-table-flex">
                   <div class="content-properties-table-header">
-                    Serial Number
+                    {{ $t("serialNumber") }}
                   </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
@@ -246,7 +268,7 @@
                 </div>
                 <div class="content-properties-table-flex">
                   <div class="content-properties-table-header">
-                    Hardware version
+                    {{ $t("hardwareVersion") }}
                   </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
@@ -256,7 +278,7 @@
                 </div>
                 <div class="content-properties-table-flex">
                   <div class="content-properties-table-header">
-                    Sofware Version
+                    {{ $t("softwareVersion") }}
                   </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
@@ -265,7 +287,9 @@
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Order Code</div>
+                  <div class="content-properties-table-header">
+                    {{ $t("orderCode") }}
+                  </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
@@ -273,7 +297,9 @@
                   </div>
                 </div>
                 <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Roles</div>
+                  <div class="content-properties-table-header">
+                    {{ $t("roles") }}
+                  </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   >
@@ -286,26 +312,28 @@
                   class="fa-solid fa-chevron-down"
                   style="padding-right: 5px; font-size: 10px"
                 ></i>
-                Configuration Version
+                {{ $t("configurationVersion") }}
               </div>
               <div class="content-properties-table">
                 <div class="content-properties-table-flex">
                   <div class="content-properties-table-header">
-                    Last Modified
+                    {{ $t("lastModified") }}
                   </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   ></div>
                 </div>
                 <div class="content-properties-table-flex">
-                  <div class="content-properties-table-header">Author</div>
+                  <div class="content-properties-table-header">
+                    {{ $t("author") }}
+                  </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
                   ></div>
                 </div>
                 <div class="content-properties-table-flex">
                   <div class="content-properties-table-header">
-                    Last Saved By
+                    {{ $t("lastSavedBy") }}
                   </div>
                   <div
                     class="content-properties-table-content fixed-box pl10 break-word"
@@ -349,6 +377,7 @@ import {
   getAncestorByMode,
 } from "@/api/treenode";
 import { getIedInfoById } from "@/api/device";
+import { mapGetters } from "vuex";
 
 const EMPTY_PROPS = () => ({
   Owner1: "",
@@ -358,6 +387,63 @@ const EMPTY_PROPS = () => ({
   VoltageLevel: "",
   Feeder: "",
 });
+
+// Translation dictionary
+const translations = {
+  "en-vi": {
+    home: "Home",
+    location: "Location",
+    owner: "Owner",
+    objectProperties: "Object Properties",
+    ownerAndPosition: "Owner & Position",
+    owner1: "Owner 1",
+    owner2: "Owner 2",
+    owner3: "Owner 3",
+    voltageLevel: "Voltage Level",
+    feeder: "Feeder",
+    deviceInformation: "Device Information",
+    name: "Name",
+    description: "Description",
+    vendor: "Vendor",
+    model: "Model",
+    serialNumber: "Serial Number",
+    hardwareVersion: "Hardware Version",
+    softwareVersion: "Software Version",
+    orderCode: "Order Code",
+    roles: "Roles",
+    configurationVersion: "Configuration Version",
+    lastModified: "Last Modified",
+    author: "Author",
+    lastSavedBy: "Last Saved By",
+  },
+  "vi-vi": {
+    home: "Trang chủ",
+    location: "Vị trí",
+    owner: "Chủ sở hữu",
+    objectProperties: "Thuộc tính đối tượng",
+    ownerAndPosition: "Chủ sở hữu & Vị trí",
+    owner1: "Chủ sở hữu 1",
+    owner2: "Chủ sở hữu 2",
+    owner3: "Chủ sở hữu 3",
+    voltageLevel: "Mức điện áp",
+    feeder: "Đường dây cấp điện",
+    deviceInformation: "Thông tin thiết bị",
+    name: "Tên",
+    description: "Mô tả",
+    vendor: "Nhà cung cấp",
+    model: "Mẫu",
+    serialNumber: "Số sê-ri",
+    hardwareVersion: "Phiên bản phần cứng",
+    softwareVersion: "Phiên bản phần mềm",
+    orderCode: "Mã đặt hàng",
+    roles: "Vai trò",
+    configurationVersion: "Phiên bản cấu hình",
+    lastModified: "Sửa đổi lần cuối",
+    author: "Tác giả",
+    lastSavedBy: "Lưu lần cuối bởi",
+  },
+};
+
 export default {
   name: "TreeNavigation",
   components: {
@@ -366,6 +452,7 @@ export default {
     ContextMenu,
   },
   computed: {
+    ...mapGetters(["language"]),
     selectedId() {
       return (
         this.selectedOwnerNodes[0]?.id ??
@@ -452,7 +539,6 @@ export default {
         apparatus_id: "",
         country: "",
       },
-      showOwner: true,
       expandedNodes: new Set(),
       jobPropertiesClient: {
         name: "",
@@ -512,36 +598,25 @@ export default {
       ],
       LocationType: ["location", "voltage", "feeder"],
       contextMenuVisible: false,
+      assetPropertySign: true,
     };
-  },
-  async mounted() {
-    try {
-      const data = await getEntityTreeRaw();
-      if (Array.isArray(data)) {
-        this.ownerServerList = data;
-      } else {
-        console.warn("API trả về dữ liệu không phải mảng:", data);
-        this.ownerServerList = [];
-      }
-    } catch (err) {
-      console.error("Lỗi khi tải entity tree:", err);
-      this.$message?.error?.("Không tải được dữ liệu cây");
-    }
-  },
-  beforeMount() {},
-  watch: {
-    selectedId() {
-      this.refreshProps();
-    },
-    ownerServerList: {
-      handler() {
-        this.refreshProps();
-      },
-      deep: true,
-    },
   },
 
   methods: {
+    // Translation method
+    $t(key, params = {}) {
+      const currentLang = this.language || "en-vi";
+      let text =
+        translations[currentLang]?.[key] || translations["en-vi"][key] || key;
+
+      // Handle parameter substitution
+      Object.keys(params).forEach((param) => {
+        text = text.replace(`{${param}}`, params[param]);
+      });
+
+      return text;
+    },
+
     handleNodeDblClick(node) {
       const ancestorIed = getAncestorByMode(
         this.ownerServerList,
@@ -832,41 +907,7 @@ export default {
       }
       this.closeContextMenu();
     },
-    // openContextMenu(event, node) {
-    //   event.preventDefault();
 
-    //   if (!node || !node.id) return;
-
-    //   this.rightClickNode = node;
-    //   console.log("Right-clicked node:", node);
-    //   this.contextMenuVisible = true;
-
-    //   let posX = event.clientX;
-    //   let posY = event.clientY;
-
-    //   this.$nextTick(() => {
-    //     const menuEl = document.querySelector(".context-menu");
-    //     if (menuEl) {
-    //       const menuRect = menuEl.getBoundingClientRect();
-    //       const maxHeight = window.innerHeight * 0.8;
-    //       const menuHeight = Math.min(menuRect.height, maxHeight);
-
-    //       if (posY + menuHeight > window.innerHeight) {
-    //         posY = 70;
-    //       }
-    //       if (posX + menuRect.width > window.innerWidth) {
-    //         posX = window.innerWidth - menuRect.width - 10;
-    //       }
-    //       if (posY < 10) posY = 10;
-    //       if (posX < 10) posX = 10;
-    //       this.contextMenuPosition = { x: posX, y: posY };
-    //     } else {
-    //       this.contextMenuPosition = { x: posX, y: posY };
-    //     }
-    //   });
-
-    //   document.addEventListener("click", this.handleOutsideClick);
-    // },
     openContextMenu(event, node) {
       event.preventDefault();
       if (!node || !node.id) return;
@@ -1227,23 +1268,6 @@ export default {
       }
     },
 
-    async showOwnerServerRoot() {
-      const ownerRootServer = this.$refs.ownerRootServer;
-      const locationRoot = this.$refs.locationRoot;
-
-      if (ownerRootServer) {
-        ownerRootServer.style.borderBottom = "2px #aba7a7 solid";
-        ownerRootServer.style.color = "rgba(0, 0, 0, 1)";
-      }
-
-      if (locationRoot) {
-        locationRoot.style.borderBottom = "2px #e6e4e4 solid";
-        locationRoot.style.color = "rgba(0, 0, 0, 0.5)";
-      }
-
-      this.showOwner = true;
-    },
-
     async showPropertiesData(node) {
       this.selectedOwnerNodes = [node];
       this.refreshProps();
@@ -1400,24 +1424,31 @@ export default {
         ? getPropertiesById(this.ownerServerList, this.selectedId)
         : EMPTY_PROPS();
     },
-
-    updateSelectionOwner(node) {
-      this.selectedOwnerNodes = [node];
-      this.pathMapServer = node.parentArr
-        ? node.parentArr.map((parent) => ({
-            id: parent.id,
-            parent: parent.name,
-          }))
-        : [];
+  },
+  async mounted() {
+    try {
+      const data = await getEntityTreeRaw();
+      if (Array.isArray(data)) {
+        this.ownerServerList = data;
+      } else {
+        console.warn("API trả về dữ liệu không phải mảng:", data);
+        this.ownerServerList = [];
+      }
+    } catch (err) {
+      console.error("Lỗi khi tải entity tree:", err);
+      this.$message?.error?.("Không tải được dữ liệu cây");
+    }
+  },
+  beforeMount() {},
+  watch: {
+    selectedId() {
+      this.refreshProps();
     },
-    updateSelectionLocation(node) {
-      this.selectedLocationNodes = [node];
-      this.pathMapServer = node.parentArr
-        ? node.parentArr.map((parent) => ({
-            id: parent.id,
-            parent: parent.name,
-          }))
-        : [];
+    ownerServerList: {
+      handler() {
+        this.refreshProps();
+      },
+      deep: true,
     },
   },
 };
