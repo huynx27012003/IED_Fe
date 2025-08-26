@@ -1,6 +1,6 @@
 <template>
   <div class="system-setting-tab">
-    <h3>{{ ownerData.name }}</h3>
+    <!-- <h3>{{ ownerData.name }}</h3> -->
     <div class="toolbar">
       <el-button v-if="!isEditing" type="primary" @click="enterEditMode">
         {{ editButtonText }}
@@ -14,7 +14,6 @@
         }}</el-button>
       </template>
     </div>
-
     <table class="parameter-table">
       <thead>
         <tr>

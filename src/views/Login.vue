@@ -52,6 +52,7 @@
 
 <script>
 import Loading from "@/views/common/Loading.vue";
+// import Loading from "@/component/Loading.vue";
 // import { login, getUserFromToken } from "@/api/auth";
 import Cookies from "js-cookie";
 import { mapMutations } from "vuex";
