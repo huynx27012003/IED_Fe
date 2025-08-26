@@ -727,6 +727,18 @@ export default {
     handleToggleNode(node) {
       node.expanded = !node.expanded;
       this.pathMapServer = node.parentArr || [];
+
+      if (!node.expanded && node.children && node.children.length > 0) {
+        const collapseChildren = (children) => {
+          children.forEach((child) => {
+            child.expanded = false;
+            if (child.children && child.children.length > 0) {
+              collapseChildren(child.children);
+            }
+          });
+        };
+        collapseChildren(node.children);
+      }
     },
     fetchParent(node) {
       return "setting1";
@@ -820,28 +832,76 @@ export default {
       }
       this.closeContextMenu();
     },
+    // openContextMenu(event, node) {
+    //   event.preventDefault();
+
+    //   if (!node || !node.id) return;
+
+    //   this.rightClickNode = node;
+    //   console.log("Right-clicked node:", node);
+    //   this.contextMenuVisible = true;
+
+    //   let posX = event.clientX;
+    //   let posY = event.clientY;
+
+    //   this.$nextTick(() => {
+    //     const menuEl = document.querySelector(".context-menu");
+    //     if (menuEl) {
+    //       const menuRect = menuEl.getBoundingClientRect();
+    //       const maxHeight = window.innerHeight * 0.8;
+    //       const menuHeight = Math.min(menuRect.height, maxHeight);
+
+    //       if (posY + menuHeight > window.innerHeight) {
+    //         posY = 70;
+    //       }
+    //       if (posX + menuRect.width > window.innerWidth) {
+    //         posX = window.innerWidth - menuRect.width - 10;
+    //       }
+    //       if (posY < 10) posY = 10;
+    //       if (posX < 10) posX = 10;
+    //       this.contextMenuPosition = { x: posX, y: posY };
+    //     } else {
+    //       this.contextMenuPosition = { x: posX, y: posY };
+    //     }
+    //   });
+
+    //   document.addEventListener("click", this.handleOutsideClick);
+    // },
     openContextMenu(event, node) {
       event.preventDefault();
-
       if (!node || !node.id) return;
 
-      this.rightClickNode = node;
-      console.log("Right-clicked node:", node);
-      this.contextMenuVisible = true;
+      const focusModes = new Set([
+        "protectionFunction",
+        "protectionLevel",
+        "protectionGroup",
+        "settingFunction",
+        "systemSetting",
+      ]);
 
+      if (focusModes.has(node.mode)) {
+        const ancestorIed = getAncestorByMode(
+          this.ownerServerList,
+          node.id,
+          "ied"
+        );
+        if (ancestorIed) {
+          this.handleUpdateFocus({ iedId: ancestorIed.id, focusNode: node });
+        }
+        return;
+      }
+
+      this.rightClickNode = node;
+      this.contextMenuVisible = true;
       let posX = event.clientX;
       let posY = event.clientY;
-
       this.$nextTick(() => {
         const menuEl = document.querySelector(".context-menu");
         if (menuEl) {
           const menuRect = menuEl.getBoundingClientRect();
           const maxHeight = window.innerHeight * 0.8;
           const menuHeight = Math.min(menuRect.height, maxHeight);
-
-          if (posY + menuHeight > window.innerHeight) {
-            posY = 70;
-          }
+          if (posY + menuHeight > window.innerHeight) posY = 70;
           if (posX + menuRect.width > window.innerWidth) {
             posX = window.innerWidth - menuRect.width - 10;
           }
@@ -852,7 +912,6 @@ export default {
           this.contextMenuPosition = { x: posX, y: posY };
         }
       });
-
       document.addEventListener("click", this.handleOutsideClick);
     },
     closeContextMenu() {

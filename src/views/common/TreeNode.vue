@@ -46,20 +46,39 @@
             style="width: 16px; height: 16px"
           />
         </template>
-        <template v-if="node.mode === 'settingFunction'">
+        <!-- <template v-if="node.mode === 'settingFunction'">
           <img
             :src="require('@/assets/images/new.png')"
             alt="Parameter"
             style="width: 16px; height: 16px; margin-left: 5px"
           />
+        </template> -->
+        <template v-if="node.mode === 'settingFunction'">
+          <i
+            class="fa-solid fa-bolt"
+            style="color: black; margin-left: 25px"
+          ></i>
         </template>
-        <template v-if="node.mode === 'protectionLevel'">
+
+        <!-- <template v-if="node.mode === 'protectionLevel'">
           <img
             :src="require('@/assets/images/protectionLevel.png')"
             alt="Parameter"
             style="width: 16px; height: 16px"
           />
+        </template> -->
+        <template
+          v-if="
+            node.mode === 'protectionLevel' ||
+            (node.name && node.name.startsWith('Level'))
+          "
+        >
+          <i
+            class="fa-solid fa-signal"
+            style="font-size: 16px; margin-left: 20px"
+          ></i>
         </template>
+
         <template v-else-if="node.mode === 'systemSetting'">
           <img
             :src="require('@/assets/images/systemSetting.png')"
