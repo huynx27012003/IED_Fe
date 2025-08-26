@@ -307,7 +307,6 @@ export default {
         this.dragMoved = true;
       }
 
-      // Nếu đang kéo thật thì cập nhật vị trí
       let left = e.clientX - this.dragDX;
       let top = e.clientY - this.dragDY;
 
@@ -338,10 +337,8 @@ export default {
       window.removeEventListener("pointerup", this.endDrag);
       window.removeEventListener("pointercancel", this.endDrag);
 
-      // Nếu KHÔNG kéo (chỉ chạm/nhấp) → toggle menu
       if (!this.dragMoved) {
         this.menuOpen = !this.menuOpen;
-        // KHÔNG pin vị trí khi chỉ click
         return;
       }
 
@@ -666,7 +663,6 @@ export default {
   },
   mounted() {
     this.$nextTick(() => {
-      // khôi phục từ localStorage
       try {
         const saved = JSON.parse(
           localStorage.getItem(this.fmStorageKey) || "null"
@@ -688,14 +684,12 @@ export default {
             this.userPinned = !!saved.userPinned;
           }
         } else {
-          // chưa có -> auto đặt lần đầu
           this.updateFloatingPos();
         }
       } catch {
         this.updateFloatingPos();
       }
 
-      // nghe scroll/resize như cũ (để auto cập nhật khi chưa kéo tay)
       this._scrollParents = this.getScrollParents(this.$refs.rootEl);
       this._scrollParents.forEach((p) =>
         p.addEventListener("scroll", this.updateFloatingPos, { passive: true })
