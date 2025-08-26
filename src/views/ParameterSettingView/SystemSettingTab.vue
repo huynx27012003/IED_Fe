@@ -1,19 +1,14 @@
 <template>
-  <div class="system-setting-tab">
-    <!-- <h3>{{ ownerData.name }}</h3> -->
-    <div class="toolbar">
-      <el-button v-if="!isEditing" type="primary" @click="enterEditMode">
-        {{ editButtonText }}
-      </el-button>
-      <template v-else>
-        <el-button type="success" @click="saveAll">{{
-          saveButtonText
-        }}</el-button>
-        <el-button type="danger" @click="cancelAll">{{
-          cancelButtonText
-        }}</el-button>
-      </template>
+  <div class="system-setting-tab" ref="rootEl">
+    <div class="toolbar" v-if="isEditing">
+      <el-button type="success" @click="saveAll">{{
+        saveButtonText
+      }}</el-button>
+      <el-button type="danger" @click="cancelAll">{{
+        cancelButtonText
+      }}</el-button>
     </div>
+
     <table class="parameter-table">
       <thead>
         <tr>
@@ -53,9 +48,9 @@
             <td :class="['value-col', cellClass(row.value)]">
               <div class="cell">
                 <template v-if="!isEditing">
-                  <span v-if="isOnOff(row)" class="switch-label">{{
-                    getSwitchLabel(row)
-                  }}</span>
+                  <span v-if="isOnOff(row)" class="switch-label">
+                    {{ getSwitchLabel(row) }}
+                  </span>
                   <el-switch
                     v-if="isOnOff(row)"
                     :model-value="getSwitchValue(row)"
@@ -63,11 +58,11 @@
                     inactive-value="Off"
                     disabled
                   />
-
-                  <span v-else class="cell-text">{{
-                    formatValue(row, row.value)
-                  }}</span>
+                  <span v-else class="cell-text">
+                    {{ formatValue(row, row.value) }}
+                  </span>
                 </template>
+
                 <template v-else>
                   <el-select
                     v-if="row.options && !isOnOff(row)"
@@ -85,9 +80,10 @@
                       :value="opt"
                     />
                   </el-select>
-                  <span v-if="isOnOff(row)" class="switch-label">{{
-                    getSwitchLabel(row, editStates[row.id])
-                  }}</span>
+
+                  <span v-if="isOnOff(row)" class="switch-label">
+                    {{ getSwitchLabel(row, editStates[row.id]) }}
+                  </span>
                   <el-switch
                     v-if="isOnOff(row)"
                     v-model="editStates[row.id]"
@@ -119,8 +115,44 @@
         </template>
       </tbody>
     </table>
+
+    <div class="floating-menu" ref="floatingEl">
+      <button
+        class="gear-btn drag-handle"
+        @pointerdown="startDrag"
+        aria-label="Open quick menu"
+      >
+        <i class="fa-solid fa-gear"></i>
+      </button>
+
+      <transition name="fade">
+        <div v-if="menuOpen" class="menu-items" @click.self="menuOpen = false">
+          <!-- Edit -->
+          <button class="menu-item" @click="onClickEdit" aria-label="Edit">
+            <i class="fa-solid fa-pen"></i>
+          </button>
+          <!-- ON -->
+          <button
+            class="menu-item"
+            @click="onClickSetOperation('On')"
+            aria-label="Turn On"
+          >
+            <i class="fa-solid fa-toggle-on"></i>
+          </button>
+          <!-- OFF -->
+          <button
+            class="menu-item"
+            @click="onClickSetOperation('Off')"
+            aria-label="Turn Off"
+          >
+            <i class="fa-solid fa-toggle-off"></i>
+          </button>
+        </div>
+      </transition>
+    </div>
   </div>
 </template>
+
 <script>
 import {
   getAncestorByMode,
@@ -138,10 +170,22 @@ export default {
   },
   data() {
     return {
+      isDragging: false,
+      dragDX: 0,
+      dragDY: 0,
+      userPinned: false,
+      fmLeft: null,
+      fmTop: null,
+      offsetX: 850,
+      offsetY: 50,
       parameterGroups: [],
       isEditing: false,
       editStates: {},
       changedValues: [],
+      menuOpen: false,
+      dragMoved: false,
+      dragStartX: 0,
+      dragStartY: 0,
     };
   },
   computed: {
@@ -185,6 +229,10 @@ export default {
     failureMessage() {
       return this.language === "vi-vi" ? "Lưu thất bại!" : "Save failed!";
     },
+    fmStorageKey() {
+      const id = this.ownerData?.node?.id ?? "unknown";
+      return `floatingPos:${id}`;
+    },
     rowsToRender() {
       const node = this.focusNode || this.ownerData.node;
       const mode = node.mode;
@@ -209,6 +257,185 @@ export default {
     },
   },
   methods: {
+    getScrollParents(el) {
+      const parents = [];
+      let p = el && el.parentElement;
+      while (p) {
+        const s = getComputedStyle(p);
+        const hasScroll = /(auto|scroll)/.test(
+          `${s.overflow}${s.overflowX}${s.overflowY}`
+        );
+        if (hasScroll) parents.push(p);
+        p = p.parentElement;
+      }
+      parents.push(window);
+      return parents;
+    },
+    startDrag(e) {
+      const fm = this.$refs.floatingEl;
+      if (!fm) return;
+
+      const rect = fm.getBoundingClientRect();
+      this.fmLeft = rect.left;
+      this.fmTop = rect.top;
+
+      this.dragDX = e.clientX - this.fmLeft;
+      this.dragDY = e.clientY - this.fmTop;
+      this.dragStartX = e.clientX;
+      this.dragStartY = e.clientY;
+      this.dragMoved = false;
+      this.isDragging = true;
+
+      e.target.setPointerCapture?.(e.pointerId);
+      document.documentElement.classList.add("dragging");
+
+      window.addEventListener("pointermove", this.onDrag, { passive: false });
+      window.addEventListener("pointerup", this.endDrag);
+      window.addEventListener("pointercancel", this.endDrag);
+    },
+
+    onDrag(e) {
+      if (!this.isDragging) return;
+      e.preventDefault();
+
+      const fm = this.$refs.floatingEl;
+      if (!fm) return;
+
+      const dx0 = e.clientX - this.dragStartX;
+      const dy0 = e.clientY - this.dragStartY;
+      if (!this.dragMoved && (Math.abs(dx0) > 6 || Math.abs(dy0) > 6)) {
+        this.dragMoved = true;
+      }
+
+      // Nếu đang kéo thật thì cập nhật vị trí
+      let left = e.clientX - this.dragDX;
+      let top = e.clientY - this.dragDY;
+
+      const w = fm.offsetWidth || 0;
+      const h = fm.offsetHeight || 0;
+      const maxLeft = window.innerWidth - w;
+      const maxTop = window.innerHeight - h;
+
+      left = Math.max(0, Math.min(left, maxLeft));
+      top = Math.max(0, Math.min(top, maxTop));
+
+      fm.style.position = "fixed";
+      fm.style.left = `${left}px`;
+      fm.style.top = `${top}px`;
+      fm.style.right = "";
+      fm.style.bottom = "";
+
+      this.fmLeft = left;
+      this.fmTop = top;
+    },
+
+    endDrag() {
+      if (!this.isDragging) return;
+      this.isDragging = false;
+      document.documentElement.classList.remove("dragging");
+
+      window.removeEventListener("pointermove", this.onDrag);
+      window.removeEventListener("pointerup", this.endDrag);
+      window.removeEventListener("pointercancel", this.endDrag);
+
+      // Nếu KHÔNG kéo (chỉ chạm/nhấp) → toggle menu
+      if (!this.dragMoved) {
+        this.menuOpen = !this.menuOpen;
+        // KHÔNG pin vị trí khi chỉ click
+        return;
+      }
+
+      this.userPinned = true;
+    },
+
+    updateFloatingPos() {
+      const fm = this.$refs.floatingEl;
+      const root = this.$refs.rootEl;
+      if (!fm || !root) return;
+
+      if (this.userPinned && this.fmLeft != null && this.fmTop != null) return;
+
+      const rect = root.getBoundingClientRect();
+      const visLeft = Math.max(rect.left, 0);
+      const visRight = Math.min(rect.right, window.innerWidth);
+      const visTop = Math.max(rect.top, 0);
+      const visBottom = Math.min(rect.bottom, window.innerHeight);
+      const hasIntersection = visRight > visLeft && visBottom > visTop;
+
+      if (!hasIntersection) {
+        fm.style.display = "none";
+        return;
+      } else {
+        fm.style.display = "";
+      }
+
+      const left = visLeft + this.offsetX;
+
+      const bottomToViewport = this.offsetY;
+      const bottomToContainer = window.innerHeight - rect.bottom + this.offsetY;
+      const bottom = Math.max(bottomToViewport, bottomToContainer);
+
+      fm.style.position = "fixed";
+      fm.style.left = `${left}px`;
+      fm.style.top = "";
+      fm.style.right = "";
+      fm.style.bottom = `${bottom}px`;
+
+      this.fmLeft = left;
+      this.fmTop = window.innerHeight - bottom - (fm.offsetHeight || 0);
+    },
+
+    resetFloatingPos() {
+      this.userPinned = false;
+
+      this.$nextTick(this.updateFloatingPos);
+    },
+    onClickEdit() {
+      this.menuOpen = false;
+      if (!this.isEditing) this.enterEditMode();
+    },
+    async onClickSetOperation(val) {
+      this.menuOpen = false;
+
+      const targetRows = this.rowsToRender.filter(
+        (r) =>
+          !r.isGroup &&
+          typeof r.name === "string" &&
+          r.name.trim().toLowerCase() === "operation" &&
+          this.isOnOff(r)
+      );
+
+      if (!targetRows.length) {
+        this.$message.info(
+          this.language === "vi-vi"
+            ? "Không tìm thấy tham số Operation để chuyển trạng thái."
+            : "No 'Operation' parameters found."
+        );
+        return;
+      }
+
+      if (this.isEditing) {
+        targetRows.forEach((r) => (this.editStates[r.id] = val));
+        this.$message.success(
+          (this.language === "vi-vi"
+            ? "Đã đặt Operation = "
+            : "Set Operation = ") + val
+        );
+        return;
+      }
+
+      const prevEdit = this.isEditing;
+      try {
+        this.enterEditMode();
+        targetRows.forEach((r) => (this.editStates[r.id] = val));
+        await this.saveAll();
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (prevEdit) this.isEditing = true;
+      }
+    },
+
     hasOperationOff(node) {
       if (!node || !Array.isArray(node.children)) return false;
       const hasDirectOperationOff = node.children.some(
@@ -258,14 +485,8 @@ export default {
     },
     getSwitchLabel(row, value = this.getSwitchValue(row)) {
       const labels = {
-        "vi-vi": {
-          On: "Bật",
-          Off: "Tắt",
-        },
-        default: {
-          On: "On",
-          Off: "Off",
-        },
+        "vi-vi": { On: "Bật", Off: "Tắt" },
+        default: { On: "On", Off: "Off" },
       };
       const langConfig = labels[this.language] || labels.default;
       return langConfig[value];
@@ -403,11 +624,12 @@ export default {
             }
           }
         } else {
-          this.$message.info("Chưa có gì thay đổi!");
+          this.$message.info(
+            this.language === "vi-vi" ? "Chưa có gì thay đổi!" : "No changes."
+          );
         }
       } catch (error) {
         console.error("Failed to update parameters:", error);
-
         let errorMsg = this.failureMessage;
         if (error.response && error.response.data) {
           errorMsg =
@@ -415,7 +637,6 @@ export default {
         } else if (error.message) {
           errorMsg = error.message;
         }
-
         this.$message.error(errorMsg);
       }
 
@@ -444,12 +665,72 @@ export default {
     },
   },
   mounted() {
+    this.$nextTick(() => {
+      // khôi phục từ localStorage
+      try {
+        const saved = JSON.parse(
+          localStorage.getItem(this.fmStorageKey) || "null"
+        );
+        if (
+          saved &&
+          typeof saved.left === "number" &&
+          typeof saved.top === "number"
+        ) {
+          const fm = this.$refs.floatingEl;
+          if (fm) {
+            fm.style.position = "fixed";
+            fm.style.left = `${saved.left}px`;
+            fm.style.top = `${saved.top}px`;
+            fm.style.right = "";
+            fm.style.bottom = "";
+            this.fmLeft = saved.left;
+            this.fmTop = saved.top;
+            this.userPinned = !!saved.userPinned;
+          }
+        } else {
+          // chưa có -> auto đặt lần đầu
+          this.updateFloatingPos();
+        }
+      } catch {
+        this.updateFloatingPos();
+      }
+
+      // nghe scroll/resize như cũ (để auto cập nhật khi chưa kéo tay)
+      this._scrollParents = this.getScrollParents(this.$refs.rootEl);
+      this._scrollParents.forEach((p) =>
+        p.addEventListener("scroll", this.updateFloatingPos, { passive: true })
+      );
+      window.addEventListener("resize", this.updateFloatingPos);
+    });
+
     getEntityTree().then((tree) => {
       const iedNode = getAncestorByMode(tree, this.ownerData.node.id, "ied");
       if (!iedNode) return;
       const groupTree = getGroupByIedId(tree, iedNode.id);
       if (groupTree?.children) this.parameterGroups = groupTree.children;
     });
+
+    document.addEventListener("click", this.handleDocClick);
+  },
+  beforeUnmount() {
+    document.removeEventListener("click", this.handleDocClick);
+
+    if (this._scrollParents) {
+      this._scrollParents.forEach((p) =>
+        p.removeEventListener("scroll", this.updateFloatingPos)
+      );
+    }
+    window.removeEventListener("resize", this.updateFloatingPos);
+  },
+  created() {
+    this.handleDocClick = (e) => {
+      const fm = this.$el.querySelector(".floating-menu");
+      if (fm && (fm === e.target || fm.contains(e.target))) return;
+      this.menuOpen = false;
+    };
+  },
+  updated() {
+    this.$nextTick(this.updateFloatingPos);
   },
 };
 </script>
@@ -475,6 +756,7 @@ export default {
   gap: 8px;
 }
 
+/* màu nhóm giữ nguyên như cũ */
 .row-ied,
 .row-systemSetting,
 .row-protectionGroup {
@@ -547,56 +829,96 @@ thead {
   overflow: visible;
   position: relative;
 }
+
+.floating-menu {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gear-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: transparent;
+  color: black;
+  border: none;
+  font-size: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+.menu-items {
+  position: absolute;
+  bottom: calc(56px + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  margin: 0;
+}
+
+.menu-item {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #fff;
+  color: #222;
+  border: 1px solid #e5e5e5;
+  font-size: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.18s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>
 
 <style>
 .system-setting-dropdown {
   z-index: 999999 !important;
 }
-
 .el-select-dropdown {
   z-index: 999999 !important;
 }
-
 .system-setting-dropdown .el-select-dropdown__item {
   color: #333;
   padding: 8px 16px;
 }
-
 .system-setting-dropdown .el-select-dropdown__item:hover {
   background-color: #f5f5f5;
   color: #333;
 }
-
 .system-setting-dropdown .el-select-dropdown__item.selected {
   background-color: #409eff;
   color: #fff;
   font-weight: bold;
 }
-</style>
-<!-- Global styles for dropdown fix -->
-<style>
-.system-setting-dropdown {
-  z-index: 999999 !important;
+.drag-handle {
+  cursor: grab;
 }
-
-.el-select-dropdown {
-  z-index: 999999 !important;
+.dragging .drag-handle {
+  cursor: grabbing;
 }
-
-.system-setting-dropdown .el-select-dropdown__item {
-  color: #333;
-  padding: 8px 16px;
-}
-
-.system-setting-dropdown .el-select-dropdown__item:hover {
-  background-color: #f5f5f5;
-  color: #333;
-}
-
-.system-setting-dropdown .el-select-dropdown__item.selected {
-  background-color: #409eff;
-  color: #fff;
-  font-weight: bold;
+.dragging {
+  user-select: none;
 }
 </style>
