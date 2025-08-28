@@ -1,5 +1,8 @@
 <template>
   <div v-if="visible" class="context-menu" ref="menu">
+    <!-- gọi Loading.vue -->
+    <Loading v-if="isLoading" />
+
     <ul v-if="nodeMode === 'bay'">
       <li @click="openSub(0, 'addDevices')">
         + Add Devices <span class="arrow">▶</span>
@@ -93,7 +96,9 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="cancelImport">Cancel</el-button>
-          <el-button type="primary" @click="confirmImport">Confirm</el-button>
+          <el-button type="primary" @click="confirmImport" :loading="isLoading">
+            {{ isLoading ? "Importing..." : "Confirm" }}
+          </el-button>
         </span>
       </template>
     </el-dialog>
@@ -107,7 +112,12 @@ import {
   // findSubPathById,
 } from "@/api/treenode";
 import { importDevice } from "@/api/device";
+import Loading from "@/components/Loading.vue";
+
 export default {
+  components: {
+    Loading,
+  },
   props: {
     visible: Boolean,
     position: Object,
@@ -123,6 +133,7 @@ export default {
       ownerModes: ["organisation"],
       showImportDialog: false,
       selectedFile: null,
+      isLoading: false, // Thêm state loading
     };
   },
   computed: {
@@ -180,30 +191,12 @@ export default {
       };
 
       if (action === "parameter") {
-        // let parent = this.tree?.length
-        //   ? getParentById(this.tree, this.selectedNode.id)
-        //   : null;
-        // console.log("getParentById(...) =>", parent);
-        // if (this.selectedNode.mode === "settingFunction") {
-        //   parent =
-        //     getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
-        // }
-
         tab.id = `${this.selectedNode.id}-parameter`;
         tab.name = `${this.selectedNode.name} - Parameter Settings`;
         tab.component = "SystemSettingTab";
       }
 
       if (action === "test") {
-        // let parent = this.tree?.length
-        //   ? getParentById(this.tree, this.selectedNode.id)
-        //   : null;
-        // console.log("getParentById(...) =>", parent);
-        // if (this.selectedNode.mode === "protectionFunction") {
-        //   parent =
-        //     getAncestorByMode(this.tree, this.selectedNode.id, "ied") || parent;
-        // }
-
         tab.id = `${this.selectedNode.id}-testManagement`;
         tab.name = `${this.selectedNode.name} - Test Management`;
         tab.component = "TestManagementTab";
@@ -317,6 +310,7 @@ export default {
     cancelImport() {
       this.showImportDialog = false;
       this.selectedFile = null;
+      this.isLoading = false; // Reset loading state
       this.$refs.fileInput.value = "";
     },
     async confirmImport() {
@@ -324,6 +318,8 @@ export default {
         this.$message.error("No file selected or invalid node ID");
         return;
       }
+
+      this.isLoading = true; // Bắt đầu loading
 
       try {
         await importDevice(this.selectedFile, this.selectedNode.id);
@@ -353,6 +349,7 @@ export default {
         this.$message.error(`Failed to import: ${error.message}`);
         console.error("Import error:", error);
       } finally {
+        this.isLoading = false; // Kết thúc loading
         this.showImportDialog = false;
         this.selectedFile = null;
         this.$refs.fileInput.value = "";
