@@ -1,9 +1,12 @@
 <template>
   <li @contextmenu.prevent="handleRightClick($event, node)">
     <span
-      :class="{ selected: selectedNodes?.some((n) => n.id === node.id) }"
-      class="folder"
-      @click="toggle"
+      :class="{
+        selected: selectedNodes?.some((n) => n.id === node.id),
+      }"
+      class="folder no-select"
+      @click="toggle($event)"
+      @dblclick.stop.prevent="onDblClick(node, $event)"
     >
       <div class="icon-wrapper">
         <template
@@ -29,7 +32,7 @@
               "
               alt="toggle"
               style="width: 16px; height: 20px"
-              @click.stop="toggle"
+              @click.stop="toggle($event)"
             />
           </template>
           <template v-else>
@@ -53,12 +56,6 @@
             style="width: 16px; height: 16px; margin-left: 25px"
           />
         </template>
-        <!-- <template v-if="node.mode === 'settingFunction'">
-          <i
-            class="fa-solid fa-bolt"
-            style="color: black; margin-left: 25px"
-          ></i>
-        </template> -->
 
         <template v-if="node.mode === 'protectionLevel'">
           <img
@@ -67,17 +64,6 @@
             style="width: 16px; height: 16px; margin-left: 25px"
           />
         </template>
-        <!-- <template
-          v-if="
-            node.mode === 'protectionLevel' ||
-            (node.name && node.name.startsWith('Level'))
-          "
-        >
-          <i
-            class="fa-solid fa-signal"
-            style="font-size: 16px; margin-left: 20px"
-          ></i>
-        </template> -->
 
         <template v-else-if="node.mode === 'systemSetting'">
           <img
@@ -121,12 +107,6 @@
             style="width: 20px; height: 20px"
           />
         </template>
-        <!-- <template v-else-if="dataOwnerType.includes(node.mode)">
-          <icon size="16px" folderType="location" badgeColor="146EBE" />
-        </template> -->
-        <!-- <template v-else-if="dataType.includes(node.mode)">
-          <icon size="16px" folderType="owner" badgeColor="146EBE" />
-        </template> -->
         <template v-else-if="node.mode === 'organisation'">
           <img
             :src="require('@/assets/images/owner.png')"
@@ -156,6 +136,7 @@
         :key="child.id"
         :node="child"
         :selectedNodes="selectedNodes"
+        :selectedParameterId="selectedParameterId"
         @fetch-children="(n) => $emit('fetch-children', n)"
         @show-properties="(n) => $emit('show-properties', n)"
         @update-selection="updateSelection"
@@ -164,6 +145,7 @@
           (event, childNode) => $emit('open-context-menu', event, childNode)
         "
         @toggle-node="(node) => $emit('toggle-node', node)"
+        @node-dblclick="$emit('node-dblclick', $event)"
       />
     </ul>
   </li>
@@ -194,11 +176,20 @@ export default {
         "Power cable",
         "Voltage transformer",
       ],
+      skipNextClick: false,
     };
   },
   methods: {
+    onDblClick(node) {
+      this.skipNextClick = true;
+      setTimeout(() => (this.skipNextClick = false), 300);
+      this.$emit("node-dblclick", node);
+    },
+
     toggle(event) {
-      if (event.ctrlKey) {
+      if (this.skipNextClick) return;
+
+      if (event && event.ctrlKey) {
         this.updateSelection(this.node);
       } else {
         this.clearSelection();
@@ -226,17 +217,31 @@ export default {
         this.$emit("toggle-node", this.node);
       }
     },
+
     updateSelection(node) {
       this.$emit("update-selection", node);
     },
     clearSelection() {
       this.$emit("clear-selection");
     },
+
     handleRightClick(event, node) {
       event.preventDefault();
       event.stopPropagation();
 
-      this.$emit("open-context-menu", event, node);
+      const dblClickModes = new Set([
+        "protectionFunction",
+        "protectionLevel",
+        "protectionGroup",
+        "settingFunction",
+        "systemSetting",
+      ]);
+
+      if (dblClickModes.has(node.mode)) {
+        this.onDblClick(node, event);
+      } else {
+        this.$emit("open-context-menu", event, node);
+      }
     },
   },
 };
@@ -270,5 +275,11 @@ ul {
 }
 .node-name {
   white-space: nowrap;
+}
+
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
 }
 </style>

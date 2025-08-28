@@ -10,7 +10,11 @@
         ></i>
       </div>
 
-      <!-- Path items -->
+      <!-- tôi muốn chuột phải ở các node có mode  "protectionFunction",
+        "protectionLevel",
+        "protectionGroup",
+        "settingFunction",
+        "systemSetting", thì chuyển thành double click, còn các node khác vẫn giữ nguyên là chuột phải, double click không còn bôi đen chữ và không colapse hay expand như click-->
       <div
         style="display: flex; align-items: center"
         v-for="(item, index) in pathMapServer"
@@ -911,25 +915,25 @@ export default {
       event.preventDefault();
       if (!node || !node.id) return;
 
-      const focusModes = new Set([
-        "protectionFunction",
-        "protectionLevel",
-        "protectionGroup",
-        "settingFunction",
-        "systemSetting",
-      ]);
+      // const focusModes = new Set([
+      //   "protectionFunction",
+      //   "protectionLevel",
+      //   "protectionGroup",
+      //   "settingFunction",
+      //   "systemSetting",
+      // ]);
 
-      if (focusModes.has(node.mode)) {
-        const ancestorIed = getAncestorByMode(
-          this.ownerServerList,
-          node.id,
-          "ied"
-        );
-        if (ancestorIed) {
-          this.handleUpdateFocus({ iedId: ancestorIed.id, focusNode: node });
-        }
-        return;
-      }
+      // if (focusModes.has(node.mode)) {
+      //   const ancestorIed = getAncestorByMode(
+      //     this.ownerServerList,
+      //     node.id,
+      //     "ied"
+      //   );
+      //   if (ancestorIed) {
+      //     this.handleUpdateFocus({ iedId: ancestorIed.id, focusNode: node });
+      //   }
+      //   return;
+      // }
 
       this.rightClickNode = node;
       this.contextMenuVisible = true;
@@ -1784,13 +1788,11 @@ export default {
 </style>
 
 <style scoped>
-/* Kiểu dáng dropdown */
 .dropdown {
   width: 35%;
   margin-right: 10px;
 }
 
-/* Ô input */
 .dropdown-input {
   width: 100%;
   padding-right: 80px;
@@ -1800,7 +1802,6 @@ export default {
   height: 40px;
 }
 
-/* Style menu dropdown */
 .dropdown-menu {
   position: absolute;
   top: 100%;
@@ -1813,11 +1814,10 @@ export default {
   padding: 0;
   margin: 5px 0;
   list-style: none;
-  display: none; /* Ẩn mặc định */
+  display: none;
   z-index: 10;
 }
 
-/* Style cho từng mục */
 .dropdown-menu li {
   padding: 10px;
   cursor: pointer;

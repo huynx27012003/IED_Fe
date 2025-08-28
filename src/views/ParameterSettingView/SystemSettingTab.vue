@@ -176,6 +176,7 @@ export default {
   },
   data() {
     return {
+      groupTreeRoot: null,
       isDragging: false,
       dragDX: 0,
       dragDY: 0,
@@ -242,12 +243,22 @@ export default {
     rowsToRender() {
       const node = this.focusNode || this.ownerData.node;
       const mode = node.mode;
+
       if (mode === "ied") {
         const source = this.parameterGroups.length
           ? this.parameterGroups
           : node.children || [];
-        return this.renderParamRows(source, 1);
+        return this.renderParamRows(
+          source,
+          1,
+          false,
+          new Set(),
+          false,
+          null,
+          false
+        );
       }
+
       if (
         [
           "protectionFunction",
@@ -257,12 +268,44 @@ export default {
           "systemSetting",
         ].includes(mode)
       ) {
-        return this.renderParamRows(node.children || [], 1);
+        // Tìm ancestor protectionGroup nếu có
+        const pgNode = getAncestorByMode(
+          this.parameterGroups,
+          node.id,
+          "protectionGroup"
+        );
+
+        const inPG = !!pgNode;
+        const pgId = pgNode ? pgNode.id : null;
+        const arOff = pgNode ? this.hasAutoRecloseOffDeep(pgNode) : false;
+
+        return this.renderParamRows(
+          node.children || [],
+          1,
+          false,
+          new Set(),
+          inPG,
+          pgId,
+          arOff
+        );
       }
+
       return [];
     },
   },
   methods: {
+    isARField(name) {
+      const n = this.normalize(name);
+      return n === "initiate ar" || n === "lockout ar";
+    },
+
+    hasAutoRecloseOffDeep(node) {
+      if (!node) return false;
+      const isARGroup = this.normalize(node.name) === "auto reclose";
+      if (isARGroup && this.hasOperationOff(node)) return true;
+      const kids = Array.isArray(node.children) ? node.children : [];
+      return kids.some((c) => this.hasAutoRecloseOffDeep(c));
+    },
     normalize(str) {
       return String(str ?? "")
         .toLowerCase()
@@ -575,18 +618,28 @@ export default {
     cellClass(v) {
       return this.isNullish(v) ? "null-cell" : "";
     },
-    renderParamRows(children, level, inheritedMuted = false, seen = new Set()) {
+    renderParamRows(
+      children,
+      level,
+      inheritedMuted = false,
+      seen = new Set(),
+      inProtectionGroup = false,
+      protectionGroupId = null,
+      arOffInThisPG = false
+    ) {
       const rows = [];
       const padding = level * 20;
 
+      // logic Operation Off như cũ
       const hasOperationOff = children?.some(
         (child) =>
           !child.children?.length &&
-          String(child?.name || "").toLowerCase() === "operation" &&
-          String(child?.value || "").toLowerCase() === "off"
+          this.normalize(child?.name) === "operation" &&
+          this.normalize(child?.value) === "off"
       );
       const levelMuted = inheritedMuted || hasOperationOff;
 
+      // characteristic như cũ
       const currentLevelRows =
         children?.filter((c) => !c.children?.length) || [];
       const characteristicRow = currentLevelRows.find(
@@ -600,15 +653,30 @@ export default {
         if (seen.has(child.id)) return;
         seen.add(child.id);
 
+        // tự tắt theo Operation của chính node con
         const selfMuted =
           levelMuted ||
           (child.children?.some(
             (c) =>
-              String(c?.name || "").toLowerCase() === "operation" &&
-              String(c?.value || "").toLowerCase() === "off"
+              this.normalize(c?.name) === "operation" &&
+              this.normalize(c?.value) === "off"
           ) ??
             false);
 
+        // nếu gặp một protectionGroup mới => reset context cho subtree đó
+        let nextInPG = inProtectionGroup;
+        let nextPGId = protectionGroupId;
+        let nextArOffInPG = arOffInThisPG;
+        if (
+          child.children?.length &&
+          this.normalize(child.mode) === "protectiongroup"
+        ) {
+          nextInPG = true;
+          nextPGId = child.id;
+          nextArOffInPG = this.hasAutoRecloseOffDeep(child);
+        }
+
+        // characteristicMuted như cũ (đổi đúng cặp Delay/TimeDial)
         let characteristicMuted = false;
         if (!child.children?.length && characteristicValueLower) {
           const rowNameLower = this.normalize(child.name);
@@ -627,23 +695,40 @@ export default {
             padding,
             muted: selfMuted,
             characteristicMuted: false,
+            protectionGroupId: nextPGId, // group cũng mang theo id để debug
           });
+
           rows.push(
-            ...this.renderParamRows(child.children, level + 1, selfMuted, seen)
+            ...this.renderParamRows(
+              child.children,
+              level + 1,
+              selfMuted,
+              seen,
+              nextInPG,
+              nextPGId,
+              nextArOffInPG
+            )
           );
         } else {
+          // --- AR rule: nếu đang ở trong PG và AR (Auto Reclose) Off, thì mute các trường AR
+          const arMute =
+            nextInPG && nextArOffInPG && this.isARField(child.name);
+
           rows.push({
             key: "param-" + child.id,
             isGroup: false,
             ...child,
             padding,
-            muted: levelMuted,
+            muted: levelMuted || arMute,
             characteristicMuted,
+            protectionGroupId: nextPGId,
           });
         }
       });
+
       return rows;
     },
+
     displayValue(v) {
       return v == null ? "" : v;
     },
@@ -691,8 +776,11 @@ export default {
             processedKeys.add(row.id);
             row.value = newVal;
 
-            if (String(row.name).toLowerCase() === "operation") {
-              const isOff = String(newVal).toLowerCase() === "off";
+            if (this.normalize(row.name) === "operation") {
+              const isOff = this.normalize(newVal) === "off";
+              const parentGroup = this.findParentGroup(row.id); // hàm của bạn, trả về group gần nhất
+
+              // 1) như cũ: nếu Operation bật/tắt ở 1 group thì tô xám toàn group đó
               const parentGroupId = this.findParentGroupId(row.id);
               this.rowsToRender.forEach((r) => {
                 if (r.isGroup && r.id === parentGroupId) r.muted = isOff;
@@ -703,6 +791,21 @@ export default {
                   r.muted = isOff;
                 }
               });
+
+              // 2) NEW: Nếu parent group là Auto Reclose => mute/unmute các "Initiate AR" & "Lockout AR"
+              if (this.normalize(parentGroup?.name) === "auto reclose") {
+                const pgId = row.protectionGroupId; // đã gắn ở renderParamRows
+                this.rowsToRender.forEach((r) => {
+                  if (
+                    !r.isGroup &&
+                    r.protectionGroupId === pgId &&
+                    this.isARField(r.name)
+                  ) {
+                    // Tô xám theo trạng thái AR. (Nếu có lý do mute khác, backend reload sẽ render lại chính xác)
+                    r.muted = isOff;
+                  }
+                });
+              }
             }
 
             if (this.normalize(row.name) === "characteristic") {
@@ -830,7 +933,10 @@ export default {
       const iedNode = getAncestorByMode(tree, this.ownerData.node.id, "ied");
       if (!iedNode) return;
       const groupTree = getGroupByIedId(tree, iedNode.id);
-      if (groupTree?.children) this.parameterGroups = groupTree.children;
+      if (groupTree?.children) {
+        this.parameterGroups = groupTree.children;
+        this.groupTreeRoot = groupTree;
+      }
     });
 
     document.addEventListener("click", this.handleDocClick);
