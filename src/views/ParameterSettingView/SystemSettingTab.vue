@@ -268,7 +268,6 @@ export default {
           "systemSetting",
         ].includes(mode)
       ) {
-        // Tìm ancestor protectionGroup nếu có
         const pgNode = getAncestorByMode(
           this.parameterGroups,
           node.id,
@@ -462,97 +461,82 @@ export default {
     async onClickSetOperation(val) {
       this.menuOpen = false;
 
-      const targetRows = this.rowsToRender.filter(
+      const targets = this.rowsToRender.filter(
         (r) =>
           !r.isGroup &&
-          typeof r.name === "string" &&
-          r.name.trim().toLowerCase() === "operation" &&
-          this.isOnOff(r)
+          this.normalize(r.name) === "operation" &&
+          this.isOnOff(r) &&
+          r.value !== val
       );
 
-      if (!targetRows.length) {
+      if (!targets.length) {
         this.$message.info(
           this.language === "vi-vi"
-            ? "Không tìm thấy tham số Operation để chuyển trạng thái."
-            : "No 'Operation' parameters found."
+            ? "Không có 'Operation' nào cần thay đổi."
+            : "No 'Operation' to change."
         );
         return;
       }
 
-      const groupChanges = new Map();
-      const processedKeys = new Set();
+      const groups = new Map();
+      targets.forEach((row) => {
+        const groupId = this.findParentGroupId(row.id) || "ungrouped";
+        if (!groups.has(groupId)) groups.set(groupId, []);
+        groups.get(groupId).push({ key: row.id, value: val });
 
-      targetRows.forEach((row) => {
-        if (!processedKeys.has(row.id) && row.value !== val) {
-          const groupId = this.findParentGroupId(row.id);
-          if (!groupChanges.has(groupId)) {
-            groupChanges.set(groupId, []);
-          }
-          groupChanges.get(groupId).push({
-            key: row.id,
-            value: val,
-          });
-          processedKeys.add(row.id);
+        row.value = val;
+        const isOff = this.normalize(val) === "off";
+        this.rowsToRender.forEach((r) => {
+          if (r.isGroup && r.id === groupId) r.muted = isOff;
+          if (!r.isGroup && this.findParentGroupId(r.id) === groupId)
+            r.muted = isOff;
+        });
 
-          row.value = val;
-
-          const isOff = String(val).toLowerCase() === "off";
-          const parentGroupId = this.findParentGroupId(row.id);
+        const parentGroup = this.findParentGroup(row.id);
+        if (this.normalize(parentGroup?.name) === "auto reclose") {
+          const pg = row.protectionGroupId;
           this.rowsToRender.forEach((r) => {
-            if (r.isGroup && r.id === parentGroupId) r.muted = isOff;
-            if (!r.isGroup && this.findParentGroupId(r.id) === parentGroupId) {
+            if (
+              !r.isGroup &&
+              r.protectionGroupId === pg &&
+              this.isARField(r.name)
+            ) {
               r.muted = isOff;
             }
           });
         }
       });
 
-      const changedValues = Array.from(groupChanges.values());
+      const payload = Array.from(groups.values());
 
       try {
-        if (changedValues.length > 0) {
-          await updateDeviceParameters(changedValues);
-          this.$message.success(
-            (this.language === "vi-vi"
-              ? "Đã đặt Operation = "
-              : "Set Operation = ") + val
-          );
+        await updateDeviceParameters(payload);
+        this.$message.success(
+          (this.language === "vi-vi"
+            ? "Đã đặt Operation = "
+            : "Set Operation = ") + val
+        );
 
-          const tree = await getEntityTree();
-          this.$emit("device-saved");
-          const iedNode = getAncestorByMode(
-            tree,
-            this.ownerData.node.id,
-            "ied"
-          );
-          if (iedNode) {
-            const groupTree = getGroupByIedId(tree, iedNode.id);
-            if (groupTree?.children) {
-              this.parameterGroups = JSON.parse(
-                JSON.stringify(groupTree.children)
-              );
-              this.$nextTick(() => this.$forceUpdate());
-            }
+        const tree = await getEntityTree();
+        this.$emit("device-saved");
+        const iedNode = getAncestorByMode(tree, this.ownerData.node.id, "ied");
+        if (iedNode) {
+          const groupTree = getGroupByIedId(tree, iedNode.id);
+          if (groupTree?.children) {
+            this.parameterGroups = JSON.parse(
+              JSON.stringify(groupTree.children)
+            );
+            this.$nextTick(() => this.$forceUpdate());
           }
-        } else {
-          this.$message.info(
-            this.language === "vi-vi" ? "Chưa có gì thay đổi!" : "No changes."
-          );
         }
-      } catch (error) {
-        console.error("Failed to update Operation:", error);
-        let errorMsg =
-          this.language === "vi-vi" ? "Lưu thất bại!" : "Save failed!";
-        if (error.response && error.response.data) {
-          errorMsg =
-            error.response.data.message || JSON.stringify(error.response.data);
-        } else if (error.message) {
-          errorMsg = error.message;
-        }
-        this.$message.error(errorMsg);
+      } catch (e) {
+        let msg = this.language === "vi-vi" ? "Lưu thất bại!" : "Save failed!";
+        if (e?.response?.data)
+          msg = e.response.data.message || JSON.stringify(e.response.data);
+        else if (e?.message) msg = e.message;
+        this.$message.error(msg);
       }
     },
-
     hasOperationOff(node) {
       if (!node || !Array.isArray(node.children)) return false;
       const hasDirectOperationOff = node.children.some(
@@ -630,7 +614,6 @@ export default {
       const rows = [];
       const padding = level * 20;
 
-      // logic Operation Off như cũ
       const hasOperationOff = children?.some(
         (child) =>
           !child.children?.length &&
@@ -639,7 +622,6 @@ export default {
       );
       const levelMuted = inheritedMuted || hasOperationOff;
 
-      // characteristic như cũ
       const currentLevelRows =
         children?.filter((c) => !c.children?.length) || [];
       const characteristicRow = currentLevelRows.find(
@@ -653,7 +635,6 @@ export default {
         if (seen.has(child.id)) return;
         seen.add(child.id);
 
-        // tự tắt theo Operation của chính node con
         const selfMuted =
           levelMuted ||
           (child.children?.some(
@@ -663,7 +644,6 @@ export default {
           ) ??
             false);
 
-        // nếu gặp một protectionGroup mới => reset context cho subtree đó
         let nextInPG = inProtectionGroup;
         let nextPGId = protectionGroupId;
         let nextArOffInPG = arOffInThisPG;
@@ -676,7 +656,6 @@ export default {
           nextArOffInPG = this.hasAutoRecloseOffDeep(child);
         }
 
-        // characteristicMuted như cũ (đổi đúng cặp Delay/TimeDial)
         let characteristicMuted = false;
         if (!child.children?.length && characteristicValueLower) {
           const rowNameLower = this.normalize(child.name);
@@ -695,7 +674,7 @@ export default {
             padding,
             muted: selfMuted,
             characteristicMuted: false,
-            protectionGroupId: nextPGId, // group cũng mang theo id để debug
+            protectionGroupId: nextPGId,
           });
 
           rows.push(
@@ -710,7 +689,6 @@ export default {
             )
           );
         } else {
-          // --- AR rule: nếu đang ở trong PG và AR (Auto Reclose) Off, thì mute các trường AR
           const arMute =
             nextInPG && nextArOffInPG && this.isARField(child.name);
 
@@ -753,124 +731,98 @@ export default {
     },
     async saveAll() {
       this.menuOpen = false;
-      this.changedValues = [];
-      const groupChanges = new Map();
-      const processedKeys = new Set();
+
+      const groups = new Map();
+      const processed = new Set();
 
       this.rowsToRender.forEach((row) => {
-        if (
-          !row.isGroup &&
-          this.editStates[row.id] !== undefined &&
-          !processedKeys.has(row.id)
-        ) {
-          const newVal = this.editStates[row.id];
-          if (row.value !== newVal) {
-            const groupId = this.findParentGroupId(row.id);
-            if (!groupChanges.has(groupId)) {
-              groupChanges.set(groupId, []);
-            }
-            groupChanges.get(groupId).push({
-              key: row.id,
-              value: newVal,
-            });
-            processedKeys.add(row.id);
-            row.value = newVal;
+        if (row.isGroup) return;
+        if (this.editStates[row.id] === undefined) return;
+        if (processed.has(row.id)) return;
 
-            if (this.normalize(row.name) === "operation") {
-              const isOff = this.normalize(newVal) === "off";
-              const parentGroup = this.findParentGroup(row.id); // hàm của bạn, trả về group gần nhất
+        const newVal = this.editStates[row.id];
+        if (row.value === newVal) return;
 
-              // 1) như cũ: nếu Operation bật/tắt ở 1 group thì tô xám toàn group đó
-              const parentGroupId = this.findParentGroupId(row.id);
-              this.rowsToRender.forEach((r) => {
-                if (r.isGroup && r.id === parentGroupId) r.muted = isOff;
-                if (
-                  !r.isGroup &&
-                  this.findParentGroupId(r.id) === parentGroupId
-                ) {
-                  r.muted = isOff;
-                }
-              });
+        const groupId = this.findParentGroupId(row.id) || "ungrouped";
+        if (!groups.has(groupId)) groups.set(groupId, []);
+        groups.get(groupId).push({ key: row.id, value: newVal });
+        processed.add(row.id);
 
-              // 2) NEW: Nếu parent group là Auto Reclose => mute/unmute các "Initiate AR" & "Lockout AR"
-              if (this.normalize(parentGroup?.name) === "auto reclose") {
-                const pgId = row.protectionGroupId; // đã gắn ở renderParamRows
-                this.rowsToRender.forEach((r) => {
-                  if (
-                    !r.isGroup &&
-                    r.protectionGroupId === pgId &&
-                    this.isARField(r.name)
-                  ) {
-                    // Tô xám theo trạng thái AR. (Nếu có lý do mute khác, backend reload sẽ render lại chính xác)
-                    r.muted = isOff;
-                  }
-                });
+        if (this.normalize(row.name) === "operation") {
+          const isOff = this.normalize(newVal) === "off";
+          this.rowsToRender.forEach((r) => {
+            if (r.isGroup && r.id === groupId) r.muted = isOff;
+            if (!r.isGroup && this.findParentGroupId(r.id) === groupId)
+              r.muted = isOff;
+          });
+
+          const parentGroup = this.findParentGroup(row.id);
+          if (this.normalize(parentGroup?.name) === "auto reclose") {
+            const pg = row.protectionGroupId;
+            this.rowsToRender.forEach((r) => {
+              if (
+                !r.isGroup &&
+                r.protectionGroupId === pg &&
+                this.isARField(r.name)
+              ) {
+                r.muted = isOff;
               }
-            }
-
-            if (this.normalize(row.name) === "characteristic") {
-              const parentGroupId = this.findParentGroupId(row.id);
-              const characteristicValueLower = this.normalize(newVal);
-              this.rowsToRender.forEach((r) => {
-                if (
-                  !r.isGroup &&
-                  this.findParentGroupId(r.id) === parentGroupId
-                ) {
-                  const rowNameLower = this.normalize(r.name);
-                  r.characteristicMuted =
-                    (characteristicValueLower === "definite time" &&
-                      rowNameLower === "time dial") ||
-                    (characteristicValueLower !== "definite time" &&
-                      rowNameLower === "delay time");
-                }
-              });
-            }
+            });
           }
+        }
+
+        if (this.normalize(row.name) === "characteristic") {
+          const characteristicValueLower = this.normalize(newVal);
+          this.rowsToRender.forEach((r) => {
+            if (!r.isGroup && this.findParentGroupId(r.id) === groupId) {
+              const rowNameLower = this.normalize(r.name);
+              r.characteristicMuted =
+                (characteristicValueLower === "definite time" &&
+                  rowNameLower === "time dial") ||
+                (characteristicValueLower !== "definite time" &&
+                  rowNameLower === "delay time");
+            }
+          });
         }
       });
 
-      this.changedValues = Array.from(groupChanges.values());
+      const payload = Array.from(groups.values());
 
       try {
-        if (this.changedValues.length > 0) {
-          await updateDeviceParameters(this.changedValues);
-          this.$message.success(this.successMessage);
-
-          const tree = await getEntityTree();
-          this.$emit("device-saved");
-          const iedNode = getAncestorByMode(
-            tree,
-            this.ownerData.node.id,
-            "ied"
-          );
-          if (iedNode) {
-            const groupTree = getGroupByIedId(tree, iedNode.id);
-            if (groupTree?.children) {
-              this.parameterGroups = JSON.parse(
-                JSON.stringify(groupTree.children)
-              );
-              this.$nextTick(() => this.$forceUpdate());
-            }
-          }
-        } else {
+        if (!payload.length) {
           this.$message.info(
             this.language === "vi-vi" ? "Chưa có gì thay đổi!" : "No changes."
           );
+          this.isEditing = false;
+          this.editStates = {};
+          return;
         }
-      } catch (error) {
-        console.error("Failed to update parameters:", error);
-        let errorMsg = this.failureMessage;
-        if (error.response && error.response.data) {
-          errorMsg =
-            error.response.data.message || JSON.stringify(error.response.data);
-        } else if (error.message) {
-          errorMsg = error.message;
-        }
-        this.$message.error(errorMsg);
-      }
 
-      this.isEditing = false;
-      this.editStates = {};
+        await updateDeviceParameters(payload);
+        this.$message.success(this.successMessage);
+
+        const tree = await getEntityTree();
+        this.$emit("device-saved");
+        const iedNode = getAncestorByMode(tree, this.ownerData.node.id, "ied");
+        if (iedNode) {
+          const groupTree = getGroupByIedId(tree, iedNode.id);
+          if (groupTree?.children) {
+            this.parameterGroups = JSON.parse(
+              JSON.stringify(groupTree.children)
+            );
+            this.$nextTick(() => this.$forceUpdate());
+          }
+        }
+      } catch (e) {
+        let msg = this.failureMessage;
+        if (e?.response?.data)
+          msg = e.response.data.message || JSON.stringify(e.response.data);
+        else if (e?.message) msg = e.message;
+        this.$message.error(msg);
+      } finally {
+        this.isEditing = false;
+        this.editStates = {};
+      }
     },
     findParentGroupId(paramId) {
       const keyStr = String(paramId);
