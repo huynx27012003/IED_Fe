@@ -263,6 +263,11 @@ export default {
     },
   },
   methods: {
+    normalize(str) {
+      return String(str ?? "")
+        .toLowerCase()
+        .trim();
+    },
     findParentGroup(paramId) {
       let foundGroup = null;
       for (let i = 0; i < this.rowsToRender.length; i++) {
@@ -585,10 +590,10 @@ export default {
       const currentLevelRows =
         children?.filter((c) => !c.children?.length) || [];
       const characteristicRow = currentLevelRows.find(
-        (r) => String(r.name || "").toLowerCase() === "characteristic"
+        (r) => this.normalize(r.name) === "characteristic"
       );
-      const characteristicValue = characteristicRow
-        ? String(characteristicRow.value || "").trim()
+      const characteristicValueLower = characteristicRow
+        ? this.normalize(characteristicRow.value)
         : null;
 
       children?.forEach((child) => {
@@ -605,15 +610,13 @@ export default {
             false);
 
         let characteristicMuted = false;
-        if (!child.children?.length && characteristicValue) {
-          const rowName = String(child.name || "")
-            .toLowerCase()
-            .trim();
+        if (!child.children?.length && characteristicValueLower) {
+          const rowNameLower = this.normalize(child.name);
           characteristicMuted =
-            (characteristicValue === "Definite time" &&
-              rowName === "delay time") ||
-            (characteristicValue !== "Definite time" &&
-              rowName === "time dial");
+            (characteristicValueLower === "definite time" &&
+              rowNameLower === "time dial") ||
+            (characteristicValueLower !== "definite time" &&
+              rowNameLower === "delay time");
         }
 
         if (child.children?.length) {
@@ -702,22 +705,20 @@ export default {
               });
             }
 
-            if (String(row.name).toLowerCase() === "characteristic") {
+            if (this.normalize(row.name) === "characteristic") {
               const parentGroupId = this.findParentGroupId(row.id);
-              const characteristicValue = String(newVal).trim();
+              const characteristicValueLower = this.normalize(newVal);
               this.rowsToRender.forEach((r) => {
                 if (
                   !r.isGroup &&
                   this.findParentGroupId(r.id) === parentGroupId
                 ) {
-                  const rowName = String(r.name || "")
-                    .toLowerCase()
-                    .trim();
+                  const rowNameLower = this.normalize(r.name);
                   r.characteristicMuted =
-                    (characteristicValue === "Definite time" &&
-                      rowName === "delay time") ||
-                    (characteristicValue !== "Definite time" &&
-                      rowName === "time dial");
+                    (characteristicValueLower === "definite time" &&
+                      rowNameLower === "time dial") ||
+                    (characteristicValueLower !== "definite time" &&
+                      rowNameLower === "delay time");
                 }
               });
             }
