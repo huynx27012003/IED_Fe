@@ -1,6 +1,5 @@
 <template>
   <div v-if="visible" class="context-menu" ref="menu">
-    <!-- Menu cho feeder -->
     <ul v-if="nodeMode === 'bay'">
       <li @click="openSub(0, 'addDevices')">
         + Add Devices <span class="arrow">▶</span>

@@ -1,14 +1,5 @@
 <template>
   <div class="system-setting-tab" ref="rootEl">
-    <div class="toolbar" v-if="isEditing">
-      <el-button type="success" @click="saveAll">{{
-        saveButtonText
-      }}</el-button>
-      <el-button type="danger" @click="cancelAll">{{
-        cancelButtonText
-      }}</el-button>
-    </div>
-
     <table class="parameter-table">
       <thead>
         <tr>
@@ -39,7 +30,7 @@
             class="param-row"
             :class="[
               row.mode ? 'row-' + row.mode : '',
-              { 'muted-row': row.muted },
+              { 'muted-row': row.muted || isCharacteristicMuted(row) },
             ]"
           >
             <td class="param-name" :style="{ paddingLeft: row.padding + 'px' }">
@@ -81,15 +72,19 @@
                     />
                   </el-select>
 
-                  <span v-if="isOnOff(row)" class="switch-label">
-                    {{ getSwitchLabel(row, editStates[row.id]) }}
-                  </span>
-                  <el-switch
-                    v-if="isOnOff(row)"
-                    v-model="editStates[row.id]"
-                    active-value="On"
-                    inactive-value="Off"
-                  />
+                  <div
+                    v-else-if="isOnOff(row)"
+                    style="display: flex; align-items: center; width: 100%"
+                  >
+                    <span class="switch-label">
+                      {{ getSwitchLabel(row, editStates[row.id]) }}
+                    </span>
+                    <el-switch
+                      v-model="editStates[row.id]"
+                      active-value="On"
+                      inactive-value="Off"
+                    />
+                  </div>
 
                   <input
                     v-else
@@ -127,10 +122,21 @@
 
       <transition name="fade">
         <div v-if="menuOpen" class="menu-items" @click.self="menuOpen = false">
-          <!-- Edit -->
-          <button class="menu-item" @click="onClickEdit" aria-label="Edit">
-            <i class="fa-solid fa-pen"></i>
-          </button>
+          <!-- Edit/Save/Cancel -->
+          <template v-if="!isEditing">
+            <button class="menu-item" @click="onClickEdit" aria-label="Edit">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+          </template>
+          <template v-else>
+            <button class="menu-item" @click="saveAll" aria-label="Save">
+              <i class="fa-solid fa-check"></i>
+            </button>
+            <button class="menu-item" @click="cancelAll" aria-label="Cancel">
+              <i class="fa-solid fa-times"></i>
+            </button>
+          </template>
+
           <!-- ON -->
           <button
             class="menu-item"
@@ -257,6 +263,50 @@ export default {
     },
   },
   methods: {
+    isCharacteristicMuted(row) {
+      if (row.isGroup) return false;
+
+      const currentLevel = this.rowsToRender.filter(
+        (r) =>
+          !r.isGroup &&
+          this.findParentGroupId(r.id) === this.findParentGroupId(row.id)
+      );
+
+      const characteristicRow = currentLevel.find(
+        (r) => String(r.name || "").toLowerCase() === "characteristic"
+      );
+
+      if (!characteristicRow) return false;
+
+      const characteristicValue = String(characteristicRow.value || "").trim();
+      const rowName = String(row.name || "")
+        .toLowerCase()
+        .trim();
+
+      if (characteristicValue === "Definite time" && rowName === "delay time") {
+        return true;
+      }
+
+      if (characteristicValue !== "Definite time" && rowName === "time dial") {
+        return true;
+      }
+
+      return false;
+    },
+
+    findParentGroup(paramId) {
+      let foundGroup = null;
+      for (let i = 0; i < this.rowsToRender.length; i++) {
+        const row = this.rowsToRender[i];
+        if (row.isGroup) {
+          foundGroup = row;
+        } else if (row.id === paramId) {
+          return foundGroup;
+        }
+      }
+      return null;
+    },
+
     getScrollParents(el) {
       const parents = [];
       let p = el && el.parentElement;
@@ -384,13 +434,14 @@ export default {
 
     resetFloatingPos() {
       this.userPinned = false;
-
       this.$nextTick(this.updateFloatingPos);
     },
+
     onClickEdit() {
       this.menuOpen = false;
       if (!this.isEditing) this.enterEditMode();
     },
+
     async onClickSetOperation(val) {
       this.menuOpen = false;
 
@@ -411,25 +462,77 @@ export default {
         return;
       }
 
-      if (this.isEditing) {
-        targetRows.forEach((r) => (this.editStates[r.id] = val));
-        this.$message.success(
-          (this.language === "vi-vi"
-            ? "Đã đặt Operation = "
-            : "Set Operation = ") + val
-        );
-        return;
-      }
+      const groupChanges = new Map();
+      const processedKeys = new Set();
 
-      const prevEdit = this.isEditing;
+      targetRows.forEach((row) => {
+        if (!processedKeys.has(row.id) && row.value !== val) {
+          const groupId = this.findParentGroupId(row.id);
+          if (!groupChanges.has(groupId)) {
+            groupChanges.set(groupId, []);
+          }
+          groupChanges.get(groupId).push({
+            key: row.id,
+            value: val,
+          });
+          processedKeys.add(row.id);
+
+          row.value = val;
+
+          const isOff = String(val).toLowerCase() === "off";
+          const parentGroupId = this.findParentGroupId(row.id);
+          this.rowsToRender.forEach((r) => {
+            if (r.isGroup && r.id === parentGroupId) r.muted = isOff;
+            if (!r.isGroup && this.findParentGroupId(r.id) === parentGroupId) {
+              r.muted = isOff;
+            }
+          });
+        }
+      });
+
+      const changedValues = Array.from(groupChanges.values());
+
       try {
-        this.enterEditMode();
-        targetRows.forEach((r) => (this.editStates[r.id] = val));
-        await this.saveAll();
-      } catch (e) {
-        console.error(e);
-      } finally {
-        if (prevEdit) this.isEditing = true;
+        if (changedValues.length > 0) {
+          await updateDeviceParameters(changedValues);
+          this.$message.success(
+            (this.language === "vi-vi"
+              ? "Đã đặt Operation = "
+              : "Set Operation = ") + val
+          );
+
+          const tree = await getEntityTree();
+          this.$emit("device-saved");
+          const iedNode = getAncestorByMode(
+            tree,
+            this.ownerData.node.id,
+            "ied"
+          );
+          if (iedNode) {
+            const groupTree = getGroupByIedId(tree, iedNode.id);
+            if (groupTree?.children) {
+              this.parameterGroups = JSON.parse(
+                JSON.stringify(groupTree.children)
+              );
+              this.$nextTick(() => this.$forceUpdate());
+            }
+          }
+        } else {
+          this.$message.info(
+            this.language === "vi-vi" ? "Chưa có gì thay đổi!" : "No changes."
+          );
+        }
+      } catch (error) {
+        console.error("Failed to update Operation:", error);
+        let errorMsg =
+          this.language === "vi-vi" ? "Lưu thất bại!" : "Save failed!";
+        if (error.response && error.response.data) {
+          errorMsg =
+            error.response.data.message || JSON.stringify(error.response.data);
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+        this.$message.error(errorMsg);
       }
     },
 
@@ -501,17 +604,29 @@ export default {
     renderParamRows(children, level, inheritedMuted = false, seen = new Set()) {
       const rows = [];
       const padding = level * 20;
+
+      const hasOperationOff = children?.some(
+        (child) =>
+          !child.children?.length &&
+          String(child?.name || "").toLowerCase() === "operation" &&
+          String(child?.value || "").toLowerCase() === "off"
+      );
+
+      const levelMuted = inheritedMuted || hasOperationOff;
+
       children?.forEach((child) => {
         if (seen.has(child.id)) return;
         seen.add(child.id);
+
         const selfMuted =
-          inheritedMuted ||
+          levelMuted ||
           (child.children?.some(
             (c) =>
               String(c?.name || "").toLowerCase() === "operation" &&
               String(c?.value || "").toLowerCase() === "off"
           ) ??
             false);
+
         if (child.children?.length) {
           rows.push({
             key: "group-" + child.id,
@@ -529,7 +644,7 @@ export default {
             isGroup: false,
             ...child,
             padding,
-            muted: inheritedMuted,
+            muted: levelMuted,
           });
         }
       });
@@ -552,11 +667,13 @@ export default {
       });
     },
     cancelAll() {
+      this.menuOpen = false;
       this.isEditing = false;
       this.editStates = {};
       this.changedValues = [];
     },
     async saveAll() {
+      this.menuOpen = false;
       this.changedValues = [];
       const groupChanges = new Map();
       const processedKeys = new Set();
@@ -743,13 +860,6 @@ export default {
   font-style: italic;
 }
 
-.toolbar {
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 /* màu nhóm giữ nguyên như cũ */
 .row-ied,
 .row-systemSetting,
@@ -808,15 +918,20 @@ thead {
 .cell-input {
   flex: 1 1 auto;
   min-width: 0;
+  border: 1px solid #ddd;
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 .switch-label {
   margin-right: 15px;
   font-size: 14px;
+  flex-shrink: 0;
 }
 
 .cell .el-switch {
   margin: 0;
+  flex-shrink: 0;
 }
 
 .system-setting-tab {
@@ -845,6 +960,12 @@ thead {
   justify-content: center;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.gear-btn:hover {
+  background: #cacbcb;
+  transform: scale(1.05);
 }
 
 .menu-items {
@@ -852,11 +973,9 @@ thead {
   bottom: calc(56px + 10px);
   left: 50%;
   transform: translateX(-50%);
-
   display: flex;
   flex-direction: column;
   gap: 10px;
-
   margin: 0;
 }
 
@@ -864,18 +983,28 @@ thead {
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  background: #fff;
+  background: transparent;
   color: #222;
   border: 1px solid #e5e5e5;
-  font-size: 20px;
+  font-size: 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
 }
 
-/* transition */
+.menu-item:hover {
+  background: #f0f8ff;
+  transform: scale(1.1);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+}
+
+.menu-item:active {
+  transform: scale(0.95);
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.18s ease;
@@ -914,5 +1043,17 @@ thead {
 }
 .dragging {
   user-select: none;
+}
+
+.el-select {
+  width: 100% !important;
+}
+
+.el-select .el-input {
+  width: 100% !important;
+}
+
+.el-select .el-input__inner {
+  width: 100% !important;
 }
 </style>

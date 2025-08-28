@@ -1,39 +1,47 @@
 <template>
-  <div class="loading-container">
-    <div class="spinner"></div>
+  <div class="loading-overlay">
+    <div class="spinner">
+      <img
+        src="@/assets/images/icon.png"
+        alt="loading icon"
+        class="spinner-icon"
+      />
+    </div>
     <span class="loading-text">Đang tải...</span>
   </div>
 </template>
 
-<script>
-export default {
-  name: "Loading",
-};
-</script>
-
 <style scoped>
-.loading-container {
-  position: absolute;
+.loading-overlay {
+  position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   background: rgba(255, 255, 255, 0.8);
-  z-index: 1000;
+  z-index: 9999;
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
   border: 4px solid #f3f3f3;
   border-top: 4px solid #409eff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 10px;
+}
+
+.spinner-icon {
+  width: 28px;
+  height: 28px;
 }
 
 .loading-text {

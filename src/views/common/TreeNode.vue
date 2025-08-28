@@ -50,7 +50,7 @@
           <img
             :src="require('@/assets/images/settings.png')"
             alt="Parameter"
-            style="width: 16px; height: 16px; margin-left: 5px"
+            style="width: 16px; height: 16px; margin-left: 25px"
           />
         </template>
         <!-- <template v-if="node.mode === 'settingFunction'">
@@ -64,7 +64,7 @@
           <img
             :src="require('@/assets/images/level.png')"
             alt="Parameter"
-            style="width: 16px; height: 16px"
+            style="width: 16px; height: 16px; margin-left: 25px"
           />
         </template>
         <!-- <template
@@ -114,11 +114,25 @@
             style="width: 16px; height: 16px"
           />
         </template>
-        <template v-else-if="dataOwnerType.includes(node.mode)">
-          <icon size="16px" folderType="location" badgeColor="146EBE" />
+        <template v-else-if="node.mode === 'substation'">
+          <img
+            :src="require('@/assets/images/location.png')"
+            alt="substation"
+            style="width: 20px; height: 20px"
+          />
         </template>
-        <template v-else-if="dataType.includes(node.mode)">
+        <!-- <template v-else-if="dataOwnerType.includes(node.mode)">
+          <icon size="16px" folderType="location" badgeColor="146EBE" />
+        </template> -->
+        <!-- <template v-else-if="dataType.includes(node.mode)">
           <icon size="16px" folderType="owner" badgeColor="146EBE" />
+        </template> -->
+        <template v-else-if="node.mode === 'organisation'">
+          <img
+            :src="require('@/assets/images/owner.png')"
+            alt="organisation"
+            style="width: 20px; height: 20px"
+          />
         </template>
         <template v-else-if="assetType.includes(node.asset)">
           <icon size="16px" folderType="asset" badgeColor="146EBE" />
