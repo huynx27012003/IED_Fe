@@ -43,7 +43,7 @@
           <img
             :src="require('@/assets/images/Voltage_Level.png')"
             alt="Voltage"
-            style="width: 16px; height: 16px"
+            style="width: 20px; height: 20px"
           />
         </template>
         <template v-if="node.mode === 'settingFunction'">
@@ -83,7 +83,7 @@
           <img
             :src="require('@/assets/images/systemSetting.png')"
             alt="System Setting"
-            style="width: 16px; height: 16px"
+            style="width: 16px; height: 17px"
           />
         </template>
         <template v-else-if="node.mode === 'protectionFunction'">
@@ -131,7 +131,7 @@
           <img
             :src="require('@/assets/images/owner.png')"
             alt="organisation"
-            style="width: 20px; height: 20px"
+            style="width: 25px; height: 25px"
           />
         </template>
         <template v-else-if="assetType.includes(node.asset)">

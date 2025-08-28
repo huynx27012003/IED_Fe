@@ -30,7 +30,7 @@
             class="param-row"
             :class="[
               row.mode ? 'row-' + row.mode : '',
-              { 'muted-row': row.muted || isCharacteristicMuted(row) },
+              { 'muted-row': row.muted || row.characteristicMuted },
             ]"
           >
             <td class="param-name" :style="{ paddingLeft: row.padding + 'px' }">
@@ -263,37 +263,6 @@ export default {
     },
   },
   methods: {
-    isCharacteristicMuted(row) {
-      if (row.isGroup) return false;
-
-      const currentLevel = this.rowsToRender.filter(
-        (r) =>
-          !r.isGroup &&
-          this.findParentGroupId(r.id) === this.findParentGroupId(row.id)
-      );
-
-      const characteristicRow = currentLevel.find(
-        (r) => String(r.name || "").toLowerCase() === "characteristic"
-      );
-
-      if (!characteristicRow) return false;
-
-      const characteristicValue = String(characteristicRow.value || "").trim();
-      const rowName = String(row.name || "")
-        .toLowerCase()
-        .trim();
-
-      if (characteristicValue === "Definite time" && rowName === "delay time") {
-        return true;
-      }
-
-      if (characteristicValue !== "Definite time" && rowName === "time dial") {
-        return true;
-      }
-
-      return false;
-    },
-
     findParentGroup(paramId) {
       let foundGroup = null;
       for (let i = 0; i < this.rowsToRender.length; i++) {
@@ -611,8 +580,16 @@ export default {
           String(child?.name || "").toLowerCase() === "operation" &&
           String(child?.value || "").toLowerCase() === "off"
       );
-
       const levelMuted = inheritedMuted || hasOperationOff;
+
+      const currentLevelRows =
+        children?.filter((c) => !c.children?.length) || [];
+      const characteristicRow = currentLevelRows.find(
+        (r) => String(r.name || "").toLowerCase() === "characteristic"
+      );
+      const characteristicValue = characteristicRow
+        ? String(characteristicRow.value || "").trim()
+        : null;
 
       children?.forEach((child) => {
         if (seen.has(child.id)) return;
@@ -627,6 +604,18 @@ export default {
           ) ??
             false);
 
+        let characteristicMuted = false;
+        if (!child.children?.length && characteristicValue) {
+          const rowName = String(child.name || "")
+            .toLowerCase()
+            .trim();
+          characteristicMuted =
+            (characteristicValue === "Definite time" &&
+              rowName === "delay time") ||
+            (characteristicValue !== "Definite time" &&
+              rowName === "time dial");
+        }
+
         if (child.children?.length) {
           rows.push({
             key: "group-" + child.id,
@@ -634,6 +623,7 @@ export default {
             ...child,
             padding,
             muted: selfMuted,
+            characteristicMuted: false,
           });
           rows.push(
             ...this.renderParamRows(child.children, level + 1, selfMuted, seen)
@@ -645,6 +635,7 @@ export default {
             ...child,
             padding,
             muted: levelMuted,
+            characteristicMuted,
           });
         }
       });
@@ -707,6 +698,26 @@ export default {
                   this.findParentGroupId(r.id) === parentGroupId
                 ) {
                   r.muted = isOff;
+                }
+              });
+            }
+
+            if (String(row.name).toLowerCase() === "characteristic") {
+              const parentGroupId = this.findParentGroupId(row.id);
+              const characteristicValue = String(newVal).trim();
+              this.rowsToRender.forEach((r) => {
+                if (
+                  !r.isGroup &&
+                  this.findParentGroupId(r.id) === parentGroupId
+                ) {
+                  const rowName = String(r.name || "")
+                    .toLowerCase()
+                    .trim();
+                  r.characteristicMuted =
+                    (characteristicValue === "Definite time" &&
+                      rowName === "delay time") ||
+                    (characteristicValue !== "Definite time" &&
+                      rowName === "time dial");
                 }
               });
             }

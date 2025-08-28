@@ -609,7 +609,6 @@ export default {
       let text =
         translations[currentLang]?.[key] || translations["en-vi"][key] || key;
 
-      // Handle parameter substitution
       Object.keys(params).forEach((param) => {
         text = text.replace(`{${param}}`, params[param]);
       });
