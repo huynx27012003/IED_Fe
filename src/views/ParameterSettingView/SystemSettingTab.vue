@@ -25,12 +25,14 @@
               {{ row.name }}
             </td>
           </tr>
+
           <tr
             v-else
             class="param-row"
             :class="[
               row.mode ? 'row-' + row.mode : '',
               { 'muted-row': row.muted || row.characteristicMuted },
+              { 'only-value': row.onlyValue },
             ]"
           >
             <td class="param-name" :style="{ paddingLeft: row.padding + 'px' }">
@@ -39,9 +41,9 @@
             <td :class="['value-col', cellClass(row.value)]">
               <div class="cell">
                 <template v-if="!isEditing">
-                  <span v-if="isOnOff(row)" class="switch-label">
-                    {{ getSwitchLabel(row) }}
-                  </span>
+                  <span v-if="isOnOff(row)" class="switch-label">{{
+                    getSwitchLabel(row)
+                  }}</span>
                   <el-switch
                     v-if="isOnOff(row)"
                     :model-value="getSwitchValue(row)"
@@ -49,9 +51,9 @@
                     inactive-value="Off"
                     disabled
                   />
-                  <span v-else class="cell-text">
-                    {{ formatValue(row, row.value) }}
-                  </span>
+                  <span v-else class="cell-text">{{
+                    formatValue(row, row.value)
+                  }}</span>
                 </template>
 
                 <template v-else>
@@ -76,9 +78,9 @@
                     v-else-if="isOnOff(row)"
                     style="display: flex; align-items: center; width: 100%"
                   >
-                    <span class="switch-label">
-                      {{ getSwitchLabel(row, editStates[row.id]) }}
-                    </span>
+                    <span class="switch-label">{{
+                      getSwitchLabel(row, editStates[row.id])
+                    }}</span>
                     <el-switch
                       v-model="editStates[row.id]"
                       active-value="On"
@@ -94,6 +96,7 @@
                 </template>
               </div>
             </td>
+
             <td :class="cellClass(row.unit)">
               <span class="cell-text">{{ displayValue(row.unit) }}</span>
             </td>
@@ -176,6 +179,8 @@ export default {
   },
   data() {
     return {
+      loadingSave: false,
+      freshFocusNode: null,
       groupTreeRoot: null,
       isDragging: false,
       dragDX: 0,
@@ -241,7 +246,7 @@ export default {
       return `floatingPos:${id}`;
     },
     rowsToRender() {
-      const node = this.focusNode || this.ownerData.node;
+      const node = this.freshFocusNode || this.focusNode || this.ownerData.node;
       const mode = node.mode;
 
       if (mode === "ied") {
@@ -268,15 +273,9 @@ export default {
           "systemSetting",
         ].includes(mode)
       ) {
-        const pgNode = getAncestorByMode(
-          this.parameterGroups,
-          node.id,
-          "protectionGroup"
-        );
-
-        const inPG = !!pgNode;
-        const pgId = pgNode ? pgNode.id : null;
-        const arOff = pgNode ? this.hasAutoRecloseOffDeep(pgNode) : false;
+        const inPG = mode === "protectionGroup";
+        const arOff = inPG ? this.hasAutoRecloseOffDeep(node) : false;
+        const pgId = inPG ? node.id : null;
 
         return this.renderParamRows(
           node.children || [],
@@ -288,11 +287,46 @@ export default {
           arOff
         );
       }
-
       return [];
     },
   },
   methods: {
+    findNodeLocal(arr = [], id) {
+      const t = String(id);
+      const stack = Array.isArray(arr) ? [...arr] : [];
+      while (stack.length) {
+        const n = stack.pop();
+        if (!n) continue;
+        if (String(n.id) === t) return n;
+        if (n.children?.length) stack.push(...n.children);
+      }
+      return null;
+    },
+
+    async reloadFromServer(keepFocus = true) {
+      const tree = await getEntityTree();
+      const iedNode = getAncestorByMode(tree, this.ownerData.node.id, "ied");
+      if (!iedNode) {
+        this.parameterGroups = [];
+        this.freshFocusNode = null;
+        return;
+      }
+      const groupTree = getGroupByIedId(tree, iedNode.id);
+      this.parameterGroups = groupTree?.children
+        ? JSON.parse(JSON.stringify(groupTree.children))
+        : [];
+
+      if (keepFocus) {
+        const focusId = this.focusNode?.id || this.ownerData.node?.id;
+        this.freshFocusNode = focusId
+          ? this.findNodeLocal(this.parameterGroups, focusId)
+          : null;
+      } else {
+        this.freshFocusNode = null;
+      }
+
+      this.$nextTick(() => this.$forceUpdate());
+    },
     isARField(name) {
       const n = this.normalize(name);
       return n === "initiate ar" || n === "lockout ar";
@@ -731,7 +765,7 @@ export default {
     },
     async saveAll() {
       this.menuOpen = false;
-
+      this.loadingSave = true;
       const groups = new Map();
       const processed = new Set();
 
@@ -747,43 +781,6 @@ export default {
         if (!groups.has(groupId)) groups.set(groupId, []);
         groups.get(groupId).push({ key: row.id, value: newVal });
         processed.add(row.id);
-
-        if (this.normalize(row.name) === "operation") {
-          const isOff = this.normalize(newVal) === "off";
-          this.rowsToRender.forEach((r) => {
-            if (r.isGroup && r.id === groupId) r.muted = isOff;
-            if (!r.isGroup && this.findParentGroupId(r.id) === groupId)
-              r.muted = isOff;
-          });
-
-          const parentGroup = this.findParentGroup(row.id);
-          if (this.normalize(parentGroup?.name) === "auto reclose") {
-            const pg = row.protectionGroupId;
-            this.rowsToRender.forEach((r) => {
-              if (
-                !r.isGroup &&
-                r.protectionGroupId === pg &&
-                this.isARField(r.name)
-              ) {
-                r.muted = isOff;
-              }
-            });
-          }
-        }
-
-        if (this.normalize(row.name) === "characteristic") {
-          const characteristicValueLower = this.normalize(newVal);
-          this.rowsToRender.forEach((r) => {
-            if (!r.isGroup && this.findParentGroupId(r.id) === groupId) {
-              const rowNameLower = this.normalize(r.name);
-              r.characteristicMuted =
-                (characteristicValueLower === "definite time" &&
-                  rowNameLower === "time dial") ||
-                (characteristicValueLower !== "definite time" &&
-                  rowNameLower === "delay time");
-            }
-          });
-        }
       });
 
       const payload = Array.from(groups.values());
@@ -793,26 +790,61 @@ export default {
           this.$message.info(
             this.language === "vi-vi" ? "Chưa có gì thay đổi!" : "No changes."
           );
-          this.isEditing = false;
-          this.editStates = {};
           return;
         }
 
         await updateDeviceParameters(payload);
         this.$message.success(this.successMessage);
 
-        const tree = await getEntityTree();
-        this.$emit("device-saved");
-        const iedNode = getAncestorByMode(tree, this.ownerData.node.id, "ied");
-        if (iedNode) {
-          const groupTree = getGroupByIedId(tree, iedNode.id);
-          if (groupTree?.children) {
-            this.parameterGroups = JSON.parse(
-              JSON.stringify(groupTree.children)
-            );
-            this.$nextTick(() => this.$forceUpdate());
+        this.rowsToRender.forEach((row) => {
+          if (!row.isGroup && this.editStates[row.id] !== undefined) {
+            const newVal = this.editStates[row.id];
+            if (row.value !== newVal) {
+              row.value = newVal;
+
+              if (
+                this.normalize(row.name) === "operation" &&
+                this.isOnOff(row)
+              ) {
+                const isOff = this.normalize(newVal) === "off";
+                const groupId = this.findParentGroupId(row.id);
+
+                this.rowsToRender.forEach((r) => {
+                  if (r.isGroup && r.id === groupId) {
+                    r.muted = isOff;
+                  } else if (
+                    !r.isGroup &&
+                    this.findParentGroupId(r.id) === groupId
+                  ) {
+                    r.muted = isOff;
+                  }
+                });
+
+                const parentGroup = this.findParentGroup(row.id);
+                if (this.normalize(parentGroup?.name) === "auto reclose") {
+                  const pg = row.protectionGroupId;
+                  this.rowsToRender.forEach((r) => {
+                    if (
+                      !r.isGroup &&
+                      r.protectionGroupId === pg &&
+                      this.isARField(r.name)
+                    ) {
+                      r.muted = isOff;
+                    }
+                  });
+                }
+              }
+            }
           }
-        }
+        });
+
+        this.isEditing = false;
+        this.editStates = {};
+
+        this.$forceUpdate();
+
+        await this.reloadFromServer(true);
+        this.$emit("device-saved");
       } catch (e) {
         let msg = this.failureMessage;
         if (e?.response?.data)
@@ -820,8 +852,7 @@ export default {
         else if (e?.message) msg = e.message;
         this.$message.error(msg);
       } finally {
-        this.isEditing = false;
-        this.editStates = {};
+        this.loadingSave = false;
       }
     },
     findParentGroupId(paramId) {
@@ -952,6 +983,7 @@ export default {
   font-size: 13px;
   margin-bottom: 30px;
   overflow: visible;
+  vertical-align: top;
 }
 
 .parameter-table th,
@@ -966,23 +998,23 @@ thead {
 }
 
 .value-col {
-  width: 120px;
-  max-width: 160px;
-  white-space: nowrap;
+  width: 220px;
+  max-width: 420px;
 }
 
 .cell {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   min-height: 22px;
   position: relative;
 }
 
 .cell-text {
   flex: 1 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .cell-input {
@@ -1111,6 +1143,7 @@ thead {
 .dragging .drag-handle {
   cursor: grabbing;
 }
+
 .dragging {
   user-select: none;
 }
