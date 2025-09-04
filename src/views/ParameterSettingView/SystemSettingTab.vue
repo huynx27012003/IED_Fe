@@ -33,12 +33,16 @@
               row.mode ? 'row-' + row.mode : '',
               { 'muted-row': row.muted || row.characteristicMuted },
               { 'only-value': row.onlyValue },
+              { 'signal-row': isSignalField(row.name) },
             ]"
           >
             <td class="param-name" :style="{ paddingLeft: row.padding + 'px' }">
               {{ row.name }}
             </td>
-            <td :class="['value-col', cellClass(row.value)]">
+            <td
+              :class="['value-col', cellClass(row.value)]"
+              :colspan="isSignalField(row.name) ? 5 : 1"
+            >
               <div class="cell">
                 <template v-if="!isEditing">
                   <span v-if="isOnOff(row)" class="switch-label">{{
@@ -97,18 +101,23 @@
               </div>
             </td>
 
-            <td :class="cellClass(row.unit)">
-              <span class="cell-text">{{ displayValue(row.unit) }}</span>
-            </td>
-            <td :class="cellClass(row.minVal)">
-              <span class="cell-text">{{ displayValue(row.minVal) }}</span>
-            </td>
-            <td :class="cellClass(row.maxVal)">
-              <span class="cell-text">{{ displayValue(row.maxVal) }}</span>
-            </td>
-            <td :class="cellClass(row.description)">
-              <span class="cell-text">{{ displayValue(row.description) }}</span>
-            </td>
+            <!-- Chỉ hiển thị các cột này nếu không phải là Signal field -->
+            <template v-if="!isSignalField(row.name)">
+              <td :class="cellClass(row.unit)">
+                <span class="cell-text">{{ displayValue(row.unit) }}</span>
+              </td>
+              <td :class="cellClass(row.minVal)">
+                <span class="cell-text">{{ displayValue(row.minVal) }}</span>
+              </td>
+              <td :class="cellClass(row.maxVal)">
+                <span class="cell-text">{{ displayValue(row.maxVal) }}</span>
+              </td>
+              <td :class="cellClass(row.description)">
+                <span class="cell-text">{{
+                  displayValue(row.description)
+                }}</span>
+              </td>
+            </template>
           </tr>
         </template>
       </tbody>
@@ -291,6 +300,14 @@ export default {
     },
   },
   methods: {
+    isSignalField(name) {
+      const normalizedName = this.normalize(name);
+      return (
+        normalizedName === "lockout signal" ||
+        normalizedName === "initiate signal"
+      );
+    },
+
     findNodeLocal(arr = [], id) {
       const t = String(id);
       const stack = Array.isArray(arr) ? [...arr] : [];
@@ -961,7 +978,19 @@ export default {
   font-style: italic;
 }
 
-/* màu nhóm giữ nguyên như cũ */
+.signal-row .value-col {
+  width: auto;
+  max-width: none;
+  min-width: 300px;
+}
+
+.signal-row .cell-text {
+  white-space: normal;
+  word-wrap: break-word;
+  line-height: 1.4;
+  padding: 4px 0;
+}
+
 .row-ied,
 .row-systemSetting,
 .row-protectionGroup {
@@ -1004,7 +1033,7 @@ thead {
 
 .cell {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   min-height: 22px;
   position: relative;
 }
