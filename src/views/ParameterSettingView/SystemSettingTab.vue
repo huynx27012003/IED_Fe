@@ -238,7 +238,7 @@ export default {
             unit: "Unit",
             min: "Min",
             max: "Max",
-            description: "Reference",
+            description: "Description",
           };
     },
     editButtonText() {
@@ -1075,7 +1075,6 @@ export default {
   position: relative;
   resize: horizontal;
   overflow: auto;
-  min-width: 60px;
 }
 
 .parameter-table th::-webkit-resizer,
