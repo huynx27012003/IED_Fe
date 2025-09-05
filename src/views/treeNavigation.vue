@@ -622,9 +622,7 @@ export default {
 
     handleNodeDblClick(node) {
       console.log("Node double-clicked, focusing existing tab:", node);
-
       if (!node) return;
-
       if (node.mode === "ied") {
         const existingTab = this.tabs.find((t) => t.node?.id === node.id);
         if (existingTab) {

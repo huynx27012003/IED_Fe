@@ -5,21 +5,37 @@ export async function getEntityTreeRaw() {
     const response = await client.get('/api/entity-tree', {
       headers: { accept: 'application/json' }
     });
-    // console.log('getEntityTreeRaw: Result:', JSON.stringify(response.data, null, 5));
-    return response.data;
+
+    // Lọc bỏ các node con có name là "Lockout Signal" nếu node cha có name là "Auto Reclose"
+    const filterAutoRecloseChildren = (node) => {
+      if (node.name === 'Auto Reclose') {
+        node.children = node.children.filter(child => child.name !== 'Lockout Signal');
+      }
+      if (node.children?.length) {
+        node.children.forEach(filterAutoRecloseChildren);
+      }
+      return node;
+    };
+
+    // Áp dụng lọc cho mỗi node trong cây
+    const filteredData = Array.isArray(response.data) ? response.data.map(filterAutoRecloseChildren) : [];
+
+    // console.log('getEntityTreeRaw: Result:', JSON.stringify(filteredData, null, 5));
+    return filteredData;
   } catch (error) {
     console.error('getEntityTreeRaw: Error:', error.message, error.response?.data);
     throw error;
   }
 }
 
-// chẩn hóa cây
+
 export async function getEntityTree() {
   const data = await getEntityTreeRaw();
   const result = Array.isArray(data) ? data.map(normalizeNode) : [];
   // console.log('getEntityTree: Result:', JSON.stringify(result, null, 2));
   return result;
 }
+
 
 // chuẩn hóa node
 export function normalizeNode(n = {}) {

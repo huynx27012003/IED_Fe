@@ -71,7 +71,6 @@
           :tree="tree"
           :expandedGroup="item.node?.id"
           :focusNode="item.focusNode"
-          @saveAll="$emit('node-dblclick', $event)"
           @edit-start="handleEditStart"
           @device-saved="$emit('refresh-tree')"
           @device-created="$emit('refresh-tree')"

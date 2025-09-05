@@ -88,3 +88,15 @@ export async function updateDeviceParameters(parameterGroups) {
     throw error;
   }
 }
+export async function deleteDevice(iedId) {
+  try {
+    const response = await client.delete('/api/ied/delete', {
+      params: { iedId }
+    });
+    console.log('Delete response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting device with id=${iedId}:`, error);
+    throw error;
+  }
+}

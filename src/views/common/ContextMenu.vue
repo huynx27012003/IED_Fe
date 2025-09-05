@@ -111,7 +111,7 @@ import {
   getAncestorByMode,
   // findSubPathById,
 } from "@/api/treenode";
-import { importDevice } from "@/api/device";
+import { importDevice, deleteDevice } from "@/api/device";
 import Loading from "@/components/Loading.vue";
 
 export default {
@@ -176,7 +176,7 @@ export default {
     isOpen(level, key) {
       return this.activePath[level] === key;
     },
-    emitAction(action) {
+    async emitAction(action) {
       if (!this.selectedNode || !this.selectedNode.id) {
         console.error("selectedNode không hợp lệ:", this.selectedNode);
         this.$emit("close");
@@ -202,6 +202,22 @@ export default {
         tab.component = "TestManagementTab";
       }
 
+      if (action === "delete") {
+        try {
+          await deleteDevice(this.selectedNode.id);
+          this.$message.success(
+            `Device with ID: ${this.selectedNode.id} has been deleted.`
+          );
+          this.$emit("close");
+          this.$emit("refresh-tree");
+        } catch (error) {
+          console.error("Error deleting device:", error);
+          this.$message.error(
+            `Failed to delete device with ID: ${this.selectedNode.id}`
+          );
+        }
+        return;
+      }
       if (
         action === "protectionGroup" ||
         action === "protectionLevel" ||

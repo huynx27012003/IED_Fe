@@ -62,7 +62,6 @@
                 </template>
 
                 <template v-else>
-                  <!-- select -->
                   <el-select
                     v-if="row.options && !isOnOff(row)"
                     v-model="editStates[row.id]"
@@ -80,7 +79,6 @@
                     />
                   </el-select>
 
-                  <!-- switch -->
                   <div
                     v-else-if="isOnOff(row)"
                     style="display: flex; align-items: center; width: 100%"
@@ -95,22 +93,16 @@
                     />
                   </div>
 
-                  <!-- input -->
                   <input
                     v-else
                     v-model="editStates[row.id]"
                     class="cell-input"
-                    :class="{
-                      'input-error':
-                        needsValidation(row) &&
-                        !isValid(row, editStates[row.id]),
-                    }"
-                    @blur="validateValue(row)"
                   />
                 </template>
               </div>
             </td>
 
+            <!-- Chỉ hiển thị các cột này nếu không phải là Signal field -->
             <template v-if="!isSignalField(row.name)">
               <td :class="cellClass(row.unit)">
                 <span class="cell-text">{{ displayValue(row.unit) }}</span>
@@ -311,60 +303,6 @@ export default {
     },
   },
   methods: {
-    needsValidation(row) {
-      // chỉ validate nếu min/max có giá trị thực sự
-      const hasMin =
-        row.minVal !== null &&
-        row.minVal !== "" &&
-        row.minVal !== undefined &&
-        row.minVal !== "-∞";
-      const hasMax =
-        row.maxVal !== null &&
-        row.maxVal !== "" &&
-        row.maxVal !== undefined &&
-        row.maxVal !== "+∞";
-      return hasMin || hasMax;
-    },
-
-    isValid(row, value) {
-      if (!this.needsValidation(row)) return true; // bỏ qua nếu không có min/max
-
-      if (value === "" || value == null) return true;
-      const num = Number(value);
-      if (isNaN(num)) return false;
-
-      const hasMin =
-        row.minVal !== null && row.minVal !== "" && row.minVal !== undefined;
-      const hasMax =
-        row.maxVal !== null && row.maxVal !== "" && row.maxVal !== undefined;
-
-      if (hasMin && num < Number(row.minVal)) return false;
-      if (hasMax && num > Number(row.maxVal)) return false;
-
-      return true;
-    },
-
-    validateValue(row) {
-      if (!this.needsValidation(row)) return;
-
-      const value = this.editStates[row.id];
-      if (!this.isValid(row, value)) {
-        const minTxt =
-          row.minVal != null && row.minVal !== "" ? row.minVal : "-∞";
-        const maxTxt =
-          row.maxVal != null && row.maxVal !== "" ? row.maxVal : "+∞";
-
-        if (this.language === "vi-vi") {
-          this.$message.warning(
-            `Giá trị của "${row.name}" phải nằm trong khoảng [${minTxt}, ${maxTxt}]`
-          );
-        } else {
-          this.$message.warning(
-            `The value of "${row.name}" must be between [${minTxt}, ${maxTxt}]`
-          );
-        }
-      }
-    },
     isSignalField(name) {
       const normalizedName = this.normalize(name);
       return (
@@ -386,15 +324,9 @@ export default {
     },
 
     async reloadFromServer(keepFocus = true) {
-      console.log("Reloading data from server...");
       const tree = await getEntityTree();
-      console.log("Tree data:", tree);
-      const iedNode = getAncestorByMode(tree, this.focusNode.id, "ied");
+      const iedNode = getAncestorByMode(tree, this.ownerData.node.id, "ied");
       if (!iedNode) {
-        console.log(
-          "No IED node found, resetting data. ownerData.node.id:",
-          this.ownerData.node.id
-        );
         this.parameterGroups = [];
         this.freshFocusNode = null;
         return;
@@ -403,7 +335,6 @@ export default {
       this.parameterGroups = groupTree?.children
         ? JSON.parse(JSON.stringify(groupTree.children))
         : [];
-      console.log("New parameterGroups:", this.parameterGroups);
 
       if (keepFocus) {
         const focusId = this.focusNode?.id || this.ownerData.node?.id;
@@ -414,10 +345,7 @@ export default {
         this.freshFocusNode = null;
       }
 
-      this.$nextTick(() => {
-        console.log("Forcing update...");
-        this.$forceUpdate();
-      });
+      this.$nextTick(() => this.$forceUpdate());
     },
     isARField(name) {
       const n = this.normalize(name);
@@ -898,13 +826,46 @@ export default {
             const newVal = this.editStates[row.id];
             if (row.value !== newVal) {
               row.value = newVal;
-              // ... (các logic khác)
+
+              if (
+                this.normalize(row.name) === "operation" &&
+                this.isOnOff(row)
+              ) {
+                const isOff = this.normalize(newVal) === "off";
+                const groupId = this.findParentGroupId(row.id);
+
+                this.rowsToRender.forEach((r) => {
+                  if (r.isGroup && r.id === groupId) {
+                    r.muted = isOff;
+                  } else if (
+                    !r.isGroup &&
+                    this.findParentGroupId(r.id) === groupId
+                  ) {
+                    r.muted = isOff;
+                  }
+                });
+
+                const parentGroup = this.findParentGroup(row.id);
+                if (this.normalize(parentGroup?.name) === "auto reclose") {
+                  const pg = row.protectionGroupId;
+                  this.rowsToRender.forEach((r) => {
+                    if (
+                      !r.isGroup &&
+                      r.protectionGroupId === pg &&
+                      this.isARField(r.name)
+                    ) {
+                      r.muted = isOff;
+                    }
+                  });
+                }
+              }
             }
           }
         });
 
         this.isEditing = false;
         this.editStates = {};
+
         this.$forceUpdate();
 
         await this.reloadFromServer(true);
@@ -1012,11 +973,6 @@ export default {
 </script>
 
 <style scoped>
-.input-error {
-  border: 1px solid red;
-  background-color: #ffeaea;
-}
-
 .muted-row td,
 .muted-row {
   background-color: #f3f3f3;
