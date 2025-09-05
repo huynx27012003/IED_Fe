@@ -102,6 +102,25 @@
         </span>
       </template>
     </el-dialog>
+    <el-dialog
+      v-model="showDeleteDialog"
+      title="Confirm Delete"
+      width="30%"
+      :before-close="cancelDelete"
+    >
+      <span
+        >Do you really want to delete device with ID:
+        {{ selectedNode.id }}?</span
+      >
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="cancelDelete">Cancel</el-button>
+          <el-button type="primary" @click="confirmDelete" :loading="isLoading">
+            {{ isLoading ? "Deleting..." : "Confirm" }}
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -129,6 +148,7 @@ export default {
   },
   data() {
     return {
+      showDeleteDialog: false,
       activePath: [],
       ownerModes: ["organisation"],
       showImportDialog: false,
@@ -166,6 +186,37 @@ export default {
     },
   },
   methods: {
+    cancelDelete() {
+      this.showDeleteDialog = false;
+      this.isLoading = false; // Reset trạng thái loading khi hủy
+    },
+
+    async confirmDelete() {
+      if (!this.selectedNode || !this.selectedNode.id) {
+        this.$message.error("Invalid node selected.");
+        return;
+      }
+
+      this.isLoading = true;
+
+      try {
+        await deleteDevice(this.selectedNode.id);
+        this.$message.success(
+          `Device with ID: ${this.selectedNode.name} has been deleted.`
+        );
+        this.showDeleteDialog = false;
+        this.$emit("close");
+        this.$emit("refresh-tree");
+      } catch (error) {
+        console.error("Error deleting device:", error);
+        this.$message.error(
+          `Failed to delete device with ID: ${this.selectedNode.id}`
+        );
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     handleClickOutside(e) {
       if (!this.$el.contains(e.target)) this.$emit("close");
     },
@@ -202,20 +253,25 @@ export default {
         tab.component = "TestManagementTab";
       }
 
+      // if (action === "delete") {
+      //   try {
+      //     await deleteDevice(this.selectedNode.id);
+      //     this.$message.success(
+      //       `Device with ID: ${this.selectedNode.id} has been deleted.`
+      //     );
+      //     this.$emit("close");
+      //     this.$emit("refresh-tree");
+      //   } catch (error) {
+      //     console.error("Error deleting device:", error);
+      //     this.$message.error(
+      //       `Failed to delete device with ID: ${this.selectedNode.id}`
+      //     );
+      //   }
+      //   return;
+      // }
       if (action === "delete") {
-        try {
-          await deleteDevice(this.selectedNode.id);
-          this.$message.success(
-            `Device with ID: ${this.selectedNode.id} has been deleted.`
-          );
-          this.$emit("close");
-          this.$emit("refresh-tree");
-        } catch (error) {
-          console.error("Error deleting device:", error);
-          this.$message.error(
-            `Failed to delete device with ID: ${this.selectedNode.id}`
-          );
-        }
+        // Hiển thị hộp thoại xác nhận xóa
+        this.showDeleteDialog = true;
         return;
       }
       if (
