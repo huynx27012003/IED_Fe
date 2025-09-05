@@ -1,7 +1,12 @@
 <template>
-  <div v-if="visible" class="context-menu" ref="menu">
-    <!-- gọi Loading.vue -->
-    <Loading v-if="isLoading" />
+  <div
+    v-if="visible"
+    class="context-menu"
+    :class="{ 'loading-overlay': isLoading }"
+    ref="menu"
+  >
+    <!-- Loading overlay khi đang import/delete -->
+    <Loading v-if="isLoading" class="loading-component" />
 
     <ul v-if="nodeMode === 'bay'">
       <li @click="openSub(0, 'addDevices')">
@@ -153,7 +158,7 @@ export default {
       ownerModes: ["organisation"],
       showImportDialog: false,
       selectedFile: null,
-      isLoading: false, // Thêm state loading
+      isLoading: false,
     };
   },
   computed: {
@@ -188,7 +193,7 @@ export default {
   methods: {
     cancelDelete() {
       this.showDeleteDialog = false;
-      this.isLoading = false; // Reset trạng thái loading khi hủy
+      this.isLoading = false;
     },
 
     async confirmDelete() {
@@ -253,27 +258,11 @@ export default {
         tab.component = "TestManagementTab";
       }
 
-      // if (action === "delete") {
-      //   try {
-      //     await deleteDevice(this.selectedNode.id);
-      //     this.$message.success(
-      //       `Device with ID: ${this.selectedNode.id} has been deleted.`
-      //     );
-      //     this.$emit("close");
-      //     this.$emit("refresh-tree");
-      //   } catch (error) {
-      //     console.error("Error deleting device:", error);
-      //     this.$message.error(
-      //       `Failed to delete device with ID: ${this.selectedNode.id}`
-      //     );
-      //   }
-      //   return;
-      // }
       if (action === "delete") {
-        // Hiển thị hộp thoại xác nhận xóa
         this.showDeleteDialog = true;
         return;
       }
+
       if (
         action === "protectionGroup" ||
         action === "protectionLevel" ||
@@ -382,7 +371,7 @@ export default {
     cancelImport() {
       this.showImportDialog = false;
       this.selectedFile = null;
-      this.isLoading = false; // Reset loading state
+      this.isLoading = false;
       this.$refs.fileInput.value = "";
     },
     async confirmImport() {
@@ -391,7 +380,7 @@ export default {
         return;
       }
 
-      this.isLoading = true; // Bắt đầu loading
+      this.isLoading = true;
 
       try {
         await importDevice(this.selectedFile, this.selectedNode.id);
@@ -421,7 +410,7 @@ export default {
         this.$message.error(`Failed to import: ${error.message}`);
         console.error("Import error:", error);
       } finally {
-        this.isLoading = false; // Kết thúc loading
+        this.isLoading = false;
         this.showImportDialog = false;
         this.selectedFile = null;
         this.$refs.fileInput.value = "";
@@ -459,6 +448,31 @@ export default {
 </script>
 
 <style scoped>
+.context-menu {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.08);
+  min-width: 180px;
+  padding: 8px 0;
+  position: fixed;
+  z-index: 1000;
+  transition: opacity 0.3s ease;
+}
+
+.loading-overlay {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.loading-component {
+  position: fixed;
+  height: 100vh;
+  width: 100vw;
+  transform: translate(-50%, -50%);
+  z-index: 1002;
+}
+
 .context-menu ul {
   list-style: none;
   margin: 0;
@@ -487,7 +501,7 @@ export default {
 .submenu {
   position: absolute;
   top: 0;
-  left: calc(100% + 2px); /* 2px gap */
+  left: calc(100% + 2px);
   background: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -520,10 +534,5 @@ export default {
 .submenu-item.danger:hover {
   background-color: #ffeaea;
   color: #d60000;
-}
-
-.cancel {
-  color: red;
-  font-weight: 500;
 }
 </style>
