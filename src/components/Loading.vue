@@ -1,29 +1,36 @@
 <template>
   <div class="loading-overlay">
-    <div class="spinner">
-      <img
-        src="@/assets/images/icon.png"
-        alt="loading icon"
-        class="spinner-icon"
-      />
+    <div class="spinner-wrapper">
+      <div class="spinner">
+        <img
+          src="@/assets/images/icon.png"
+          alt="loading icon"
+          class="spinner-icon"
+        />
+      </div>
+      <span class="loading-text">Đang tải...</span>
     </div>
-    <span class="loading-text">Đang tải...</span>
   </div>
 </template>
 
 <style scoped>
 .loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  position: absolute;
+  inset: 0; /* phủ toàn bộ cha */
   background: rgba(255, 255, 255, 0.8);
   z-index: 9999;
+}
+
+/* spinner luôn ở giữa viewport */
+.spinner-wrapper {
+  position: fixed; /* 👈 quan trọng */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .spinner {

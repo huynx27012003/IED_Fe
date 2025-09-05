@@ -621,32 +621,67 @@ export default {
     },
 
     handleNodeDblClick(node) {
-      const ancestorIed = getAncestorByMode(
-        this.ownerServerList,
-        node.id,
-        "ied"
-      );
-      if (!ancestorIed) return;
+      console.log("Node double-clicked, focusing existing tab:", node);
 
-      const existingTab = this.tabs.find((t) => t.node?.id === ancestorIed.id);
+      if (!node) return;
 
-      if (existingTab) {
-        this.handleUpdateFocus({
-          iedId: ancestorIed.id,
-          focusNode: node,
-        });
-      } else {
-        const tab = {
-          id: ancestorIed.id,
-          name: ancestorIed.name,
-          mode: ancestorIed.mode,
-          component: "SystemSettingTab",
-          node: ancestorIed,
-          focusNode: node,
-        };
-        this.handleOpenTab(tab);
+      if (node.mode === "ied") {
+        const existingTab = this.tabs.find((t) => t.node?.id === node.id);
+        if (existingTab) {
+          this.handleUpdateFocus({ iedId: node.id, focusNode: node });
+        } else {
+          const tab = {
+            id: node.id,
+            name: node.name,
+            mode: node.mode,
+            component: "SystemSettingTab",
+            node,
+            focusNode: node,
+          };
+          this.handleOpenTab(tab);
+        }
+        return;
+      }
+
+      const focusModes = new Set([
+        "protectionFunction",
+        "protectionLevel",
+        "protectionGroup",
+        "settingFunction",
+        "systemSetting",
+      ]);
+
+      if (focusModes.has(node.mode)) {
+        const ancestorIed = getAncestorByMode(
+          this.ownerServerList,
+          node.id,
+          "ied"
+        );
+        if (!ancestorIed) return;
+
+        const existingTab = this.tabs.find(
+          (t) => t.node?.id === ancestorIed.id
+        );
+
+        if (existingTab) {
+          this.handleUpdateFocus({
+            iedId: ancestorIed.id,
+            focusNode: node,
+          });
+        } else {
+          const tab = {
+            id: ancestorIed.id,
+            name: ancestorIed.name,
+            mode: ancestorIed.mode,
+            component: "SystemSettingTab",
+            node: ancestorIed,
+            focusNode: node,
+          };
+          this.handleOpenTab(tab);
+        }
       }
     },
+
     handleUpdateFocus(payload) {
       if (!payload || !payload.iedId) {
         console.warn("handleUpdateFocus: payload invalid", payload);

@@ -23,19 +23,20 @@ export async function getEntityTree() {
 
 // chuẩn hóa node
 export function normalizeNode(n = {}) {
-  const normalized = {
+  return {
     id: n.id ?? null,
-    name: n.name ?? '',
-    mode: n.mode ?? '',
+    name: n.name ?? "",
+    mode: n.mode ?? "",
     description: n.description ?? null,
     value: n.value ?? null,
     unit: n.unit ?? null,
     minVal: n.minVal ?? null,
     maxVal: n.maxVal ?? null,
-    children: Array.isArray(n.children) ? n.children.map(normalizeNode) : [],
+    options: Array.isArray(n.options) ? [...n.options] : [],   
+    children: Array.isArray(n.children) ? n.children.map(normalizeNode) : [], 
   };
-  return normalized;
 }
+
 
 export function findNodeById(tree = [], id) {
   const t = String(id);

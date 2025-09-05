@@ -16,9 +16,11 @@
     "element-plus": "^2.9.11",
     "js-cookie": "^3.0.5",
     "leaflet": "^1.9.4",
+    "memoize-one": "^6.0.0",
     "mermaid": "^11.6.0",
     "vue": "^3.3.0",
     "vue-router": "^4.5.1",
+    "vue-virtual-scroller": "^1.1.2",
     "vuex": "^4.1.0"
   },
   "devDependencies": {
