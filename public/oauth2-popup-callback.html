@@ -1,0 +1,21 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>SSO Callback</title>
+  </head>
+  <body>
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var code = params.get('code');
+        if (window.opener && code) {
+          try {
+            window.opener.postMessage({ type: 'smart-sso-oauth', code: code }, window.location.origin);
+          } catch (e) {}
+          setTimeout(function () { window.close(); }, 10);
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,75 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  K8S_NAMESPACE: test
+  CI_REGISTRY: registry.english.io.vn
+  CI_REGISTRY_IMAGE: ${CI_REGISTRY}/tester-ied/ied/ied-web
+
+build_and_push:
+  stage: build
+  image: gcr.io/kaniko-project/executor:debug
+  tags: [docker]
+  rules:
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  script: |
+    set -e
+    if [ -n "$CI_COMMIT_TAG" ]; then IMAGE_TAG="$CI_COMMIT_TAG"; else IMAGE_TAG="latest"; fi
+    FULL_IMAGE="${CI_REGISTRY_IMAGE}:${IMAGE_TAG}"
+    echo "Build & push -> ${FULL_IMAGE}"
+
+    mkdir -p /kaniko/.docker
+    cat > /kaniko/.docker/config.json <<EOF
+    {
+      "auths": {
+        "${CI_REGISTRY}": {
+          "username": "${REG_USER}",
+          "password": "${REG_PASS}"
+        }
+      }
+    }
+    EOF
+
+    /kaniko/executor \
+      --context "$CI_PROJECT_DIR" \
+      --dockerfile "$CI_PROJECT_DIR/Dockerfile" \
+      --destination "$FULL_IMAGE" \
+      --insecure \
+      --skip-tls-verify
+
+deploy_k8s:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  tags: [docker]
+  rules:
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  script: |
+    set -e
+    if [ -n "$CI_COMMIT_TAG" ]; then IMAGE_TAG="$CI_COMMIT_TAG"; else IMAGE_TAG="latest"; fi
+    FULL_IMAGE="${CI_REGISTRY_IMAGE}:${IMAGE_TAG}"
+
+    echo "Create/refresh pull secret"
+    kubectl --kubeconfig="$KUBECONFIG" -n "$K8S_NAMESPACE" \
+      create secret docker-registry gitlab-registry-creds \
+      --docker-server="${CI_REGISTRY}" \
+      --docker-username="${REG_USER}" \
+      --docker-password="${REG_PASS}" \
+      --dry-run=client -o yaml | kubectl --kubeconfig="$KUBECONFIG" -n "$K8S_NAMESPACE" apply -f -
+
+    echo "Patch deployment to use pull secret"
+    kubectl --kubeconfig="$KUBECONFIG" -n "$K8S_NAMESPACE" \
+      patch deploy/ied-web -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name":"gitlab-registry-creds"}]}}}}'
+
+    echo "Set image (optional if always latest): ${FULL_IMAGE}"
+    kubectl --kubeconfig="$KUBECONFIG" -n "$K8S_NAMESPACE" \
+      set image deployment/ied-web ied-web="${FULL_IMAGE}" || true
+
+    echo "Force restart deployment (always triggers new ReplicaSet)"
+    kubectl --kubeconfig="$KUBECONFIG" -n "$K8S_NAMESPACE" \
+      rollout restart deployment/ied-web
+
+    kubectl --kubeconfig="$KUBECONFIG" -n "$K8S_NAMESPACE" \
+      rollout status deployment/ied-web
