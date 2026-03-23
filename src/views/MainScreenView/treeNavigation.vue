@@ -211,6 +211,7 @@
               mode="global"
               layout="tree"
               @open-subtree-tab="openSclImportSubtreeTab"
+              @open-context-menu="openContextMenu"
               @control-block-update="handleControlBlockUpdate"
             />
           </div>
@@ -656,6 +657,7 @@
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
 .child-nav::-webkit-scrollbar {
   display: none;
 }
@@ -1030,6 +1032,3 @@
   word-break: break-word;
 }
 </style>
-
-
-

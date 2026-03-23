@@ -1,6 +1,14 @@
 <template>
   <div class="activity-bar">
     <div class="activity-bar-top">
+      <button
+        class="sidebar-toggle-modern"
+        :title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        @click="$emit('toggle-sidebar')"
+      >
+        <i :class="sidebarCollapsed ? 'fa-solid fa-angles-right' : 'fa-solid fa-angles-left'"></i>
+      </button>
+
       <div
         v-for="item in topItems"
         :key="item.id"
@@ -89,12 +97,6 @@ export default {
           icon: 'fa-solid fa-circle-question',
           title: 'Help',
           action: 'noop'
-        },
-        {
-          id: 'toggleSidebar',
-          titleExpand: 'Expand sidebar',
-          titleCollapse: 'Collapse sidebar',
-          action: 'toggleSidebar'
         }
       ]
     };
@@ -154,6 +156,36 @@ export default {
   flex-direction: column;
   align-items: center;
   padding: 25px 0;
+}
+
+.activity-bar-top {
+  padding-top: 10px;
+}
+
+.sidebar-toggle-modern {
+  width: 34px;
+  height: 34px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(191, 220, 255, 0.35);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.07));
+  color: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 12px rgba(8, 22, 47, 0.25);
+}
+
+.sidebar-toggle-modern:hover {
+  transform: translateY(-1px);
+  border-color: rgba(191, 220, 255, 0.55);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.12));
+}
+
+.sidebar-toggle-modern i {
+  font-size: 14px;
 }
 
 .activity-bar-item {

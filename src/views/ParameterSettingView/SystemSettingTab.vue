@@ -75,7 +75,8 @@
             >
               <i class="fa-solid fa-pen"></i>
             </button>
-            <template v-else>
+
+            <div v-else class="edit-mode-group">
               <button
                 type="button"
                 class="table-pane-action-btn"
@@ -94,7 +95,35 @@
               >
                 <i class="fa-solid fa-times"></i>
               </button>
-            </template>
+              <button
+                type="button"
+                class="table-pane-action-btn"
+                @click="onClickSetOperation('On')"
+                aria-label="Turn On"
+                title="Turn On"
+              >
+                <i class="fa-solid fa-toggle-on"></i>
+              </button>
+              <button
+                type="button"
+                class="table-pane-action-btn"
+                @click="onClickSetOperation('Off')"
+                aria-label="Turn Off"
+                title="Turn Off"
+              >
+                <i class="fa-solid fa-toggle-off"></i>
+              </button>
+            </div>
+
+            <button
+              type="button"
+              class="table-pane-action-btn"
+              @click="openZonePreview"
+              aria-label="Zone diagram"
+              title="Zone diagram"
+            >
+              <i class="fa-solid fa-chart-line"></i>
+            </button>
 
             <div class="table-pane-action-divider"></div>
 
@@ -115,26 +144,6 @@
               title="Expand all rows"
             >
               <i class="fa-solid fa-expand"></i>
-            </button>
-
-            <div class="table-pane-action-divider"></div>
-            <button
-              type="button"
-              class="table-pane-action-btn"
-              @click="onClickSetOperation('On')"
-              aria-label="Turn On"
-              title="Turn On"
-            >
-              <i class="fa-solid fa-toggle-on"></i>
-            </button>
-            <button
-              type="button"
-              class="table-pane-action-btn"
-              @click="onClickSetOperation('Off')"
-              aria-label="Turn Off"
-              title="Turn Off"
-            >
-              <i class="fa-solid fa-toggle-off"></i>
             </button>
           </div>
         </div>
@@ -224,7 +233,7 @@
 
                 <template v-else>
                   <el-select
-                    v-if="row.options && !row.isOnOff"
+                    v-if="hasSelectableOptions(row)"
                     v-model="editStates[row.id]"
                     :placeholder="selectPlaceholder"
                     style="width: 100%"
@@ -287,10 +296,16 @@
       </tbody>
             </table>
            </template>
-          </div>
         </div>
-     </div>
-  </div>
+      </div>
+
+      <Diagram
+        v-model="showZoneDialog"
+        :polygons="diagramPolygons"
+        :loading="diagramLoading"
+      />
+   </div>
+ </div>
 </template>
 
 <script src="./SystemSettingTab.script.js"></script>
@@ -628,6 +643,16 @@ thead {
   height: 18px;
   background: #ddd;
   margin: 0 2px;
+}
+
+.edit-mode-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 8px;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.18);
 }
 
 .pane-subtitle {

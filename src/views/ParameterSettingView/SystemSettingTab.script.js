@@ -1,12 +1,15 @@
 import { mapState } from "vuex";
 import Loading from "@/components/Loading.vue";
 import TreeNode from "@/views/common/TreeNode.vue";
+import Diagram from "@/views/ParameterSettingView/Diagram.vue";
+import { getPointsDistanceByIedId } from "@/api/pointsDistance";
+import { getAncestorByMode } from "@/api/treenode";
 import { useParamTree } from "@/helpers/parameterSetting/useParamTree";
 import { useParamTable } from "@/helpers/parameterSetting/useParamTable";
 import { useParamEdit } from "@/helpers/parameterSetting/useParamEdit";
 export default {
   name: "SystemSettingTab",
-  components: { Loading, TreeNode },
+  components: { Loading, TreeNode, Diagram },
   props: {
     ownerData: { type: Object, required: true },
     focusNode: { type: Object, default: null },
@@ -116,6 +119,11 @@ export default {
       virtualOverscan: 8,
       virtualScrollTop: 0,
       virtualViewportHeight: 0,
+
+      // Mock protection zone preview
+      showZoneDialog: false,
+      diagramLoading: false,
+      diagramPolygons: [],
     };
   },
   computed: {
@@ -296,6 +304,87 @@ export default {
     ...useParamTree(),
     ...useParamTable(),
     ...useParamEdit(),
+    resolveCurrentIedId() {
+      const node = this.freshFocusNode || this.focusNode || this.ownerData?.node;
+      if (!node) return this.ownerData?.node?.id || null;
+
+      if (node.mode === "ied") return node.id;
+
+      const ancestor = getAncestorByMode(this.tree, node.id, "ied");
+      return ancestor?.id || this.ownerData?.node?.id || null;
+    },
+    buildDiagramPolygons(payload) {
+      const palette = [
+        "#2a9d8f",
+        "#3a86ff",
+        "#ff006e",
+        "#fb8500",
+        "#8338ec",
+        "#06d6a0",
+        "#118ab2",
+        "#ef476f",
+        "#8d6e63",
+        "#4361ee",
+        "#f4a261",
+        "#7b2cbf",
+      ];
+
+      const groups = Array.isArray(payload) ? payload : [];
+      const polygons = [];
+
+      groups.forEach((group) => {
+        const levels = Array.isArray(group?.levels) ? group.levels : [];
+        levels.forEach((lv) => {
+          const rawPoints = Array.isArray(lv?.points) ? lv.points : [];
+          if (!rawPoints.length) return;
+
+          const points = rawPoints
+            .slice()
+            .sort((a, b) => (a?.pointIndex ?? 0) - (b?.pointIndex ?? 0))
+            .map((p) => ({ r: Number(p?.r), x: Number(p?.x) }))
+            .filter((p) => Number.isFinite(p.r) && Number.isFinite(p.x));
+
+          if (points.length < 2) return;
+
+          const idx = polygons.length;
+
+          polygons.push({
+            key: `${group?.type || "TYPE"}-g${lv?.group || 0}-l${lv?.level || 0}-${lv?.id || idx}`,
+            label: `${group?.type || "TYPE"} G${lv?.group || "?"}-L${lv?.level || "?"}`,
+            type: group?.type || "TYPE",
+            distanceName: group?.name || group?.type || "TYPE",
+            group: Number(lv?.group) || 0,
+            level: Number(lv?.level) || 0,
+            color: palette[idx % palette.length],
+            points,
+          });
+        });
+      });
+
+      return polygons;
+    },
+    async openZonePreview() {
+      const iedId = this.resolveCurrentIedId();
+      if (!iedId) {
+        this.$message?.warning?.("Cannot determine IED id for diagram");
+        return;
+      }
+
+      this.showZoneDialog = true;
+      this.diagramLoading = true;
+      this.diagramPolygons = [];
+
+      try {
+        const response = await getPointsDistanceByIedId(iedId);
+        const payload = response?.data ?? response;
+        this.diagramPolygons = this.buildDiagramPolygons(payload);
+      } catch (error) {
+        console.error("Load diagram points failed:", error);
+        this.$message?.error?.("Failed to load diagram points");
+      } finally {
+        this.diagramLoading = false;
+      }
+    },
   },
   mounted() {
     // Parameter tree is derived from cached prop `tree` (no extra `/entity-tree` call).

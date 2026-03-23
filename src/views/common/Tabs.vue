@@ -2,11 +2,7 @@
 <template>
   <div ref="customTabs" class="custom-tabs">
     <div class="tabs-header">
-      <div class="scroll-btn left" @click="scrollLeft">
-        <i class="fa-solid fa-chevron-left"></i>
-      </div>
-
-      <div class="tabs-header-data" ref="tabsHeader" @scroll="checkScroll">
+      <div class="tabs-header-data" ref="tabsHeader">
         <div
           v-for="(tab, index) in tabs"
           :key="tab?.id || index"
@@ -53,10 +49,6 @@
             >✖</span
           >
         </div>
-      </div>
-
-      <div class="scroll-btn right" @click="scrollRight">
-        <i class="fa-solid fa-angle-right"></i>
       </div>
     </div>
 
@@ -300,26 +292,30 @@ export default {
   display: flex;
   height: 100%;
   box-sizing: border-box;
-  width: calc(100% - 40px);
+  width: 100%;
   border-bottom: 1px rgb(224, 222, 222) solid;
   flex-wrap: nowrap;
   overflow-x: hidden;
   overflow-y: hidden;
-  padding: 0 10px;
-  margin: 0 10px;
+  padding: 0 6px;
+  margin: 0;
   gap: 8px;
 }
 .tab-item {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0 10px;
+  justify-content: flex-start;
+  padding: 0 8px;
   cursor: pointer;
   transition: all 0.3s;
   white-space: nowrap;
   position: relative;
   border-radius: 4px;
   border-right: 0.5px solid #f4f4f4;
+  flex: 1 1 0;
+  min-width: 64px;
+  max-width: 220px;
+  overflow: hidden;
 }
 .tab-item:last-child {
   border-right: none;
@@ -333,6 +329,12 @@ export default {
   font-weight: bold;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
+}
+.tab-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .close-icon {
   cursor: pointer;
@@ -354,16 +356,6 @@ export default {
 }
 .close-icon:hover {
   background-color: #e8e8e8;
-}
-.scroll-btn {
-  display: flex;
-  height: 100%;
-  cursor: pointer;
-  font-size: 15px;
-  color: #012596;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
 }
 .tabs-content {
   flex: 1;

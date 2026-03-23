@@ -1,11 +1,21 @@
-﻿<template>
+<template>
   <div class="login-container">
-    <el-card class="login-card">
-      <h2 class="login-title">Đăng nhập</h2>
-      <div class="login-form" style="text-align:center;">
-        <el-button type="success" @click="startSSOPopupLogin">Login with SSO</el-button>
+    <div class="login-panel">
+      <div class="panel-header">
+        <div class="brand-badge">
+          ATDigital IED
+        </div>
       </div>
-    </el-card>
+
+      <div class="login-title">IED Management System</div>
+
+      <div class="login-form">
+        <el-button class="sso-button" @click="startSSOPopupLogin">
+          <i class="fa-solid fa-right-to-bracket"></i>
+          Login with SSO
+        </el-button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -100,24 +110,108 @@ export default {
 
 <style scoped>
 .login-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
   min-height: 100vh;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f6fa;
+  background: linear-gradient(160deg, #f8fbff 0%, #edf4fd 52%, #f5f9ff 100%);
+  font-family: "IBM Plex Sans", "Montserrat", "Noto Sans", sans-serif;
 }
-.login-card {
-  width: 350px;
-  padding: 32px 24px;
+
+.login-container::before,
+.login-container::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
 }
-.login-title {
-  text-align: center;
-  margin-bottom: 24px;
-  font-weight: bold;
-  font-size: 22px;
-  color: #333;
+
+.login-container::before {
+  width: 460px;
+  height: 460px;
+  left: -160px;
+  top: -180px;
+  background: radial-gradient(circle at 30% 30%, rgba(86, 154, 236, 0.22), rgba(86, 154, 236, 0));
 }
+
+.login-container::after {
+  width: 520px;
+  height: 520px;
+  right: -220px;
+  bottom: -240px;
+  background: radial-gradient(circle at 35% 35%, rgba(34, 85, 158, 0.18), rgba(34, 85, 158, 0));
+}
+
+.login-panel {
+  position: relative;
+  z-index: 1;
+  width: min(92vw, 460px);
+  padding: 26px 24px;
+  border-radius: 18px;
+  border: 1px solid rgba(167, 197, 233, 0.74);
+  background: linear-gradient(155deg, rgba(247, 252, 255, 0.76), rgba(233, 244, 255, 0.66));
+  backdrop-filter: blur(14px) saturate(118%);
+  -webkit-backdrop-filter: blur(14px) saturate(118%);
+  box-shadow: 0 14px 28px rgba(23, 54, 104, 0.18);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #1b477f;
+  border: 1px solid rgba(169, 198, 234, 0.86);
+  background: rgba(228, 241, 255, 0.78);
+}
+
 .login-form {
-  margin-top: 12px;
+  margin-top: 50px;
 }
+
+.login-title {
+  margin: 14px 0 8px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 800;
+  color: #123f79;
+  letter-spacing: 0.2px;
+}
+
+.sso-button {
+  width: 100%;
+  height: 46px;
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  background: linear-gradient(130deg, #1e3c72 0%, #2a5298 100%) !important;
+  box-shadow: 0 10px 20px rgba(34, 76, 140, 0.28);
+}
+
+.sso-button:hover {
+  transform: translateY(-1px);
+}
+
+.sso-button :deep(i) {
+  margin-right: 8px;
+}
+
 </style>

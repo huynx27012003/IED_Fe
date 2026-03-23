@@ -1,8 +1,10 @@
 <template>
   <div class="scl-management-tab">
     <SCLManage
-      mode="ied"
-      :title="`SCL Management for ${iedName}`"
+      :mode="sclManageMode"
+      :title="sclManageTitle"
+      :ied-id="iedId"
+      :scl-id="sclId"
       @control-block-update="(node) => $emit('control-block-update', node)"
     />
   </div>
@@ -19,6 +21,31 @@ export default {
     ownerData: { type: Object, default: () => ({}) },
   },
   computed: {
+    sclId() {
+      return (
+        this.ownerData?.sclId ??
+        this.ownerData?.node?.sclId ??
+        (this.ownerData?.node?.mode === 'sclFile' ? this.ownerData?.node?.id : null) ??
+        null
+      );
+    },
+    iedId() {
+      return (
+        this.ownerData?.node?.id ??
+        this.ownerData?.id ??
+        null
+      );
+    },
+    sclManageMode() {
+      return this.sclId ? 'scl' : 'ied';
+    },
+    sclManageTitle() {
+      if (this.sclId) {
+        const fileName = this.ownerData?.fileName || this.ownerData?.node?.name || 'SCL file';
+        return `SCL Management for ${fileName}`;
+      }
+      return `SCL Management for ${this.iedName}`;
+    },
     iedName() {
       return (
         this.ownerData?.node?.name ||

@@ -24,8 +24,55 @@ export default {
 };
 </script>
 <style>
+:root {
+  --popup-glass-bg: linear-gradient(
+    145deg,
+    rgba(250, 254, 255, 0.9),
+    rgba(242, 248, 255, 0.86)
+  );
+  --popup-glass-border: rgba(166, 194, 229, 0.65);
+}
+
 .el-message {
   top: 60px !important;
+}
+
+.el-overlay {
+  background: rgba(14, 31, 61, 0.18) !important;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.el-dialog,
+.el-overlay .el-dialog,
+.el-message-box,
+.el-dropdown-menu,
+.context-menu,
+.submenu {
+  background: var(--popup-glass-bg) !important;
+  border: 1px solid var(--popup-glass-border) !important;
+  backdrop-filter: blur(10px) saturate(118%);
+  -webkit-backdrop-filter: blur(10px) saturate(118%);
+  box-shadow: 0 8px 18px rgba(15, 45, 92, 0.14) !important;
+}
+
+.el-dialog,
+.el-message-box,
+.el-dropdown-menu,
+.context-menu,
+.submenu {
+  border-radius: 12px !important;
+}
+
+.el-dialog__header,
+.el-message-box__header {
+  background: transparent !important;
+  border-bottom: none !important;
+}
+
+.el-dialog__footer {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-top: 1px solid rgba(176, 203, 233, 0.45) !important;
 }
 
 html,

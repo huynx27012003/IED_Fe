@@ -33,6 +33,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
 })
+
 // Navigation Guard
 router.beforeEach((to, from, next) => {
   const isAuth = store.state.isAuthenticated
@@ -40,7 +41,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !isAuth) {
     next({ name: 'login' })
   } else if (to.name === 'login' && isAuth) {
-    next({ name: 'tree' }) 
+    next({ name: 'tree' })
   } else {
     next()
   }

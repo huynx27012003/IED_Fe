@@ -30,6 +30,29 @@
             <i class="fa-solid fa-spinner fa-spin"></i>
             <span>Parsing SCL file...</span>
           </div>
+          <div
+            v-else-if="mode === 'global' && !displaySclTreeData.length"
+            class="scl-list-wrap"
+          >
+            <div v-if="state.isListLoading" class="table-placeholder">
+              Loading SCL list...
+            </div>
+            <div v-else-if="state.sclImportList && state.sclImportList.length" class="scl-file-list">
+              <div
+                v-for="(item, idx) in state.sclImportList"
+                :key="`${item?.sclId ?? 'scl'}-${idx}`"
+                class="scl-file-item"
+                @contextmenu="openSclFileContext($event, item)"
+              >
+                <i class="fa-regular fa-file-lines scl-file-icon"></i>
+                <span class="scl-file-name">{{ item?.fileName || '-' }}</span>
+              </div>
+            </div>
+            <div v-else class="empty-state">
+              <i class="fa-solid fa-file-import empty-icon"></i>
+              <p>No imported SCL files</p>
+            </div>
+          </div>
           <div v-else-if="!displaySclTreeData.length" class="empty-state">
             <i class="fa-solid fa-file-import empty-icon"></i>
             <p>No SCL file loaded</p>
@@ -91,6 +114,7 @@
                           type="text"
                           class="search-input"
                           placeholder="Search or filter results..."
+                          @keyup.enter="applySclNameFilter"
                         />
                         <div class="selected-filters">
                           <span
@@ -104,7 +128,7 @@
                             <span class="badge-close">×</span>
                           </span>
                         </div>
-                        <button type="button" class="search-btn" title="Search">
+                        <button type="button" class="search-btn" title="Search" @click="applySclNameFilter">
                           <i class="fa-solid fa-magnifying-glass"></i>
                         </button>
                         <div v-if="filterOpen" class="filter-dropdown">
@@ -133,7 +157,12 @@
                   </th>
                 </tr>
               </thead>
-              <tbody v-if="tableRows.length">
+              <tbody v-if="isFilterLoading">
+                <tr>
+                  <td class="table-placeholder" colspan="3">Loading...</td>
+                </tr>
+              </tbody>
+              <tbody v-else-if="tableRows.length">
                 <tr
                   v-for="row in tableRows"
                   :key="row.key"
@@ -183,6 +212,7 @@
 
 <script>
 import TreeNode from "@/views/common/TreeNode.vue";
+import { filterSclSnapshot } from "@/api/scl";
 import { useSclImportState } from "@/helpers/sclManage/useSclImportState";
 import { useSclTree } from "@/helpers/sclManage/useSclTree";
 import { useSclTable } from "@/helpers/sclManage/useSclTable";
@@ -195,7 +225,7 @@ export default {
   inject: {
     sclImportStore: { default: null },
   },
-  emits: ["open-subtree-tab", "control-block-update"],
+  emits: ["open-subtree-tab", "control-block-update", "open-context-menu"],
   props: {
     mode: {
       type: String,
@@ -204,6 +234,14 @@ export default {
     title: {
       type: String,
       default: ''
+    },
+    iedId: {
+      type: [String, Number],
+      default: null,
+    },
+    sclId: {
+      type: [String, Number],
+      default: null,
     },
     // `split`: tree + table (default).
     // `tree`: tree only (used for ActivityBar "SCL Import" left pane).
@@ -231,6 +269,9 @@ export default {
         { key: "da", label: "DA" },
       ],
       selectedFilterKeys: [],
+      isFilterLoading: false,
+      baseTableRootNode: null,
+      includeRootInTable: false,
       // Table expand/collapse must be independent from the SCL tree expand/collapse.
       tableExpandedById: {},
       // Used when this component isn't backed by an injected global store.
@@ -238,6 +279,8 @@ export default {
         sclTreeData: [],
         selectedNodes: [],
         isLoading: false,
+        isListLoading: false,
+        sclImportList: [],
         fileName: "",
         tableRootNode: null,
       },
@@ -284,11 +327,38 @@ export default {
     },
     tableRows() {
       if (!this.tableRootNode) return [];
+      const modeMap = {
+        ld: "logicalDevice",
+        ln: "logicalNode",
+        do: "dataObject",
+        da: "dataAttribute",
+      };
+
+      if (this.includeRootInTable) {
+        const rows = this.flattenTableRows([this.tableRootNode], 0);
+        if (!this.selectedFilterKeys.length) return rows;
+
+        const allowedModes = new Set(
+          this.selectedFilterKeys
+            .map((key) => modeMap[key])
+            .filter(Boolean)
+        );
+        return rows.filter((row) => allowedModes.has(String(row.mode || "")));
+      }
+
       const kids = Array.isArray(this.tableRootNode.children)
         ? this.tableRootNode.children
         : [];
       const top = kids.length ? kids : [this.tableRootNode];
-      return this.flattenTableRows(top, 0);
+      const rows = this.flattenTableRows(top, 0);
+      if (!this.selectedFilterKeys.length) return rows;
+
+      const allowedModes = new Set(
+        this.selectedFilterKeys
+          .map((key) => modeMap[key])
+          .filter(Boolean)
+      );
+      return rows.filter((row) => allowedModes.has(String(row.mode || "")));
     },
     selectedFilterOptions() {
       return this.filterOptions.filter((opt) =>
@@ -297,12 +367,31 @@ export default {
     },
   },
   watch: {
+    iedId: {
+      immediate: true,
+      handler() {
+        if (this.mode === "ied") {
+          this.loadSclFromDb();
+        }
+      },
+    },
+    sclId: {
+      immediate: true,
+      handler() {
+        if (this.mode === "scl") {
+          this.loadSclFromDb();
+        }
+      },
+    },
     tableRootNode: {
       immediate: true,
       handler(next) {
         // When selection changes (from the SCL tree), reset table UI state.
         this.tableFocusedNodeId = next?.id ?? null;
         this.tableExpandedById = {};
+        if (!this.searchQuery?.trim()) {
+          this.baseTableRootNode = next || null;
+        }
       },
     },
   },
@@ -323,8 +412,87 @@ export default {
         this.selectedFilterKeys = [...this.selectedFilterKeys, key];
       }
     },
+    async applySclNameFilter() {
+      if (!["ied", "scl"].includes(this.mode)) return;
+
+      const name = this.searchQuery?.trim();
+      if (!name) {
+        this.state.tableRootNode = this.baseTableRootNode || null;
+        this.includeRootInTable = false;
+        this.tableFocusedNodeId = this.state.tableRootNode?.id ?? null;
+        this.tableExpandedById = {};
+        this.emitControlBlockUpdate(this.state.tableRootNode || null);
+        return;
+      }
+
+      this.isFilterLoading = true;
+      try {
+        const response = await filterSclSnapshot({
+          name,
+          iedId: this.mode === "ied" ? this.iedId : "",
+          sclId: this.mode === "scl" ? this.sclId : "",
+        });
+        const payload = this.resolveSclPayload(response);
+
+        let nextRoot = null;
+        let includeRoot = true;
+
+        if (Array.isArray(payload)) {
+          const wrapped = {
+            name: "Filter Results",
+            mode: "root",
+            children: payload,
+          };
+          const normalizedWrapper = this.normalizeSclTree(wrapped);
+          nextRoot = normalizedWrapper || null;
+          includeRoot = false;
+        } else {
+          const normalized = this.normalizeSclTree(payload);
+          nextRoot = normalized || null;
+          includeRoot = !!nextRoot;
+        }
+
+        this.state.tableRootNode = nextRoot;
+        this.includeRootInTable = includeRoot;
+        this.tableFocusedNodeId = includeRoot
+          ? nextRoot?.id ?? null
+          : nextRoot?.children?.[0]?.id ?? null;
+        this.tableExpandedById = {};
+        this.emitControlBlockUpdate(
+          includeRoot ? nextRoot || null : nextRoot?.children?.[0] || null
+        );
+      } catch (err) {
+        console.error("Filter SCL snapshot failed:", err);
+        this.$message?.error?.("Failed to filter SCL data");
+      } finally {
+        this.isFilterLoading = false;
+      }
+    },
+    openSclFileContext(event, item) {
+      event.preventDefault();
+      const sclId = item?.sclId;
+      if (sclId == null || sclId === "") return;
+
+      this.$emit("open-context-menu", event, {
+        id: sclId,
+        sclId,
+        fileName: item?.fileName || "",
+        name: item?.fileName || `SCL ${sclId}`,
+        mode: "sclFile",
+      });
+    },
   },
   mounted() {
+    if (this.state.isListLoading === undefined) {
+      this.state.isListLoading = false;
+    }
+    if (!Array.isArray(this.state.sclImportList)) {
+      this.state.sclImportList = [];
+    }
+    if (this.mode === "global") {
+      this.loadSclImportList();
+    }
+
     this._onFilterOutsideClick = (event) => {
       const el = this.$refs.nameSearch;
       if (el && !el.contains(event.target)) {
@@ -532,6 +700,47 @@ export default {
   color: #999;
   text-align: center;
   padding: 40px;
+}
+
+.scl-list-wrap {
+  height: 100%;
+  overflow: auto;
+}
+
+.scl-file-list {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scl-file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #dce6f4;
+  border-radius: 6px;
+  background: #fff;
+  cursor: context-menu;
+  color: #555;
+  transition: all 0.2s ease;
+}
+
+.scl-file-item:hover {
+  background: rgba(0, 198, 255, 0.08);
+  color: #007bff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.scl-file-icon {
+  font-size: 13px;
+}
+
+.scl-file-name {
+  color: inherit;
+  font-weight: 500;
+  word-break: break-all;
 }
 
 .empty-icon {

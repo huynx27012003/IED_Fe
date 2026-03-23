@@ -27,4 +27,5 @@ if (accessToken && userJson) {
     console.warn('Failed to parse stored user data:', e)
   }
 }
+
 bootstrapApp()

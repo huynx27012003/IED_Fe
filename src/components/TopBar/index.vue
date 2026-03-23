@@ -64,7 +64,7 @@
           <i class="fa fa-bell"></i>
         </div>
 
-        <el-dropdown @command="handleCommand" trigger="click">
+        <el-dropdown @command="handleCommand" trigger="click" popper-class="topbar-dropdown-menu">
           <div
             class="iconHover"
             style="
@@ -94,7 +94,7 @@
           </template>
         </el-dropdown>
 
-        <el-dropdown @command="handleCommand" trigger="click">
+        <el-dropdown @command="handleCommand" trigger="click" popper-class="topbar-dropdown-menu">
           <div
             class="iconHover"
             style="
@@ -468,6 +468,35 @@ nav {
 
 .el-popper {
   z-index: 999999 !important;
+}
+
+.topbar-dropdown-menu.el-popper {
+  border: 1px solid rgba(168, 196, 229, 0.75) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 18px rgba(14, 41, 86, 0.14) !important;
+  background: linear-gradient(145deg, rgba(248, 252, 255, 0.9), rgba(238, 246, 255, 0.84)) !important;
+  backdrop-filter: blur(10px) saturate(118%);
+  -webkit-backdrop-filter: blur(10px) saturate(118%);
+}
+
+.topbar-dropdown-menu .el-popper__arrow::before {
+  background: linear-gradient(145deg, rgba(248, 252, 255, 0.9), rgba(238, 246, 255, 0.84)) !important;
+  border: 1px solid rgba(168, 196, 229, 0.75) !important;
+}
+
+.topbar-dropdown-menu .el-dropdown-menu {
+  border: none !important;
+  background: transparent !important;
+  padding: 6px !important;
+}
+
+.topbar-dropdown-menu .el-dropdown-menu__item {
+  border-radius: 8px;
+}
+
+.topbar-dropdown-menu .el-dropdown-menu__item:not(.is-disabled):hover {
+  background: rgba(214, 233, 255, 0.72) !important;
+  color: #1a427c !important;
 }
 
 .language-select-dropdown .el-select-dropdown__item {

@@ -2,31 +2,23 @@
   <div class="device-list-view">
     <div v-if="isLoading" class="loading">Loading device list...</div>
     <div v-else-if="deviceList && deviceList.length" class="table-container">
-      <table class="device-table">
+      <table class="device-table" :style="{ minWidth: `${tableMinWidth}px` }">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Vendor</th>
-            <th>Model</th>
-            <th>Serial Number</th>
-            <th>Hardware Version</th>
-            <th>Software Version</th>
-            <th>Order Code</th>
-            <th>Role</th>
+            <th v-for="column in tableColumns" :key="`header-${column}`">
+              {{ formatColumnName(column) }}
+            </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="device in deviceList" :key="device.id || device.name">
-            <td :class="cellClass(device.name)">{{ device.name || '' }}</td>
-            <td :class="cellClass(device.description)">{{ device.description || '' }}</td>
-            <td :class="cellClass(device.vendor)">{{ device.vendor || '' }}</td>
-            <td :class="cellClass(device.model)">{{ device.model || '' }}</td>
-            <td :class="cellClass(device.serialNumber)">{{ device.serialNumber || '' }}</td>
-            <td :class="cellClass(device.hardwareVersion)">{{ device.hardwareVersion || '' }}</td>
-            <td :class="cellClass(device.softwareVersion)">{{ device.softwareVersion || '' }}</td>
-            <td :class="cellClass(device.orderCode)">{{ device.orderCode || '' }}</td>
-            <td :class="cellClass(device.role)">{{ device.role || '' }}</td>
+          <tr v-for="(device, index) in deviceList" :key="device.id || device.name || `device-${index}`">
+            <td
+              v-for="column in tableColumns"
+              :key="`cell-${device.id || device.name || index}-${column}`"
+              :class="cellClass(device[column])"
+            >
+              {{ formatCellValue(device[column]) }}
+            </td>
           </tr>
         </tbody>
       </table>
@@ -69,6 +61,24 @@ export default {
     },
     nodeName() {
       return this.node?.name || "";
+    },
+    tableColumns() {
+      const order = [];
+      const seen = new Set();
+
+      this.deviceList.forEach((device) => {
+        if (!device || typeof device !== "object") return;
+        Object.keys(device).forEach((key) => {
+          if (seen.has(key)) return;
+          seen.add(key);
+          order.push(key);
+        });
+      });
+
+      return order;
+    },
+    tableMinWidth() {
+      return Math.max(900, this.tableColumns.length * 160);
     },
   },
   watch: {
@@ -123,6 +133,24 @@ export default {
     },
     cellClass(v) {
       return this.isNullish(v) ? "null-cell" : "";
+    },
+    formatCellValue(v) {
+      if (this.isNullish(v)) return "";
+      if (typeof v === "object") {
+        try {
+          return JSON.stringify(v);
+        } catch (error) {
+          return String(v);
+        }
+      }
+      return String(v);
+    },
+    formatColumnName(key) {
+      if (!key) return "";
+      return String(key)
+        .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+        .replace(/[_-]+/g, " ")
+        .replace(/^./, (char) => char.toUpperCase());
     },
     // Resize Logic
     initResize() {
@@ -203,6 +231,7 @@ export default {
 
 .table-container {
   padding-bottom: 50px;
+  overflow-x: auto;
 }
 
 .device-table {

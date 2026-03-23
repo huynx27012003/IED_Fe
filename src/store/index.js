@@ -8,7 +8,7 @@ const store = createStore({
     return {
       isAuthenticated: !!savedToken,
       user: savedUser || null,
-      serverAddr: localStorage.getItem('SERVER_ADDR') || 'https://iedserver.english.io.vn',
+      serverAddr: localStorage.getItem('SERVER_ADDR') || 'http://103.163.118.212:30827',
       selectedOwner: null,
       language: 'en-vi'
     }

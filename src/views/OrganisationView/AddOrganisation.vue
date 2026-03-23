@@ -1,10 +1,5 @@
 <template>
   <div class="add-organisation">
-    <div class="header">
-      <h3>Add Organisation</h3>
-      <span class="hint">for {{ ownerName || "selected node" }}</span>
-    </div>
-
     <el-form
       ref="formRef"
       :model="form"
@@ -337,19 +332,6 @@ export default {
 <style scoped>
 .add-organisation {
   padding: 16px;
-}
-.header {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.header h3 {
-  margin: 0;
-}
-.hint {
-  color: #666;
-  font-size: 12px;
 }
 .org-form {
   background: #fff;

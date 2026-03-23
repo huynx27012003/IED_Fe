@@ -1,10 +1,5 @@
 <template>
   <div class="add-voltage-level">
-    <div class="header">
-      <h3>Add Voltage Level</h3>
-      <span class="hint">for {{ ownerName || "selected node" }}</span>
-    </div>
-
     <el-form
       ref="formRef"
       :model="form"
@@ -157,19 +152,6 @@ export default {
 <style scoped>
 .add-voltage-level {
   padding: 16px;
-}
-.header {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.header h3 {
-  margin: 0;
-}
-.hint {
-  color: #666;
-  font-size: 12px;
 }
 .vl-form {
   background: #fff;

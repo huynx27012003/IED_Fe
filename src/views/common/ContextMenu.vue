@@ -45,6 +45,10 @@
         <li class="danger" @click="emitAction('delete')">Delete</li>
       </ul>
 
+      <ul v-else-if="!isLoading && nodeMode === 'sclFile'">
+        <li @click="emitAction('openSclFile')">Open</li>
+      </ul>
+
       <ul v-else-if="!isLoading && nodeMode === 'settingFunction'">
         <li @click="emitAction('settingFunction')">Open</li>
         <li class="danger" @click="emitAction('delete')">Delete</li>
@@ -120,10 +124,11 @@
       <el-dialog
         v-model="showImportDialog"
         title="Confirm Import"
-        width="30%"
+        width="420px"
+        append-to-body
         :before-close="cancelImport"
       >
-        <span>Do you want to import for IED ID: {{ selectedNode.id }}?</span>
+        <div class="confirm-text">Do you want to import for IED: {{ selectedNode.name || selectedNode.id }}?</div>
         <template #footer>
           <span class="dialog-footer">
             <el-button @click="cancelImport">Cancel</el-button>
@@ -137,10 +142,11 @@
       <el-dialog
         v-model="showDeleteDialog"
         title="Confirm Delete"
-        width="30%"
+        width="420px"
+        append-to-body
         :before-close="cancelDelete"
       >
-        <span>Do you really want to delete device with ID: {{ selectedNode.id }}?</span>
+        <div class="confirm-text">Do you really want to delete device with ID: {{ selectedNode.id }}?</div>
         <template #footer>
           <span class="dialog-footer">
             <el-button @click="cancelDelete">Cancel</el-button>
@@ -493,6 +499,35 @@ export default {
           component: "SCLManagementTab",
           node: iedNode,
           focusNode: iedNode,
+        });
+        this.$nextTick(() => this.$emit("close"));
+        return;
+      }
+
+      if (action === "openSclFile") {
+        const sclId = this.selectedNode?.sclId ?? this.selectedNode?.id;
+        if (sclId == null || sclId === "") {
+          this.$message?.warning?.("Invalid SCL id");
+          this.$nextTick(() => this.$emit("close"));
+          return;
+        }
+
+        const fileName = this.selectedNode?.fileName || this.selectedNode?.name || `SCL ${sclId}`;
+        this.$emit("open-tab", {
+          id: `scl-${sclId}-sclManagement`,
+          name: `${fileName} - SCL Management`,
+          mode: "sclFile",
+          component: "SCLManagementTab",
+          sclId,
+          fileName,
+          node: {
+            id: String(sclId),
+            sclId,
+            mode: "sclFile",
+            name: fileName,
+            fileName,
+          },
+          focusNode: null,
         });
         this.$nextTick(() => this.$emit("close"));
         return;
@@ -870,5 +905,12 @@ export default {
 .submenu-item.danger:hover {
   background-color: #ffeaea;
   color: #d60000;
+}
+
+.confirm-text {
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.5;
+  color: #333;
 }
 </style>

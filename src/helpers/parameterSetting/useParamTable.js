@@ -1,5 +1,18 @@
 export function useParamTable() {
   return {
+    hasSelectableOptions(row) {
+      if (!row || row.isOnOff) return false;
+      if (!Array.isArray(row.options)) return false;
+
+      const normalized = row.options
+        .filter((opt) => opt !== null && opt !== undefined)
+        .map((opt) => String(opt).trim())
+        .filter((opt) => opt.length > 0);
+
+      if (!normalized.length) return false;
+
+      return new Set(normalized).size > 1;
+    },
     collapseMutedRows() {
       this.showMutedRows = false;
     },
@@ -24,6 +37,15 @@ export function useParamTable() {
       }
       if (this.isOnOff(row)) {
         return v === true || v === 1 || v === "On" ? "On" : "Off";
+      }
+      if (typeof v === "number" && Number.isFinite(v)) {
+        return v.toFixed(1);
+      }
+      if (typeof v === "string") {
+        const s = v.trim();
+        if (/^-?\d+(\.\d+)?$/.test(s)) {
+          return Number(s).toFixed(1);
+        }
       }
       return v;
     },

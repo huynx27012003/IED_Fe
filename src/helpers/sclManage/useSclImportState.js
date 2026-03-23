@@ -1,7 +1,51 @@
-import { importScl } from "@/api/scl";
+import { getSclSnapshot, importScl, listSclImports } from "@/api/scl";
 
 export function useSclImportState() {
   return {
+    resolveSclPayload(input) {
+      let current = input;
+
+      for (let i = 0; i < 8; i += 1) {
+        if (!current) return null;
+
+        if (Array.isArray(current)) {
+          return current;
+        }
+
+        if (typeof current !== "object") return null;
+
+        if (
+          Object.prototype.hasOwnProperty.call(current, "name") ||
+          Object.prototype.hasOwnProperty.call(current, "children") ||
+          Object.prototype.hasOwnProperty.call(current, "mode")
+        ) {
+          return current;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(current, "data")) {
+          current = current.data;
+          continue;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(current, "result")) {
+          current = current.result;
+          continue;
+        }
+
+        if (Array.isArray(current.items)) {
+          return current.items;
+        }
+
+        return null;
+      }
+
+      return null;
+    },
+    resolveSclRoot(input) {
+      const payload = this.resolveSclPayload(input);
+      if (Array.isArray(payload)) return payload[0] || null;
+      return payload;
+    },
     emitControlBlockUpdate(node) {
       this.$emit("control-block-update", node || null);
     },
@@ -18,12 +62,34 @@ export function useSclImportState() {
       const file = event?.target?.files?.[0];
       if (!file) return;
 
+      if (this.mode === "ied" && (this.iedId == null || this.iedId === "")) {
+        this.$message?.warning?.("IED id is missing for SCL import");
+      }
+
       this.state.fileName = file.name;
       this.state.isLoading = true;
 
       try {
-        const response = await importScl(file);
-        const normalized = this.normalizeSclTree(response);
+        const response = await importScl(file, this.mode === "ied" ? this.iedId : null);
+
+        if (this.mode === "global") {
+          // In global SCL IMPORT view, keep showing file list instead of rendering tree.
+          this.state.sclTreeData = [];
+          this.state.selectedNodes = [];
+          this.state.tableRootNode = null;
+          this.baseTableRootNode = null;
+          this.includeRootInTable = false;
+          this.tableFocusedNodeId = null;
+          this.tableExpandedById = {};
+          this.state.fileName = "";
+          this.emitControlBlockUpdate(null);
+          this.loadSclImportList();
+          this.$message?.success?.("SCL imported");
+          return;
+        }
+
+        const root = this.resolveSclRoot(response);
+        const normalized = this.normalizeSclTree(root);
         this.state.sclTreeData = normalized ? [normalized] : [];
 
         const firstVisible =
@@ -33,6 +99,8 @@ export function useSclImportState() {
         if (firstVisible) {
           this.state.selectedNodes = [firstVisible];
           this.state.tableRootNode = firstVisible;
+          this.baseTableRootNode = firstVisible;
+          this.includeRootInTable = false;
           this.tableFocusedNodeId = firstVisible.id;
           this.tableExpandedById = {};
           this.emitControlBlockUpdate(firstVisible);
@@ -40,22 +108,101 @@ export function useSclImportState() {
         } else {
           this.state.selectedNodes = [];
           this.state.tableRootNode = null;
+          this.baseTableRootNode = null;
+          this.includeRootInTable = false;
           this.tableFocusedNodeId = null;
           this.tableExpandedById = {};
           this.emitControlBlockUpdate(null);
         }
+
       } catch (err) {
         console.error("Import SCL failed:", err);
         this.$message?.error?.("Failed to import SCL file");
         this.state.sclTreeData = [];
         this.state.selectedNodes = [];
         this.state.tableRootNode = null;
+        this.baseTableRootNode = null;
+        this.includeRootInTable = false;
         this.tableFocusedNodeId = null;
         this.tableExpandedById = {};
         this.emitControlBlockUpdate(null);
       } finally {
         this.state.isLoading = false;
         if (event?.target) event.target.value = "";
+      }
+    },
+    async loadSclImportList() {
+      if (this.mode !== "global") return;
+
+      this.state.isListLoading = true;
+      try {
+        const response = await listSclImports();
+        const payload = response?.data ?? response;
+        this.state.sclImportList = Array.isArray(payload) ? payload : [];
+      } catch (err) {
+        console.error("Load SCL import list failed:", err);
+        this.state.sclImportList = [];
+      } finally {
+        this.state.isListLoading = false;
+      }
+    },
+    async loadSclFromDb() {
+      if (!["ied", "scl"].includes(this.mode)) return;
+      if (this.mode === "ied" && !this.iedId) {
+        this.clearFile();
+        return;
+      }
+      if (this.mode === "scl" && !this.sclId) {
+        this.clearFile();
+        return;
+      }
+
+      this.state.isLoading = true;
+      try {
+        const response = await getSclSnapshot({
+          iedId: this.mode === "ied" ? this.iedId : undefined,
+          sclId: this.mode === "scl" ? this.sclId : "",
+        });
+
+        const root = this.resolveSclRoot(response);
+        const normalized = this.normalizeSclTree(root);
+        this.state.sclTreeData = normalized ? [normalized] : [];
+
+        const firstVisible =
+          normalized && normalized.mode === "root" && Array.isArray(normalized.children)
+            ? normalized.children[0]
+            : normalized;
+
+        if (firstVisible) {
+          this.state.selectedNodes = [firstVisible];
+          this.state.tableRootNode = firstVisible;
+          this.baseTableRootNode = firstVisible;
+          this.includeRootInTable = false;
+          this.tableFocusedNodeId = firstVisible.id;
+          this.tableExpandedById = {};
+          this.emitControlBlockUpdate(firstVisible);
+          this.maybeOpenSubtreeTab();
+        } else {
+          this.state.selectedNodes = [];
+          this.state.tableRootNode = null;
+          this.baseTableRootNode = null;
+          this.includeRootInTable = false;
+          this.tableFocusedNodeId = null;
+          this.tableExpandedById = {};
+          this.emitControlBlockUpdate(null);
+        }
+      } catch (err) {
+        console.error("Load SCL snapshot failed:", err);
+        this.state.sclTreeData = [];
+        this.state.selectedNodes = [];
+        this.state.tableRootNode = null;
+        this.baseTableRootNode = null;
+        this.includeRootInTable = false;
+        this.tableFocusedNodeId = null;
+        this.tableExpandedById = {};
+        this.emitControlBlockUpdate(null);
+      } finally {
+        this.state.isLoading = false;
       }
     },
     normalizeSclTree(root) {
@@ -112,6 +259,8 @@ export function useSclImportState() {
       this.state.fileName = "";
       this.state.selectedNodes = [];
       this.state.tableRootNode = null;
+      this.baseTableRootNode = null;
+      this.includeRootInTable = false;
       this.tableFocusedNodeId = null;
       this.tableExpandedById = {};
       this.emitControlBlockUpdate(null);
