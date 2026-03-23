@@ -378,6 +378,30 @@
   table-layout: fixed;
 }
 
+.parameter-table:not(.table-resized) th:nth-child(1),
+.parameter-table:not(.table-resized) td:nth-child(1) {
+  width: 44%;
+}
+
+.parameter-table:not(.table-resized) th:nth-child(2),
+.parameter-table:not(.table-resized) td:nth-child(2) {
+  width: 11%;
+}
+
+.parameter-table:not(.table-resized) th:nth-child(3),
+.parameter-table:not(.table-resized) td:nth-child(3),
+.parameter-table:not(.table-resized) th:nth-child(4),
+.parameter-table:not(.table-resized) td:nth-child(4),
+.parameter-table:not(.table-resized) th:nth-child(5),
+.parameter-table:not(.table-resized) td:nth-child(5) {
+  width: 7%;
+}
+
+.parameter-table:not(.table-resized) th:nth-child(6),
+.parameter-table:not(.table-resized) td:nth-child(6) {
+  width: 24%;
+}
+
 .parameter-table.table-resized th:nth-child(1),
 .parameter-table.table-resized td:nth-child(1) {
   width: var(--col-1);
