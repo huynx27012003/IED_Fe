@@ -12,6 +12,10 @@ export function getModel(vendorCode, typeCode) {
   return get('/ied/get-model', { vendorCode, typeCode }, `Error fetching models for vendorCode=${vendorCode}, typeCode=${typeCode}`)
 }
 
+export function getAllActiveIeds() {
+  return get('/ied/get-all', {}, 'Error fetching active IED list')
+}
+
 export async function importDevice(file, iedId) {
   const formData = new FormData()
   formData.append('file', file)
@@ -55,4 +59,12 @@ export async function deleteDevice(iedId) {
 
 export function getHardwareByIed(iedId) {
   return get('/hardware/by-ied', { iedId }, `Error fetching hardware for iedId=${iedId}`)
+}
+
+export function getCompareSettingTrees(leftIedId, rightIedId) {
+  return get(
+    '/ied/compare-parameter',
+    { leftIedId, rightIedId },
+    `Error fetching compare settings for leftIedId=${leftIedId}, rightIedId=${rightIedId}`
+  )
 }

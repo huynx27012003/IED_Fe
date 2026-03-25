@@ -28,6 +28,27 @@
       <ul v-else-if="!isLoading && nodeMode === 'ied'">
         <li @click="emitAction('hardware')">Hardware Infomation</li>
         <li @click="emitAction('parameter')">Parameter Settings</li>
+        <li @click.stop="emitAction('compareSetting')">
+          Compare Setting <span class="arrow">▶</span>
+          <div v-if="isOpen(0, 'compareSetting')" class="submenu compare-submenu" @click.stop>
+            <div v-if="compareSettingLoading" class="submenu-item compare-submenu-status">
+              Loading IED list...
+            </div>
+            <div v-else-if="!compareSettingOptions.length" class="submenu-item compare-submenu-status">
+              No IED available
+            </div>
+            <div
+              v-else
+              v-for="item in compareSettingOptions"
+              :key="`compare-ied-${item.id}`"
+              class="submenu-item"
+              :class="{ 'compare-submenu-item-selected': selectedCompareIedId === item.id }"
+              @click.stop="selectCompareSetting(item)"
+            >
+              {{ item.name }}
+            </div>
+          </div>
+        </li>
         <li>System Integration Design</li>
         <li @click="emitAction('sclManagement')">SCL Management</li>
         <li @click="emitAction('test')">Test Management</li>
@@ -156,12 +177,13 @@
           </span>
         </template>
       </el-dialog>
+
     </div>
   </div>
 </template>
 <script>
 import { getAncestorByMode } from "@/api/treenode";
-import { importDevice, deleteDevice } from "@/api/device";
+import { importDevice, deleteDevice, getAllActiveIeds } from "@/api/device";
 import { deleteOrganisation } from "@/api/organisation";
 
 import { deleteSubstation } from "@/api/substation";
@@ -206,6 +228,9 @@ export default {
       activePath: [],
       ownerModes: ["organisation"],
       showImportDialog: false,
+      compareSettingLoading: false,
+      compareSettingOptions: [],
+      selectedCompareIedId: null,
       selectedFile: null,
       isLoading: false,
     };
@@ -267,7 +292,84 @@ export default {
     },
 
     handleClickOutside(e) {
+      if (this.showImportDialog || this.showDeleteDialog) {
+        return;
+      }
       if (this.$el && !this.$el.contains(e.target)) this.$emit("close");
+    },
+    normalizeCompareIedList(payload) {
+      const source = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload?.result)
+            ? payload.result
+            : [];
+
+      const selectedIds = new Set(
+        [
+          this.selectedNode?.id,
+          this.selectedNode?.mrid,
+          this.selectedNode?.mrd,
+          this.selectedNode?.iedId,
+        ]
+          .filter((v) => v !== null && v !== undefined && String(v).trim() !== "")
+          .map((v) => String(v).trim())
+      );
+
+      return source
+        .map((item) => {
+          const id = item?.mrid ?? item?.mrd ?? item?.iedId ?? item?.id;
+          const name = item?.name ?? item?.iedName ?? item?.label;
+          return {
+            id: id == null ? "" : String(id).trim(),
+            name: name == null ? "" : String(name),
+          };
+        })
+        .filter((item) => item.id && item.name && !selectedIds.has(item.id));
+    },
+    getSelectedIedId() {
+      const raw = this.selectedNode?.id ?? this.selectedNode?.mrid ?? this.selectedNode?.mrd ?? this.selectedNode?.iedId;
+      if (raw == null) return "";
+      return String(raw).trim();
+    },
+    async openCompareSettingSubmenu() {
+      this.openSub(0, "compareSetting");
+      this.compareSettingLoading = true;
+      this.compareSettingOptions = [];
+
+      try {
+        const response = await getAllActiveIeds();
+        this.compareSettingOptions = this.normalizeCompareIedList(response);
+      } catch (error) {
+        console.error("Load compare IED list failed:", error);
+        this.compareSettingOptions = [];
+        this.$message?.error?.("Failed to load IED list");
+      } finally {
+        this.compareSettingLoading = false;
+      }
+    },
+    selectCompareSetting(item) {
+      if (!item?.id) return;
+      const sourceIedId = this.getSelectedIedId();
+      if (!sourceIedId) {
+        this.$message?.warning?.("Current IED id is missing");
+        return;
+      }
+
+      this.selectedCompareIedId = item.id;
+      this.$emit("open-tab", {
+        id: `setting-compare-${sourceIedId}-${item.id}`,
+        name: "Setting Compare",
+        mode: "ied",
+        component: "SettingCompareTab",
+        node: this.selectedNode,
+        compareSourceId: sourceIedId,
+        compareSourceName: this.selectedNode?.name || sourceIedId,
+        compareTargetId: item.id,
+        compareTargetName: item.name || item.id,
+      });
+      this.$nextTick(() => this.$emit("close"));
     },
     openSub(level, key) {
       this.activePath = this.activePath.slice(0, level);
@@ -360,6 +462,15 @@ export default {
       if (action === "showAllGroup") {
         this.$emit("show-all-group", this.selectedNode);
         this.$nextTick(() => this.$emit("close"));
+        return;
+      }
+
+      if (action === "compareSetting") {
+        if (this.isOpen(0, "compareSetting")) {
+          this.activePath = [];
+          return;
+        }
+        await this.openCompareSettingSubmenu();
         return;
       }
 
@@ -912,5 +1023,20 @@ export default {
   word-break: break-word;
   line-height: 1.5;
   color: #333;
+}
+
+.compare-submenu {
+  max-height: 300px;
+  overflow: auto;
+}
+
+.compare-submenu-status {
+  color: #666;
+  cursor: default;
+}
+
+.compare-submenu-item-selected {
+  background: #eaf4ff;
+  color: #174f8f;
 }
 </style>

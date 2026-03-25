@@ -140,7 +140,13 @@
         </template>
 
         <div class="accent-line" v-if="selectedNodes?.some((n) => n.id === node.id)"></div>
-        <span class="node-name">{{ node.name || node.serial_no }}</span>
+        <span
+          class="node-name"
+          :class="{
+            'name-has-diff': isDiffNode,
+            'name-missing': isMissingNode,
+          }"
+        >{{ node.name || node.serial_no }}</span>
       </div>
     </span>
 
@@ -152,6 +158,7 @@
         :selectedNodes="selectedNodes"
         :selectedParameterId="selectedParameterId"
         :hide-operation-off="hideOperationOff"
+        :show-leaf-dblclick-popup="showLeafDblclickPopup"
         @fetch-children="(n) => $emit('fetch-children', n)"
         @show-properties="(n) => $emit('show-properties', n)"
         @update-selection="updateSelection"
@@ -161,6 +168,8 @@
         "
         @toggle-node="(node) => $emit('toggle-node', node)"
         @node-dblclick="$emit('node-dblclick', $event)"
+        @node-leaf-dblclick="$emit('node-leaf-dblclick', $event)"
+        @node-row-dblclick="$emit('node-row-dblclick', $event)"
       />
     </ul>
   </li>
@@ -227,7 +236,13 @@ function preloadIcons() {
 }
 preloadIcons();
 export default {
-  props: ["node", "selectedNodes", "selectedParameterId", "hideOperationOff"],
+  props: {
+    node: { type: Object, required: true },
+    selectedNodes: { type: Array, default: () => [] },
+    selectedParameterId: { type: [String, Number], default: "" },
+    hideOperationOff: { type: Boolean, default: false },
+    showLeafDblclickPopup: { type: Boolean, default: false },
+  },
   name: "TreeNode",
   components: {
     icon,
@@ -349,6 +364,12 @@ export default {
     },
     parentName() {
       return this.node?.parentNode?.name || "";
+    },
+    isMissingNode() {
+      return String(this.node?.compareStatus ?? "").toUpperCase() === "MISSING";
+    },
+    isDiffNode() {
+      return String(this.node?.compareStatus ?? "").toUpperCase() === "DIFF";
     },
   },
   watch: {
@@ -476,6 +497,27 @@ export default {
 
       return true;
     },
+    isToggleArrowVisible() {
+      if (this.node?.mode === "settingFunction" || this.node?.mode === "protectionLevel") {
+        return false;
+      }
+
+      if (!this.hasChildrenForToggle) return false;
+
+      if (
+        this.node?.mode === "protectionFunction" &&
+        Array.isArray(this.node?.children) &&
+        !this.node.children.some((c) => c.mode === "protectionLevel")
+      ) {
+        return false;
+      }
+
+      if (this.node?.mode === "ied" && !this.node.isSclTree && !this.node.showParamTree) {
+        return false;
+      }
+
+      return true;
+    },
 
     handleToggleClick(event) {
       if (event && event.button !== 0) return;
@@ -525,6 +567,11 @@ export default {
       if (event) {
         event.preventDefault();
         event.stopPropagation();
+      }
+      this.$emit("node-row-dblclick", this.node);
+      if (this.showLeafDblclickPopup && !this.isToggleArrowVisible()) {
+        this.$emit("node-leaf-dblclick", this.node);
+        return;
       }
       // behave exactly like clicking the toggle icon
       this.handleToggleClick({ button: 0 });
@@ -647,6 +694,14 @@ ul {
 .node-name {
   white-space: nowrap;
   letter-spacing: 0.3px;
+}
+
+.node-name.name-has-diff {
+  color: #c62828;
+}
+
+.node-name.name-missing {
+  color: #1565c0;
 }
 
 img {

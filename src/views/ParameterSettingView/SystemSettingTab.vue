@@ -380,12 +380,12 @@
 
 .parameter-table:not(.table-resized) th:nth-child(1),
 .parameter-table:not(.table-resized) td:nth-child(1) {
-  width: 44%;
+  width: 46%;
 }
 
 .parameter-table:not(.table-resized) th:nth-child(2),
 .parameter-table:not(.table-resized) td:nth-child(2) {
-  width: 11%;
+  width: 10%;
 }
 
 .parameter-table:not(.table-resized) th:nth-child(3),
@@ -394,12 +394,12 @@
 .parameter-table:not(.table-resized) td:nth-child(4),
 .parameter-table:not(.table-resized) th:nth-child(5),
 .parameter-table:not(.table-resized) td:nth-child(5) {
-  width: 7%;
+  width: 5%;
 }
 
 .parameter-table:not(.table-resized) th:nth-child(6),
 .parameter-table:not(.table-resized) td:nth-child(6) {
-  width: 24%;
+  width: 28%;
 }
 
 .parameter-table.table-resized th:nth-child(1),
@@ -433,13 +433,14 @@
 }
 
 .parameter-table th {
-  height: 30px;
+  min-height: 30px;
   border: 1px solid #ccc;
-  padding: 0 8px;
-  line-height: 30px;
+  padding: 6px 8px;
+  line-height: 1.25;
   text-align: left;
   position: relative;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
   box-sizing: border-box;
 }
 
@@ -448,9 +449,10 @@
   padding: 8px;
   text-align: left;
   position: relative;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-word;
 }
 
 

@@ -43,7 +43,10 @@
           <span
             class="close-icon mgr-10 mgl-10"
             :class="{
-              visible: hoveredTab === tab?.id || modelActive?.id === tab?.id,
+              visible:
+                hoveredTab === tab?.id ||
+                modelActive?.id === tab?.id ||
+                tab?.component === 'SettingCompareTab',
             }"
             @click.stop="closeTab(index)"
             >✖</span
@@ -52,8 +55,12 @@
       </div>
     </div>
 
-    <div class="tabs-content">
-      <div v-for="(item, idx) in tabs" :key="item?.id || 'tab-' + idx">
+    <div class="tabs-content" :class="{ 'compare-tab-active': modelActive?.component === 'SettingCompareTab' }">
+      <div
+        v-for="(item, idx) in tabs"
+        :key="item?.id || 'tab-' + idx"
+        class="tab-pane"
+      >
         <component
           v-show="modelActive?.id === item?.id"
           ref="componentLoadData"
@@ -94,10 +101,11 @@ const VoltageLevelView = defineAsyncComponent(() => import("@/views/VoltageLevel
 const DeviceListView = defineAsyncComponent(() => import("@/views/DeviceListView/DeviceListView.vue"));
 const SCLManagementTab = defineAsyncComponent(() => import("@/views/SCLManagementView/SCLManagementTab.vue"));
 const SCLImportSubtreeTab = defineAsyncComponent(() => import("@/views/SCLManagementView/SCLImportSubtreeTab.vue"));
+const SettingCompareTab = defineAsyncComponent(() => import("@/views/SettingCompareView/SettingCompareTab.vue"));
 
 export default {
   name: "Tabs",
-  components: { SystemSettingTab, TestManagementTab, AddDevice, OwnerView, AddOrganisation, AddSubstation, SubstationView, HardWareInfoView, AddVoltageLevel, VoltageLevelView, DeviceListView, SCLManagementTab, SCLImportSubtreeTab },
+  components: { SystemSettingTab, TestManagementTab, AddDevice, OwnerView, AddOrganisation, AddSubstation, SubstationView, HardWareInfoView, AddVoltageLevel, VoltageLevelView, DeviceListView, SCLManagementTab, SCLImportSubtreeTab, SettingCompareTab },
 
 
   props: {
@@ -244,6 +252,7 @@ export default {
       if (tab?.component === "HardWareInfoView") return "HardWareInfoView";
       if (tab?.component === "SCLManagementTab") return "SCLManagementTab";
       if (tab?.component === "SCLImportSubtreeTab") return "SCLImportSubtreeTab";
+      if (tab?.component === "SettingCompareTab") return "SettingCompareTab";
 
       if (this.dataType.includes(tab?.mode)) return "LocationViewData";
       if (tab?.component === "OwnerView") return "OwnerView";
@@ -305,7 +314,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 0 8px;
+  padding: 0 28px 0 8px;
   cursor: pointer;
   transition: all 0.3s;
   white-space: nowrap;
@@ -350,6 +359,10 @@ export default {
   box-sizing: border-box;
   border: 1px solid transparent;
   border-radius: 50%;
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 .close-icon.visible {
   visibility: visible;
@@ -367,6 +380,15 @@ export default {
   margin: 0;
   padding: 0;
   position: relative;
+}
+
+.tabs-content.compare-tab-active {
+  overflow-y: hidden;
+}
+
+.tab-pane {
+  height: 100%;
+  min-height: 0;
 }
 
 </style>
