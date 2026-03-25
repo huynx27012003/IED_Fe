@@ -55,11 +55,12 @@
       </div>
     </div>
 
-    <div class="tabs-content" :class="{ 'compare-tab-active': modelActive?.component === 'SettingCompareTab' }">
+    <div class="tabs-content">
       <div
         v-for="(item, idx) in tabs"
         :key="item?.id || 'tab-' + idx"
         class="tab-pane"
+        :style="modelActive?.id === item?.id ? { zIndex: 1 } : { zIndex: 0 }"
       >
         <component
           v-show="modelActive?.id === item?.id"
@@ -106,7 +107,6 @@ const SettingCompareTab = defineAsyncComponent(() => import("@/views/SettingComp
 export default {
   name: "Tabs",
   components: { SystemSettingTab, TestManagementTab, AddDevice, OwnerView, AddOrganisation, AddSubstation, SubstationView, HardWareInfoView, AddVoltageLevel, VoltageLevelView, DeviceListView, SCLManagementTab, SCLImportSubtreeTab, SettingCompareTab },
-
 
   props: {
     modelValue: { type: Object, default: () => ({}) },
@@ -176,11 +176,6 @@ export default {
 
         const activeId =
           this.modelActive?.id != null ? String(this.modelActive.id) : "";
-        // console.log("scrollToActiveTab: Checking", {
-        //   tabsHeader,
-        //   tabItemsCount: tabItems.length,
-        //   activeTabId: activeId || undefined,
-        // });
 
         if (!tabsHeader || !tabItems.length || !activeId) return;
 
@@ -190,7 +185,6 @@ export default {
 
         if (activeEl) {
           activeEl.scrollIntoView({ behavior: "smooth", inline: "center" });
-          // console.log("Scrolled to active tab:", activeId);
         }
       });
     },
@@ -374,21 +368,16 @@ export default {
   flex: 1;
   min-height: 0;
   width: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: auto;
+  overflow: hidden;
   margin: 0;
   padding: 0;
   position: relative;
 }
-
-.tabs-content.compare-tab-active {
-  overflow-y: hidden;
-}
-
 .tab-pane {
-  height: 100%;
-  min-height: 0;
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 0;
 }
-
 </style>
