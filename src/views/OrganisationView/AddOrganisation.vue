@@ -207,7 +207,6 @@ export default {
       submitting: false,
       form: this.initialForm(),
       rules: {
-        ownerId: [{ required: true, message: "Owner ID is required", trigger: "blur" }],
         name: [{ required: true, message: "Name is required", trigger: "blur" }],
       },
     };
@@ -284,7 +283,12 @@ export default {
           const toNull = (v) =>
             v === undefined || v === null || String(v).trim() === "" ? null : v;
           const payload = {
-            ownerId: Number(this.ownerId),
+            ownerId:
+              this.ownerId === undefined ||
+              this.ownerId === null ||
+              String(this.ownerId).trim() === ""
+                ? null
+                : Number(this.ownerId),
             taxCode: toNull(this.form.taxCode),
             name: toNull(this.form.name),
             aliasName: toNull(this.form.aliasName),

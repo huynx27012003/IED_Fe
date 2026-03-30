@@ -64,7 +64,22 @@
             </div>
 
             <div v-if="showOwner" class="child-nav">
-              <ul>
+              <div v-if="ownerTreeLoading" class="empty-owner-message">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <p>Loading owner tree...</p>
+              </div>
+              <div v-else-if="ownerTreeLoaded && !renderOwnerList.length" class="empty-owner-message">
+                <p>No organisation found.</p>
+                <button
+                  type="button"
+                  class="empty-owner-add-btn"
+                  @click="openAddOrganisationDialog(null)"
+                >
+                  <i class="fa-solid fa-sitemap"></i>
+                  Add Organisation
+                </button>
+              </div>
+              <ul v-else-if="renderOwnerList.length">
                 <TreeNode
                   v-for="item in renderOwnerList"
                   :key="item.id"
@@ -661,6 +676,48 @@
 .child-nav::-webkit-scrollbar {
   display: none;
 }
+
+.empty-owner-message {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #6b7280;
+}
+
+.empty-owner-message p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.empty-owner-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 240px;
+  padding: 11px 18px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #315aa1 0%, #24498f 100%);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(36, 73, 143, 0.28);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.empty-owner-add-btn:hover {
+  filter: brightness(1.06);
+}
+
+.empty-owner-add-btn:active {
+  transform: translateY(1px);
+}
+
 .sidebar.collapsed .child-nav {
   display: none;
 }

@@ -342,6 +342,8 @@ export default {
       count: "",
       selectedParameterId: null,
       ownerServerList: [],
+      ownerTreeLoading: false,
+      ownerTreeLoaded: false,
       // Cache thông tin IED theo iedId để tránh gọi lại API nhiều lần
       iedInfoCache: {},
       AssetType: [
@@ -751,13 +753,19 @@ export default {
       });
     },
     async reloadTree() {
+      this.ownerTreeLoading = true;
       try {
         this.saveExpandedState();
         const data = await getEntityTreeRaw();
-        this.ownerServerList = data;
+        this.ownerServerList = Array.isArray(data) ? data : [];
         this.restoreExpandedState(this.ownerServerList);
+        this.ownerTreeLoaded = true;
       } catch (e) {
         console.error("reloadTree failed:", e);
+        this.ownerServerList = [];
+        this.ownerTreeLoaded = true;
+      } finally {
+        this.ownerTreeLoading = false;
       }
     },
 
@@ -1282,6 +1290,7 @@ export default {
     },
   },
   async mounted() {
+    this.ownerTreeLoading = true;
     try {
       const data = await getEntityTreeRaw();
       if (Array.isArray(data)) {
@@ -1290,9 +1299,14 @@ export default {
         console.warn("API trả về dữ liệu không phải mảng:", data);
         this.ownerServerList = [];
       }
+      this.ownerTreeLoaded = true;
     } catch (err) {
       console.error("Lỗi khi tải entity tree:", err);
       this.$message?.error?.("Không tải được dữ liệu cây");
+      this.ownerServerList = [];
+      this.ownerTreeLoaded = true;
+    } finally {
+      this.ownerTreeLoading = false;
     }
   },
   beforeUnmount() {

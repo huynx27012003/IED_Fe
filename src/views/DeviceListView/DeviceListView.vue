@@ -5,31 +5,47 @@
     <template v-else-if="deviceList && deviceList.length">
       <div class="dashboard-section">
         <div class="dashboard-grid">
-          <div class="chart-card">
-            <div class="chart-title">By Type</div>
-            <div class="chart-content">
-              <canvas ref="typeChart"></canvas>
+          <div class="dashboard-row dashboard-row-top">
+            <div class="chart-card summary-card">
+              <div class="summary-main">
+                <div class="summary-icon-wrap">
+                  <i class="fa-solid fa-microchip summary-icon"></i>
+                </div>
+                <div class="summary-content">
+                  <div class="summary-value">{{ totalDevices }}</div>
+                  <div class="summary-label">Devices count</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chart-card by-type-card">
+              <div class="chart-title">By Type</div>
+              <div class="chart-content">
+                <canvas ref="typeChart"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card role-card">
+              <div class="chart-title">By Role</div>
+              <div class="chart-content">
+                <canvas ref="roleChart"></canvas>
+              </div>
             </div>
           </div>
 
-          <div class="chart-card">
-            <div class="chart-title">By Vendor</div>
-            <div class="chart-content">
-              <canvas ref="vendorChart"></canvas>
+          <div class="dashboard-row dashboard-row-bottom">
+            <div class="chart-card vendor-card">
+              <div class="chart-title">By Vendor</div>
+              <div class="chart-content">
+                <canvas ref="vendorChart"></canvas>
+              </div>
             </div>
-          </div>
 
-          <div class="chart-card">
-            <div class="chart-title">By Model</div>
-            <div class="chart-content">
-              <canvas ref="modelChart"></canvas>
-            </div>
-          </div>
-
-          <div class="chart-card">
-            <div class="chart-title">By Role</div>
-            <div class="chart-content">
-              <canvas ref="roleChart"></canvas>
+            <div class="chart-card model-card">
+              <div class="chart-title">By Model</div>
+              <div class="chart-content">
+                <canvas ref="modelChart"></canvas>
+              </div>
             </div>
           </div>
         </div>
@@ -99,6 +115,85 @@ function loadChartJs() {
   });
 }
 
+const TYPE_COUNT_LABEL_PLUGIN = {
+  id: "type-count-label-plugin",
+  afterDatasetsDraw(chart) {
+    const dataset = chart.config?.data?.datasets?.[0];
+    if (!dataset) return;
+    const meta = chart.getDatasetMeta(0);
+    if (!meta?.data?.length) return;
+
+    const ctx = chart.chart.ctx;
+    const area = chart.chartArea || { top: 0, bottom: 0 };
+    const labelsCount = Array.isArray(dataset.data) ? dataset.data.length : 0;
+    const useCompactLabels = labelsCount < 10;
+    const minGap = useCompactLabels ? 8 : 14;
+
+    const points = meta.data.map((arc, index) => {
+      const m = arc?._model;
+      if (!m) return null;
+      const angle = (m.startAngle + m.endAngle) / 2;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      const side = cos >= 0 ? "right" : "left";
+
+      return {
+        index,
+        text: String(dataset.data[index] ?? ""),
+        side,
+        edgeX: m.x + cos * m.outerRadius,
+        edgeY: m.y + sin * m.outerRadius,
+        rawY: m.y + sin * (m.outerRadius + (useCompactLabels ? 5 : 20)),
+        textX: m.x + (side === "right" ? m.outerRadius + (useCompactLabels ? 7 : 34) : -(m.outerRadius + (useCompactLabels ? 7 : 34))),
+      };
+    }).filter(Boolean);
+
+    const adjustVertical = (items) => {
+      if (!items.length) return;
+      items.sort((a, b) => a.rawY - b.rawY);
+      items[0].y = Math.max(area.top + 8, items[0].rawY);
+      for (let i = 1; i < items.length; i += 1) {
+        items[i].y = Math.max(items[i].rawY, items[i - 1].y + minGap);
+      }
+
+      const overflow = items[items.length - 1].y - (area.bottom - 8);
+      if (overflow > 0) {
+        for (let i = items.length - 1; i >= 0; i -= 1) {
+          items[i].y -= overflow;
+          if (i > 0 && items[i].y - items[i - 1].y < minGap) {
+            items[i - 1].y = items[i].y - minGap;
+          }
+        }
+      }
+    };
+
+    adjustVertical(points.filter((p) => p.side === "left"));
+    adjustVertical(points.filter((p) => p.side === "right"));
+
+    ctx.save();
+    ctx.font = "600 11px Arial";
+    ctx.fillStyle = "#3f4450";
+    ctx.strokeStyle = "rgba(120,126,140,0.8)";
+    ctx.lineWidth = 1;
+
+    points.forEach((p) => {
+      if (!useCompactLabels) {
+        const elbowX = p.side === "right" ? p.textX - 8 : p.textX + 8;
+        ctx.beginPath();
+        ctx.moveTo(p.edgeX, p.edgeY);
+        ctx.lineTo(elbowX, p.y);
+        ctx.stroke();
+      }
+
+      ctx.textAlign = p.side === "right" ? "left" : "right";
+      ctx.textBaseline = "middle";
+      ctx.fillText(p.text, p.textX, p.y);
+    });
+
+    ctx.restore();
+  },
+};
+
 export default {
   name: "DeviceListView",
   props: {
@@ -142,6 +237,9 @@ export default {
     },
     tableMinWidth() {
       return Math.max(900, this.tableColumns.length * 160);
+    },
+    totalDevices() {
+      return this.deviceList.length;
     },
   },
   watch: {
@@ -192,6 +290,7 @@ export default {
       const baseColors = PALETTE.slice(0, stats.length);
       this.chartInstances.type = new Chart(ref, {
         type: "doughnut",
+        plugins: [TYPE_COUNT_LABEL_PLUGIN],
         data: {
           labels: stats.map((s) => s.key),
           datasets: [
@@ -206,6 +305,9 @@ export default {
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          layout: {
+            padding: { top: 10, bottom: 10, left: 18, right: 18 },
+          },
           legend: {
             position: "right",
             labels: { boxWidth: 10, fontSize: 11, fontColor: TICK_COLOR, padding: 8 },
@@ -517,9 +619,86 @@ export default {
 }
 
 .dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 12px;
+}
+
+.dashboard-row {
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dashboard-row-top .summary-card {
+  flex: 0 0 25%;
+  min-width: 0;
+}
+
+.dashboard-row-top .by-type-card,
+.dashboard-row-top .role-card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.dashboard-row-bottom .vendor-card,
+.dashboard-row-bottom .model-card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.summary-card {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+  border: 1px solid #d7e4f7;
+  padding: 0;
+}
+
+.summary-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  width: auto;
+}
+
+.summary-icon-wrap {
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background: #f8d8d8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-icon {
+  color: #cc5252;
+  font-size: 32px;
+}
+
+.summary-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  text-align: center;
+}
+
+.summary-value {
+  font-size: 46px;
+  line-height: 1;
+  font-weight: 700;
+  color: #1f2d3d;
+}
+
+.summary-label {
+  font-size: 14px;
+  color: #6b7788;
+  letter-spacing: 0.2px;
 }
 
 .chart-card {
@@ -638,8 +817,16 @@ thead {
 }
 
 @media (max-width: 768px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
+  .dashboard-row {
+    flex-direction: column;
+  }
+
+  .dashboard-row-top .summary-card,
+  .dashboard-row-top .by-type-card,
+  .dashboard-row-top .role-card,
+  .dashboard-row-bottom .vendor-card,
+  .dashboard-row-bottom .model-card {
+    flex: 1 1 auto;
   }
 }
 </style>
