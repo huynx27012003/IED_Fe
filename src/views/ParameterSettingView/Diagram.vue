@@ -12,7 +12,7 @@
       tabindex="0"
       @keydown="handleKeydown"
     >
-      <div v-if="distanceFilters.length" class="diagram-filters" @click.stop>
+      <div v-if="distanceFilters.length || groupFilters.length" class="diagram-filters" @click.stop>
         <div
           v-for="item in distanceFilters"
           :key="item.type"
@@ -56,6 +56,21 @@
             </label>
             <div v-if="!item.levels.length" class="level-empty">No levels</div>
           </div>
+        </div>
+
+        <div
+          v-for="g in groupFilters"
+          :key="g.group"
+          class="diagram-filter-chip group-chip"
+        >
+          <label class="diagram-filter-item">
+            <input
+              type="checkbox"
+              :checked="selectedGroups.includes(g.group)"
+              @change="toggleGroup(g.group)"
+            />
+            <span>Group {{ g.group }}</span>
+          </label>
         </div>
       </div>
 
@@ -240,6 +255,7 @@ export default {
       selectedTypes: [],
       selectedLevelsByType: {},
       openLevelDropdownType: null,
+      selectedGroups: [],
     };
   },
   computed: {
@@ -261,7 +277,7 @@ export default {
               type: shape?.type || shape?.distanceType || "UNKNOWN",
               name: shape?.distanceName || shape?.name || shape?.type || "Distance",
               level: Number(shape?.level),
-              group: Number(shape?.group),
+              group: Number.isFinite(Number(shape?.group)) ? Number(shape?.group) : 0,
               points,
             };
           })
@@ -292,15 +308,30 @@ export default {
         levels: Array.from(item.levels).sort((a, b) => a - b),
       }));
     },
+    groupFilters() {
+      const groups = new Set();
+      this.normalizedPolygons.forEach((p) => {
+        if (Number.isFinite(p.group)) {
+          groups.add(p.group);
+        }
+      });
+      return Array.from(groups).sort((a, b) => a - b).map((g) => ({ group: g }));
+    },
     filteredPolygons() {
-      if (!this.distanceFilters.length) return this.normalizedPolygons;
-      if (!this.selectedTypes.length) return [];
-      const set = new Set(this.selectedTypes);
+      if (!this.distanceFilters.length && !this.groupFilters.length) return this.normalizedPolygons;
       return this.normalizedPolygons.filter((p) => {
-        if (!set.has(p.type)) return false;
-        const allowedLevels = this.selectedLevelsByType[p.type];
-        if (!Array.isArray(allowedLevels) || !allowedLevels.length) return true;
-        return allowedLevels.includes(p.level);
+        if (this.distanceFilters.length) {
+          if (!this.selectedTypes.length) return false;
+          const typeSet = new Set(this.selectedTypes);
+          if (!typeSet.has(p.type)) return false;
+          const allowedLevels = this.selectedLevelsByType[p.type];
+          if (Array.isArray(allowedLevels) && allowedLevels.length && !allowedLevels.includes(p.level)) return false;
+        }
+        if (this.groupFilters.length) {
+          if (!this.selectedGroups.length) return false;
+          if (!this.selectedGroups.includes(p.group)) return false;
+        }
+        return true;
       });
     },
     allPoints() {
@@ -558,6 +589,7 @@ export default {
           levelMap[item.type] = [...item.levels];
         });
         this.selectedLevelsByType = levelMap;
+        this.selectedGroups = this.groupFilters.map((x) => x.group);
       },
     },
   },
@@ -721,6 +753,14 @@ export default {
         this.selectedTypes = [...this.selectedTypes, type];
       }
     },
+    toggleGroup(group) {
+      if (!Number.isFinite(group)) return;
+      if (this.selectedGroups.includes(group)) {
+        this.selectedGroups = this.selectedGroups.filter((g) => g !== group);
+      } else {
+        this.selectedGroups = [...this.selectedGroups, group];
+      }
+    },
     toggleLevelDropdown(type) {
       this.openLevelDropdownType = this.openLevelDropdownType === type ? null : type;
     },
@@ -880,6 +920,10 @@ export default {
   font-size: 12px;
   color: #6a7f97;
   padding: 2px 0;
+}
+
+.diagram-filter-chip.group-chip {
+  grid-template-columns: 1fr;
 }
 
 .zone-diagram-wrap::-webkit-scrollbar {
