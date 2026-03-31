@@ -3,10 +3,19 @@
     <span
       :class="{
         selected: selectedNodes?.some((n) => n.id === node.id),
+        'drag-over': isDragOver,
+        'dragging-self': isDraggingSelf,
       }"
       class="folder no-select"
+      :draggable="enableDragMove && canDragMoveNode"
       @click="handleRowClick($event)"
       @dblclick.stop="handleRowDblClick($event)"
+      @dragstart="handleDragStart"
+      @dragend="handleDragEnd"
+      @dragenter="handleDragEnter"
+      @dragover="handleDragOver"
+      @dragleave="handleDragLeave"
+      @drop="handleDrop"
     >
       <div class="icon-wrapper">
         <template
@@ -159,6 +168,7 @@
         :selectedParameterId="selectedParameterId"
         :hide-operation-off="hideOperationOff"
         :show-leaf-dblclick-popup="showLeafDblclickPopup"
+        :enable-drag-move="enableDragMove"
         @fetch-children="(n) => $emit('fetch-children', n)"
         @show-properties="(n) => $emit('show-properties', n)"
         @update-selection="updateSelection"
@@ -170,6 +180,7 @@
         @node-dblclick="$emit('node-dblclick', $event)"
         @node-leaf-dblclick="$emit('node-leaf-dblclick', $event)"
         @node-row-dblclick="$emit('node-row-dblclick', $event)"
+        @request-tree-refresh="$emit('request-tree-refresh')"
       />
     </ul>
   </li>
@@ -177,6 +188,7 @@
 
 <script>
 import icon from "@/views/common/Icon.vue";
+import { moveAsset } from "@/api/asset";
 import collapseIcon from "@/assets/images/colapse.png";
 import expandIcon from "@/assets/images/expand.png";
 import voltageIcon from "@/assets/images/Voltage_Level.png";
@@ -226,6 +238,53 @@ const ALL_ICONS = [
   ownerIcon,
 ];
 let iconsPreloaded = false;
+let draggedNodePayload = null;
+let dragIndicatorEl = null;
+
+function ensureDragIndicator() {
+  if (typeof document === "undefined") return null;
+  if (dragIndicatorEl) return dragIndicatorEl;
+
+  const el = document.createElement("div");
+  el.className = "tree-drag-invalid-indicator";
+  el.innerHTML = '<i class="fa-solid fa-ban"></i>';
+  el.style.position = "fixed";
+  el.style.left = "0";
+  el.style.top = "0";
+  el.style.width = "22px";
+  el.style.height = "22px";
+  el.style.display = "none";
+  el.style.alignItems = "center";
+  el.style.justifyContent = "center";
+  el.style.borderRadius = "50%";
+  el.style.background = "rgba(255,255,255,0.95)";
+  el.style.color = "#111";
+  el.style.boxShadow = "0 1px 4px rgba(0,0,0,0.25)";
+  el.style.pointerEvents = "none";
+  el.style.zIndex = "99999";
+  document.body.appendChild(el);
+  dragIndicatorEl = el;
+  return dragIndicatorEl;
+}
+
+function showInvalidDragIndicator(clientX, clientY) {
+  const el = ensureDragIndicator();
+  if (!el) return;
+  el.style.display = "flex";
+  el.style.transform = `translate(${clientX + 12}px, ${clientY + 12}px)`;
+}
+
+function hideInvalidDragIndicator() {
+  if (!dragIndicatorEl) return;
+  dragIndicatorEl.style.display = "none";
+}
+
+function removeInvalidDragIndicator() {
+  if (!dragIndicatorEl) return;
+  dragIndicatorEl.remove();
+  dragIndicatorEl = null;
+}
+
 function preloadIcons() {
   if (iconsPreloaded) return;
   ALL_ICONS.forEach((src) => {
@@ -242,6 +301,7 @@ export default {
     selectedParameterId: { type: [String, Number], default: "" },
     hideOperationOff: { type: Boolean, default: false },
     showLeafDblclickPopup: { type: Boolean, default: false },
+    enableDragMove: { type: Boolean, default: false },
   },
   name: "TreeNode",
   components: {
@@ -251,6 +311,9 @@ export default {
     return {
       loadingTimer: null,
       isLoading: false,
+      isDragOver: false,
+      isDraggingSelf: false,
+      dragOverDepth: 0,
       dataType: ["organisation"],
       dataOwnerType: ["substation", "bay"],
       assetType: [
@@ -371,6 +434,9 @@ export default {
     isDiffNode() {
       return String(this.node?.compareStatus ?? "").toUpperCase() === "DIFF";
     },
+    canDragMoveNode() {
+      return !!this.getExpectedTargetMode(this.node?.mode);
+    },
   },
   watch: {
     "node.children"(val) {
@@ -401,6 +467,38 @@ export default {
           this.normalize(child?.name) === "operation" &&
           this.normalize(child?.value) === "off"
       );
+    },
+    getExpectedTargetMode(dragMode) {
+      const mode = String(dragMode || "");
+      const map = {
+        ied: "bay",
+        bay: "voltageLevel",
+        voltageLevel: "substation",
+        substation: "organisation",
+      };
+      return map[mode] || "";
+    },
+    parseDraggedPayload(event) {
+      const rawPayload = event?.dataTransfer?.getData("application/x-ied-tree-node") || "";
+      if (rawPayload) {
+        try {
+          return JSON.parse(rawPayload);
+        } catch (e) {
+          // fall back below
+        }
+      }
+      return draggedNodePayload;
+    },
+    isValidDropTarget(payload) {
+      const id = payload?.id;
+      const mode = payload?.mode;
+      const ownerId = this.node?.id;
+      const targetMode = this.node?.mode;
+      if (!id || !mode || !ownerId || !targetMode) return false;
+      if (String(id) === String(ownerId)) return false;
+      const expectedMode = this.getExpectedTargetMode(mode);
+      if (!expectedMode) return false;
+      return String(targetMode) === String(expectedMode);
     },
     getChildList(node) {
       if (!node) return [];
@@ -604,12 +702,101 @@ export default {
 
       this.$emit("open-context-menu", event, node);
     },
+
+    handleDragStart(event) {
+      if (!this.enableDragMove || !this.canDragMoveNode) return;
+      this.isDraggingSelf = true;
+      hideInvalidDragIndicator();
+      draggedNodePayload = {
+        id: this.node?.id,
+        mode: this.node?.mode,
+      };
+      if (event?.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData(
+          "application/x-ied-tree-node",
+          JSON.stringify(draggedNodePayload)
+        );
+        event.dataTransfer.setData("text/plain", String(this.node?.id ?? ""));
+      }
+    },
+    handleDragEnd() {
+      this.isDraggingSelf = false;
+      this.isDragOver = false;
+      this.dragOverDepth = 0;
+      draggedNodePayload = null;
+      hideInvalidDragIndicator();
+      removeInvalidDragIndicator();
+    },
+    handleDragEnter(event) {
+      if (!this.enableDragMove) return;
+      const payload = this.parseDraggedPayload(event);
+      if (!this.isValidDropTarget(payload)) {
+        this.isDragOver = false;
+        showInvalidDragIndicator(event?.clientX || 0, event?.clientY || 0);
+        if (event?.dataTransfer) event.dataTransfer.dropEffect = "none";
+        return;
+      }
+      this.dragOverDepth += 1;
+      this.isDragOver = true;
+      hideInvalidDragIndicator();
+      if (event?.dataTransfer) event.dataTransfer.dropEffect = "move";
+    },
+    handleDragOver(event) {
+      if (!this.enableDragMove) return;
+      const payload = this.parseDraggedPayload(event);
+      if (!this.isValidDropTarget(payload)) {
+        this.isDragOver = false;
+        showInvalidDragIndicator(event?.clientX || 0, event?.clientY || 0);
+        if (event?.dataTransfer) event.dataTransfer.dropEffect = "none";
+        return;
+      }
+      event.preventDefault();
+      this.isDragOver = true;
+      hideInvalidDragIndicator();
+      if (event?.dataTransfer) event.dataTransfer.dropEffect = "move";
+    },
+    handleDragLeave() {
+      this.dragOverDepth = Math.max(0, this.dragOverDepth - 1);
+      if (this.dragOverDepth === 0) {
+        this.isDragOver = false;
+      }
+      hideInvalidDragIndicator();
+    },
+    async handleDrop(event) {
+      if (!this.enableDragMove) return;
+      event.preventDefault();
+      this.isDragOver = false;
+      this.dragOverDepth = 0;
+      hideInvalidDragIndicator();
+
+      const payload = this.parseDraggedPayload(event);
+      if (!this.isValidDropTarget(payload)) return;
+
+      const id = payload?.id;
+      const mode = payload?.mode;
+      const ownerId = this.node?.id;
+
+      if (!id || !mode || !ownerId) return;
+      if (String(id) === String(ownerId)) return;
+
+      try {
+        await moveAsset(mode, id, ownerId);
+        this.$message?.success?.("Node moved successfully");
+        this.$emit("request-tree-refresh");
+      } catch (error) {
+        console.error("Move node failed:", error);
+        const errMsg = error?.response?.data?.message || "Failed to move node";
+        this.$message?.error?.(errMsg);
+      }
+    },
   },
   beforeUnmount() {
     if (this.loadingTimer) {
       clearTimeout(this.loadingTimer);
       this.loadingTimer = null;
     }
+    hideInvalidDragIndicator();
   },
 };
 </script>
@@ -634,6 +821,15 @@ export default {
   backdrop-filter: blur(4px);
   color: #007bff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.folder.drag-over {
+  background: rgba(59, 130, 246, 0.16) !important;
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.4);
+}
+
+.folder.dragging-self {
+  opacity: 0.55;
 }
 
 ul {

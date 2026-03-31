@@ -17,7 +17,8 @@
           </div>
         </li>
         <li @click="emitAction('deviceList')">Device List</li>
-        <li>Copy</li>
+        <li @click="emitAction('copy')">Copy</li>
+        <li :class="{ disabled: !canPasteHere, 'paste-enabled': canPasteHere }" @click="emitAction('paste')">{{ pasteActionLabel }}</li>
         <li>Cut</li>
         <li @click="emitAction('edit')">Rename</li>
         <li @click="triggerFileInput">Import</li>
@@ -56,9 +57,9 @@
         <li @click="emitAction('addGroup')">Add Group</li>
         <li @click="emitAction('showAllGroup')">Show All Group</li>
         <li>Add Setting Group</li>
-        <li>Copy</li>
+        <li @click="emitAction('copy')">Copy</li>
+        <li :class="{ disabled: !canPasteHere, 'paste-enabled': canPasteHere }" @click="emitAction('paste')">{{ pasteActionLabel }}</li>
         <li>Cut</li>
-        <li>Move</li>
         <li @click="emitAction('edit')">Rename</li>
         <li @click="triggerFileInput">Import</li>
         <li>Export</li>
@@ -99,10 +100,11 @@
         <li @click="emitAction('addBay')">+ Add bay</li>
         <li @click="emitAction('addAsset')">+ Add asset</li>
         <li @click="emitAction('deviceList')">Device List</li>
+        <li @click="emitAction('copy')">Copy</li>
+        <li :class="{ disabled: !canPasteHere, 'paste-enabled': canPasteHere }" @click="emitAction('paste')">{{ pasteActionLabel }}</li>
         <li @click="emitAction('show')">Show</li>
         <li @click="emitAction('edit')">Edit</li>
         <li @click="emitAction('download')">Download</li>
-        <li @click="emitAction('move')">Move</li>
         <li class="danger" @click="emitAction('delete')">Delete</li>
         <li @click="emitAction('duplicate')">Duplicate</li>
         <li @click="emitAction('export')">Export</li>
@@ -112,10 +114,11 @@
         <li @click="emitAction('addBay')">+ Add bay</li>
         <li @click="emitAction('addAsset')">+ Add asset</li>
         <li @click="emitAction('deviceList')">Device List</li>
+        <li @click="emitAction('copy')">Copy</li>
+        <li :class="{ disabled: !canPasteHere, 'paste-enabled': canPasteHere }" @click="emitAction('paste')">{{ pasteActionLabel }}</li>
         <li @click="emitAction('show')">Show</li>
         <li @click="emitAction('edit')">Edit</li>
         <li @click="emitAction('download')">Download</li>
-        <li @click="emitAction('move')">Move</li>
         <li class="danger" @click="emitAction('delete')">Delete</li>
         <li @click="emitAction('duplicate')">Duplicate</li>
         <li @click="emitAction('export')">Export</li>
@@ -125,14 +128,15 @@
         <li @click="emitAction('addOrganisation')">+ Add organisation</li>
         <li @click="emitAction('addSubstation')">+ Add substation</li>
         <li @click="emitAction('deviceList')">Device List</li>
+        <li @click="emitAction('copy')">Copy</li>
+        <li :class="{ disabled: !canPasteHere, 'paste-enabled': canPasteHere }" @click="emitAction('paste')">{{ pasteActionLabel }}</li>
         <li @click="emitAction('show')">Show</li>
         <li @click="emitAction('edit')">Edit</li>
         <li @click="emitAction('download')">Download</li>
-        <li @click="emitAction('move')">Move</li>
         <li class="danger" @click="emitAction('delete')">Delete</li>
         <li @click="emitAction('duplicate')">Duplicate</li>
         <li @click="emitAction('export')">Export</li>
-        <li @click="emitAction('import')">Import</li>
+        <li @click="triggerFileInput">Import</li>
       </ul>
 
       <input
@@ -149,7 +153,7 @@
         append-to-body
         :before-close="cancelImport"
       >
-        <div class="confirm-text">Do you want to import for IED: {{ selectedNode.name || selectedNode.id }}?</div>
+        <div class="confirm-text">Do you want to import for {{ importTargetLabel }}: {{ selectedNode.name || selectedNode.id }}?</div>
         <template #footer>
           <span class="dialog-footer">
             <el-button @click="cancelImport">Cancel</el-button>
@@ -184,12 +188,15 @@
 <script>
 import { getAncestorByMode } from "@/api/treenode";
 import { importDevice, deleteDevice, getAllActiveIeds } from "@/api/device";
-import { deleteOrganisation } from "@/api/organisation";
+import { deleteOrganisation, importOrganisationScd } from "@/api/organisation";
+import { pasteAsset } from "@/api/asset";
 
 import { deleteSubstation } from "@/api/substation";
 import { deleteVoltageLevel } from "@/api/voltagelevel";
 import { deleteBay } from "@/api/bay";
 import Loading from "@/components/Loading.vue";
+
+let copiedAssetCache = null;
 
 export default {
   inheritAttrs: false,
@@ -212,6 +219,7 @@ export default {
     "show-all-group",
     "open-add-voltage-level",
     "open-add-bay",
+    "set-clipboard",
   ],
   props: {
     visible: Boolean,
@@ -221,6 +229,7 @@ export default {
       default: () => ({}),
     },
     tree: { type: Array, default: () => [] },
+    clipboardAsset: { type: Object, default: null },
   },
   data() {
     return {
@@ -238,6 +247,29 @@ export default {
   computed: {
     nodeMode() {
       return this.selectedNode?.mode || "";
+    },
+    importTargetLabel() {
+      if (this.ownerModes.includes(this.nodeMode)) return "Organisation";
+      if (this.nodeMode === "ied") return "IED";
+      return "Node";
+    },
+    activeClipboardAsset() {
+      return this.clipboardAsset || copiedAssetCache || null;
+    },
+    pasteActionLabel() {
+      if (!this.activeClipboardAsset) return "Paste";
+      const name =
+        this.activeClipboardAsset?.name ||
+        this.activeClipboardAsset?.id ||
+        "item";
+      return `Paste (${name})`;
+    },
+    canPasteHere() {
+      if (!this.activeClipboardAsset || !this.selectedNode?.id) return false;
+      const expected = this.getExpectedTargetMode(this.activeClipboardAsset?.mode);
+      if (!expected) return false;
+      if (String(this.selectedNode?.mode || "") !== expected) return false;
+      return String(this.activeClipboardAsset?.id || "") !== String(this.selectedNode?.id || "");
     },
   },
   watch: {
@@ -378,6 +410,19 @@ export default {
     isOpen(level, key) {
       return this.activePath[level] === key;
     },
+    getExpectedTargetMode(mode) {
+      const m = String(mode || "");
+      const map = {
+        ied: "bay",
+        bay: "voltageLevel",
+        voltageLevel: "substation",
+        substation: "organisation",
+      };
+      return map[m] || "";
+    },
+    isCopyableMode(mode) {
+      return !!this.getExpectedTargetMode(mode);
+    },
     async emitAction(action) {
       if (!this.selectedNode || !this.selectedNode.id) {
         console.error("selectedNode khong hop le:", this.selectedNode);
@@ -471,6 +516,48 @@ export default {
           return;
         }
         await this.openCompareSettingSubmenu();
+        return;
+      }
+
+      if (action === "copy") {
+        if (!this.isCopyableMode(this.nodeMode)) {
+          this.$message?.warning?.("This node type cannot be copied");
+          this.$nextTick(() => this.$emit("close"));
+          return;
+        }
+        const payload = {
+          id: this.selectedNode?.id,
+          mode: this.selectedNode?.mode,
+          name: this.selectedNode?.name || this.selectedNode?.id,
+        };
+        copiedAssetCache = payload;
+        this.$emit("set-clipboard", payload);
+        this.$message?.success?.(`Copied ${payload.name}`);
+        this.$nextTick(() => this.$emit("close"));
+        return;
+      }
+
+      if (action === "paste") {
+        if (!this.canPasteHere) {
+          this.$message?.warning?.("Paste is not available for this node");
+          return;
+        }
+        const mode = this.activeClipboardAsset?.mode;
+        const id = this.activeClipboardAsset?.id;
+        const ownerId = this.selectedNode?.id;
+        this.isLoading = true;
+        try {
+          await pasteAsset(mode, id, ownerId);
+          this.$message?.success?.("Pasted successfully");
+          this.$emit("refresh-tree");
+          this.$nextTick(() => this.$emit("close"));
+        } catch (error) {
+          console.error("Paste asset failed:", error);
+          const errMsg = error?.response?.data?.message || "Failed to paste";
+          this.$message?.error?.(errMsg);
+        } finally {
+          this.isLoading = false;
+        }
         return;
       }
 
@@ -838,9 +925,16 @@ export default {
     async confirmImport() {
       const file = this.selectedFile;
       const nodeId = this.selectedNode && this.selectedNode.id;
+      const isOrganisationImport = this.ownerModes.includes(this.nodeMode);
+      const isIedImport = this.nodeMode === "ied";
 
       if (!file || !nodeId) {
         this.$message.error("No file selected or invalid node ID");
+        return;
+      }
+
+      if (!isOrganisationImport && !isIedImport) {
+        this.$message.error("Import is only supported for IED or Organisation");
         return;
       }
 
@@ -848,10 +942,13 @@ export default {
       this.isLoading = true;
 
       try {
-        await importDevice(file, nodeId);
-        this.$message.success(
-          `Successfully imported for IED ID: ${nodeId}`
-        );
+        if (isOrganisationImport) {
+          await importOrganisationScd(file, nodeId);
+          this.$message.success(`Successfully imported for Organisation ID: ${nodeId}`);
+        } else {
+          await importDevice(file, nodeId);
+          this.$message.success(`Successfully imported for IED ID: ${nodeId}`);
+        }
 
         const expandedIds = [];
         const collectExpanded = (nodes) => {
@@ -973,6 +1070,20 @@ export default {
 
 .context-menu li:hover {
   background-color: #f5f5f5;
+}
+
+.context-menu li.disabled {
+  color: #9aa3af;
+  cursor: not-allowed;
+}
+
+.context-menu li.disabled:hover {
+  background-color: transparent;
+}
+
+.context-menu li.paste-enabled {
+  color: #111;
+  font-weight: 500;
 }
 
 .context-menu li .arrow {

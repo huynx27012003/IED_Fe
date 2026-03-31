@@ -87,6 +87,7 @@
                   :selectedNodes="selectedNodes"
                   :selectedParameterId="selectedParameterId"
                   :hide-operation-off="hideOperationOff"
+                  :enable-drag-move="true"
                   @select-parameter="handleSelectParameter"
                   @fetch-children="fetchChildrenServer"
                   @show-properties="showPropertiesData"
@@ -95,6 +96,7 @@
                   @open-context-menu="openContextMenu"
                   @toggle-node="handleToggleNode"
                   @node-dblclick="handleNodeDblClick"
+                  @request-tree-refresh="reloadTree"
                 />
               </ul>
             </div>
@@ -127,11 +129,13 @@
                   :node="item"
                   :selectedNodes="selectedNodes"
                   :hide-operation-off="hideOperationOff"
+                  :enable-drag-move="true"
                   @fetch-children="fetchChildrenServer"
                   @show-properties="showPropertiesData"
                   @update-selection="updateSelectionLocation"
                   @clear-selection="clearSelectionLocation"
                   @open-context-menu="openContextMenu"
+                  @request-tree-refresh="reloadTree"
                 />
               </ul>
             </div>
@@ -304,7 +308,9 @@
       :position="contextMenuPosition"
       :selectedNode="rightClickNode"
       :tree="ownerServerList"
+      :clipboard-asset="clipboardAsset"
       @refresh-tree="reloadTree"
+      @set-clipboard="setClipboardAsset"
       @close="closeContextMenu"
       @open-tab="handleOpenTab"
       @update-focus="handleUpdateFocus"

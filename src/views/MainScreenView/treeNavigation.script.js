@@ -342,6 +342,7 @@ export default {
       count: "",
       selectedParameterId: null,
       ownerServerList: [],
+      clipboardAsset: null,
       ownerTreeLoading: false,
       ownerTreeLoaded: false,
       // Cache thông tin IED theo iedId để tránh gọi lại API nhiều lần
@@ -1287,6 +1288,9 @@ export default {
       this.properties = this.selectedId
         ? getPropertiesById(this.ownerServerList, this.selectedId)
         : EMPTY_PROPS();
+    },
+    setClipboardAsset(payload) {
+      this.clipboardAsset = payload || null;
     },
   },
   async mounted() {

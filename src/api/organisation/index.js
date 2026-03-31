@@ -57,3 +57,28 @@ export async function getDeviceListByOrganisation(organisationId) {
     throw error;
   }
 }
+
+export async function importOrganisationScd(file, organisationId) {
+  if (!file) {
+    throw new Error('file is required');
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const response = await client.post('/organisation/import-scd', formData, {
+      params: {
+        orgId: organisationId,
+      },
+      headers: {
+        accept: '*/*',
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error importing SCD for organisation id=${organisationId}:`, error);
+    throw error;
+  }
+}
