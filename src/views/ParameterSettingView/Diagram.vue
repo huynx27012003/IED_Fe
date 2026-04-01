@@ -271,12 +271,17 @@ export default {
               }))
               .filter((p) => Number.isFinite(p.r) && Number.isFinite(p.x));
 
+            const rawLevel = shape?.level;
+            const normalizedLevel = rawLevel === null || rawLevel === undefined
+              ? null
+              : String(rawLevel).trim();
+
             return {
               key: shape?.key || `shape-${idx}`,
               color: shape?.color || "#c0001a",
               type: shape?.type || shape?.distanceType || "UNKNOWN",
               name: shape?.distanceName || shape?.name || shape?.type || "Distance",
-              level: Number(shape?.level),
+              level: normalizedLevel === "" ? null : normalizedLevel,
               group: Number.isFinite(Number(shape?.group)) ? Number(shape?.group) : 0,
               points,
             };
@@ -298,14 +303,14 @@ export default {
         if (!map.has(p.type)) {
           map.set(p.type, { type: p.type, name: p.name, levels: new Set() });
         }
-        if (Number.isFinite(p.level)) {
+        if (p.level !== null) {
           map.get(p.type).levels.add(p.level);
         }
       });
       return Array.from(map.values()).map((item) => ({
         type: item.type,
         name: item.name,
-        levels: Array.from(item.levels).sort((a, b) => a - b),
+        levels: Array.from(item.levels).sort((a, b) => this.compareLevels(a, b)),
       }));
     },
     groupFilters() {
@@ -784,9 +789,20 @@ export default {
       } else {
         this.selectedLevelsByType = {
           ...this.selectedLevelsByType,
-          [type]: [...values, level].sort((a, b) => a - b),
+          [type]: [...values, level].sort((a, b) => this.compareLevels(a, b)),
         };
       }
+    },
+    compareLevels(a, b) {
+      const aNum = Number(a);
+      const bNum = Number(b);
+      const aIsNum = Number.isFinite(aNum);
+      const bIsNum = Number.isFinite(bNum);
+
+      if (aIsNum && bIsNum) return aNum - bNum;
+      if (aIsNum) return -1;
+      if (bIsNum) return 1;
+      return String(a).localeCompare(String(b));
     },
     onShapeEnter(shape, event) {
       if (this.selectedShapeKey && this.selectedShapeKey !== shape?.key) return;

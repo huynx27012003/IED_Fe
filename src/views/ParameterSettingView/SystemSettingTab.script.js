@@ -348,13 +348,18 @@ export default {
 
           const idx = polygons.length;
 
+          const rawLevel = lv?.level;
+          const normalizedLevel = rawLevel === null || rawLevel === undefined
+            ? null
+            : String(rawLevel).trim();
+
           polygons.push({
-            key: `${group?.type || "TYPE"}-g${lv?.group || 0}-l${lv?.level || 0}-${lv?.id || idx}`,
-            label: `${group?.type || "TYPE"} G${lv?.group || "?"}-L${lv?.level || "?"}`,
+            key: `${group?.type || "TYPE"}-g${lv?.group || 0}-l${normalizedLevel || "NA"}-${lv?.id || idx}`,
+            label: `${group?.type || "TYPE"} G${lv?.group || "?"}-L${normalizedLevel || "?"}`,
             type: group?.type || "TYPE",
             distanceName: group?.name || group?.type || "TYPE",
             group: Number(lv?.group) || 0,
-            level: Number(lv?.level) || 0,
+            level: normalizedLevel,
             color: palette[idx % palette.length],
             points,
           });
