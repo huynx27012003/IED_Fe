@@ -124,10 +124,16 @@ export default {
       showZoneDialog: false,
       diagramLoading: false,
       diagramPolygons: [],
+      
+      // View mode dropdown
+      showViewModeDropdown: false,
     };
   },
   computed: {
     ...mapState(["language"]),
+    isFilteredView() {
+      return this.hideOperationOffTree || !this.showMutedRows;
+    },
     tableColumnStyles() {
       if (!this.hasUserResized || !Array.isArray(this.columnWidths) || !this.columnWidths.length) {
         return {};
@@ -304,6 +310,25 @@ export default {
     ...useParamTree(),
     ...useParamTable(),
     ...useParamEdit(),
+    toggleViewModeDropdown(event) {
+      if (event) event.stopPropagation();
+      this.showViewModeDropdown = !this.showViewModeDropdown;
+    },
+    closeViewModeDropdown(event) {
+      // Don't close if clicking inside the dropdown
+      if (event && event.target.closest('.view-mode-dropdown')) return;
+      this.showViewModeDropdown = false;
+    },
+    handleShowAll() {
+      this.hideOperationOffTree = false;
+      this.showMutedRows = true;
+      this.showViewModeDropdown = false;
+    },
+    handleHideUnnecessary() {
+      this.hideOperationOffTree = true;
+      this.showMutedRows = false;
+      this.showViewModeDropdown = false;
+    },
     resolveCurrentIedId() {
       const node = this.freshFocusNode || this.focusNode || this.ownerData?.node;
       if (!node) return this.ownerData?.node?.id || null;
@@ -393,17 +418,21 @@ export default {
   },
   mounted() {
     // Parameter tree is derived from cached prop `tree` (no extra `/entity-tree` call).
-    // Defer the heavy table rendering to the next task so the tree can paint first.
+    // Defer the heavy table render to the next task so the tree can paint first.
     setTimeout(() => {
       this.renderTable = true;
       this.$nextTick(() => this.syncTableViewport());
     }, 0);
+    
+    // Close view mode dropdown when clicking outside
+    document.addEventListener('click', this.closeViewModeDropdown);
   },
   beforeUnmount() {
     document.removeEventListener("mousemove", this.resizeParamTree);
     document.removeEventListener("mouseup", this.stopResizeParamTree);
     document.removeEventListener("mousemove", this.onColumnResize);
     document.removeEventListener("mouseup", this.stopColumnResize);
+    document.removeEventListener('click', this.closeViewModeDropdown);
     if (this._tableScrollFrame) cancelAnimationFrame(this._tableScrollFrame);
   },
   updated() {},

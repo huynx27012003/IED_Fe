@@ -4,20 +4,6 @@
     <div class="system-setting-layout">
       <div class="param-tree-pane" :style="{ width: paramTreeWidthPx + 'px' }">
         <div class="param-tree-header">
-          <div class="param-tree-actions">
-            <i
-              class="fa-solid fa-eye toggle-icon"
-              :class="{ active: !hideOperationOffTree }"
-              @click.stop="setHideOperationOffTree(false)"
-              title="Show nodes with Operation = Off"
-            ></i>
-            <i
-              class="fa-solid fa-eye-slash toggle-icon"
-              :class="{ active: hideOperationOffTree }"
-              @click.stop="setHideOperationOffTree(true)"
-              title="Hide nodes with Operation = Off"
-            ></i>
-          </div>
           <div class="param-tree-title">Parameter Setting</div>
         </div>
 
@@ -127,24 +113,29 @@
 
             <div class="table-pane-action-divider"></div>
 
-            <button
-              type="button"
-              class="table-pane-action-btn"
-              @click="collapseMutedRows"
-              aria-label="Collapse muted rows"
-              title="Collapse muted rows"
-            >
-              <i class="fa-solid fa-compress"></i>
-            </button>
-            <button
-              type="button"
-              class="table-pane-action-btn"
-              @click="expandAllRows"
-              aria-label="Expand all rows"
-              title="Expand all rows"
-            >
-              <i class="fa-solid fa-expand"></i>
-            </button>
+            <div class="view-mode-dropdown">
+              <button
+                type="button"
+                class="table-pane-action-btn view-mode-trigger"
+                @click.stop="toggleViewModeDropdown"
+                aria-label="View mode"
+                title="View mode"
+              >
+                <i :class="isFilteredView ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                <span class="view-mode-label">{{ isFilteredView ? 'Visible Parameters' : 'All Parameters' }}</span>
+                <i class="fa-solid fa-caret-down dropdown-caret"></i>
+              </button>
+              <div v-if="showViewModeDropdown" class="view-mode-menu" @click.stop>
+                <div class="view-mode-option" @click="handleShowAll">
+                  <i class="fa-solid fa-eye"></i>
+                  <span>All Parameters</span>
+                </div>
+                <div class="view-mode-option" @click="handleHideUnnecessary">
+                  <i class="fa-solid fa-eye-slash"></i>
+                  <span>Visible Parameters</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="table-pane-body" @scroll="handleTableScroll">
@@ -638,6 +629,8 @@ thead {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  overflow: visible;
 }
 
 .table-pane-action-btn {
@@ -669,6 +662,15 @@ thead {
   height: 18px;
   background: #ddd;
   margin: 0 2px;
+}
+
+.view-mode-trigger {
+  width: auto !important;
+  padding: 0 8px;
+  gap: 4px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 .edit-mode-group {
@@ -772,5 +774,60 @@ thead {
 
 .el-select .el-input__inner {
   width: 100% !important;
+}
+
+.view-mode-dropdown {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.view-mode-label {
+  font-size: 11px;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-caret {
+  font-size: 10px;
+  margin-left: 2px;
+  flex-shrink: 0;
+}
+
+.view-mode-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 180px;
+  padding: 4px 0;
+}
+
+.view-mode-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+}
+
+.view-mode-option:hover {
+  background-color: #f0f4f8;
+}
+
+.view-mode-option i {
+  width: 16px;
+  text-align: center;
+  color: #666;
 }
 </style>
