@@ -358,6 +358,7 @@ export default {
       ],
       LocationType: ["location", "voltage", "feeder"],
       contextMenuVisible: false,
+      renamingNodeId: null,
       assetPropertySign: true,
       hideOperationOff: false,
       showSCL: false,
@@ -841,6 +842,27 @@ export default {
       node.groupVisibleCount = groups.length || 0;
       node.showAllGroups = true;
       this.$forceUpdate();
+    },
+    handleRenameNode({ id, newName }) {
+      const updateNodeName = (nodes) => {
+        for (const n of nodes) {
+          if (String(n.id) === String(id)) {
+            n.name = newName;
+            return true;
+          }
+          if (n.children?.length && updateNodeName(n.children)) return true;
+          if (n.childrenFromData?.length && updateNodeName(n.childrenFromData)) return true;
+        }
+        return false;
+      };
+      updateNodeName(this.ownerServerList);
+      this.$forceUpdate();
+    },
+    handleStartRename(node) {
+      this.renamingNodeId = node?.id || null;
+    },
+    handleCancelRename() {
+      this.renamingNodeId = null;
     },
     openAddDeviceDialog(node) {
       this.addDeviceNode = node || null;

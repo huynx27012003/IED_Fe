@@ -97,6 +97,9 @@
                   @toggle-node="handleToggleNode"
                   @node-dblclick="handleNodeDblClick"
                   @request-tree-refresh="reloadTree"
+                  :renaming-node-id="renamingNodeId"
+                  @rename-node="handleRenameNode"
+                  @cancel-rename="handleCancelRename"
                 />
               </ul>
             </div>
@@ -136,6 +139,9 @@
                   @clear-selection="clearSelectionLocation"
                   @open-context-menu="openContextMenu"
                   @request-tree-refresh="reloadTree"
+                  :renaming-node-id="renamingNodeId"
+                  @rename-node="handleRenameNode"
+                  @cancel-rename="handleCancelRename"
                 />
               </ul>
             </div>
@@ -212,6 +218,9 @@
                   @open-context-menu="openContextMenuParam"
                   @toggle-node="toggleParamNode"
                   @node-dblclick="handleNodeDblClick"
+                  :renaming-node-id="renamingNodeId"
+                  @rename-node="handleRenameNode"
+                  @cancel-rename="handleCancelRename"
                 />
               </ul>
             </div>
@@ -324,6 +333,7 @@
       @open-add-bay="openAddBayDialog"
       @add-group="handleAddGroup"
       @show-all-group="handleShowAllGroup"
+      @start-rename="handleStartRename"
     />
 
     <el-dialog

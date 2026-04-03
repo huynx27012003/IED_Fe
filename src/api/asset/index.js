@@ -16,7 +16,7 @@ export function moveAsset(mode, id, ownerId) {
 
 export function pasteAsset(mode, id, ownerId) {
   return post(
-    "/asset/paste",
+    "/asset/duplicate",
     {},
     {
       params: { mode, id, ownerId },
@@ -25,5 +25,19 @@ export function pasteAsset(mode, id, ownerId) {
       },
     },
     `Error pasting asset mode=${mode}, id=${id}, ownerId=${ownerId}`
+  );
+}
+
+export function renameAsset(mode, id, newName) {
+  return post(
+    "/asset/rename",
+    {},
+    {
+      params: { mode, id, newName },
+      headers: {
+        accept: "*/*",
+      },
+    },
+    `Error renaming asset mode=${mode}, id=${id}`
   );
 }

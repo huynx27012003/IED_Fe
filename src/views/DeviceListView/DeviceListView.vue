@@ -53,7 +53,7 @@
 
       <div class="list-section">
         <div class="table-container">
-          <table class="device-table" :style="{ minWidth: `${tableMinWidth}px` }">
+          <table class="device-table device-table-fit">
             <thead>
               <tr>
                 <th v-for="column in tableColumns" :key="`header-${column}`">
@@ -234,9 +234,6 @@ export default {
         });
       });
       return order;
-    },
-    tableMinWidth() {
-      return Math.max(900, this.tableColumns.length * 160);
     },
     totalDevices() {
       return this.deviceList.length;
@@ -745,7 +742,7 @@ export default {
 .table-container {
   height: 100%;
   overflow-y: auto;
-  overflow-x: auto;
+  overflow-x: hidden;
   padding-bottom: 50px;
   box-sizing: border-box;
 }
@@ -757,24 +754,36 @@ export default {
   table-layout: fixed;
 }
 
+.device-table-fit {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+  font-size: 11px;
+}
+
 .device-table th {
-  height: 30px;
-  padding: 0 8px;
-  line-height: 30px;
-  white-space: nowrap;
+  padding: 6px 4px;
+  line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   box-sizing: border-box;
   position: relative;
   border: 1px solid #ccc;
   text-align: left;
+  vertical-align: middle;
 }
 
 .device-table td {
   border: 1px solid #ccc;
-  padding: 8px;
+  padding: 6px 4px;
   text-align: left;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow: visible;
+  text-overflow: clip;
+  vertical-align: top;
 }
 
 .device-table tr:nth-child(even) {

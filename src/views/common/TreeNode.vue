@@ -1,5 +1,5 @@
 <template>
-  <li @contextmenu.prevent="handleRightClick($event, node)">
+  <li @contextmenu="handleRightClick($event, node)">
     <span
       :class="{
         selected: selectedNodes?.some((n) => n.id === node.id),
@@ -149,7 +149,18 @@
         </template>
 
         <div class="accent-line" v-if="selectedNodes?.some((n) => n.id === node.id)"></div>
+        <template v-if="isRenaming">
+          <input
+            ref="renameInput"
+            v-model="renameValue"
+            class="rename-inline-input"
+            type="text"
+            @keydown.stop="handleRenameKeydown"
+            @blur="handleRenameBlur"
+          />
+        </template>
         <span
+          v-else
           class="node-name"
           :class="{
             'name-has-diff': isDiffNode,
@@ -169,6 +180,8 @@
         :hide-operation-off="hideOperationOff"
         :show-leaf-dblclick-popup="showLeafDblclickPopup"
         :enable-drag-move="enableDragMove"
+        :renaming-node-id="renamingNodeId"
+        :disable-context-menu="disableContextMenu"
         @fetch-children="(n) => $emit('fetch-children', n)"
         @show-properties="(n) => $emit('show-properties', n)"
         @update-selection="updateSelection"
@@ -181,6 +194,8 @@
         @node-leaf-dblclick="$emit('node-leaf-dblclick', $event)"
         @node-row-dblclick="$emit('node-row-dblclick', $event)"
         @request-tree-refresh="$emit('request-tree-refresh')"
+        @rename-node="$emit('rename-node', $event)"
+        @cancel-rename="$emit('cancel-rename')"
       />
     </ul>
   </li>
@@ -188,7 +203,7 @@
 
 <script>
 import icon from "@/views/common/Icon.vue";
-import { moveAsset } from "@/api/asset";
+import { moveAsset, renameAsset } from "@/api/asset";
 import collapseIcon from "@/assets/images/colapse.png";
 import expandIcon from "@/assets/images/expand.png";
 import voltageIcon from "@/assets/images/Voltage_Level.png";
@@ -302,8 +317,24 @@ export default {
     hideOperationOff: { type: Boolean, default: false },
     showLeafDblclickPopup: { type: Boolean, default: false },
     enableDragMove: { type: Boolean, default: false },
+    renamingNodeId: { type: [String, Number], default: null },
+    disableContextMenu: { type: Boolean, default: false },
   },
   name: "TreeNode",
+  emits: [
+    "fetch-children",
+    "show-properties",
+    "update-selection",
+    "clear-selection",
+    "open-context-menu",
+    "toggle-node",
+    "node-dblclick",
+    "node-leaf-dblclick",
+    "node-row-dblclick",
+    "request-tree-refresh",
+    "rename-node",
+    "cancel-rename",
+  ],
   components: {
     icon,
   },
@@ -314,6 +345,7 @@ export default {
       isDragOver: false,
       isDraggingSelf: false,
       dragOverDepth: 0,
+      renameValue: "",
       dataType: ["organisation"],
       dataOwnerType: ["substation", "bay"],
       assetType: [
@@ -437,8 +469,20 @@ export default {
     canDragMoveNode() {
       return !!this.getExpectedTargetMode(this.node?.mode);
     },
+    isRenaming() {
+      return this.renamingNodeId != null && String(this.renamingNodeId) === String(this.node?.id);
+    },
   },
   watch: {
+    isRenaming(val) {
+      if (val) {
+        this.renameValue = this.node?.name || "";
+        this.$nextTick(() => {
+          this.$refs.renameInput?.focus?.();
+          this.$refs.renameInput?.select?.();
+        });
+      }
+    },
     "node.children"(val) {
       if (this.isLoading && Array.isArray(val)) {
         if (this.loadingTimer) {
@@ -450,6 +494,55 @@ export default {
     },
   },
   methods: {
+    handleRenameKeydown(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        event.stopPropagation();
+        this.confirmRename();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        this.$emit("cancel-rename");
+      }
+    },
+    handleRenameBlur() {
+      this.$nextTick(() => {
+        if (!this.isRenaming) return;
+        const active = document.activeElement;
+        if (active !== this.$refs.renameInput) {
+          this.$emit("cancel-rename");
+        }
+      });
+    },
+    async confirmRename() {
+      const newName = this.renameValue?.trim();
+      if (!newName) {
+        this.$message?.warning?.("Name cannot be empty");
+        return;
+      }
+      if (newName === this.node?.name) {
+        this.$emit("cancel-rename");
+        return;
+      }
+      const mode = this.node?.mode;
+      const id = this.node?.id;
+      if (!mode || !id) {
+        this.$message?.error?.("Invalid node");
+        this.$emit("cancel-rename");
+        return;
+      }
+      try {
+        const response = await renameAsset(mode, id, newName);
+        const updatedName = response?.data?.name || response?.name || newName;
+        this.$emit("rename-node", { id, mode, newName: updatedName });
+        this.$message?.success?.("Renamed successfully");
+        this.$emit("request-tree-refresh");
+      } catch (error) {
+        console.error("Rename failed:", error);
+        this.$message?.error?.("Failed to rename");
+      }
+      this.$emit("cancel-rename");
+    },
     normalize(value) {
       return String(value ?? "")
         .toLowerCase()
@@ -685,6 +778,7 @@ export default {
     handleRightClick(event, node) {
       event.preventDefault();
       event.stopPropagation();
+      if (this.disableContextMenu) return;
 
       const fastOpenModes = new Set([
         "protectionFunction",
@@ -1020,5 +1114,18 @@ img {
   to {
     transform: translateZ(0) rotate(360deg);
   }
+}
+
+.rename-inline-input {
+  border: 1px solid #409eff;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 13px;
+  outline: none;
+  width: 160px;
+  max-width: 200px;
+  background: #fff;
+  color: #333;
+  font-family: inherit;
 }
 </style>

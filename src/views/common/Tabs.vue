@@ -103,10 +103,11 @@ const DeviceListView = defineAsyncComponent(() => import("@/views/DeviceListView
 const SCLManagementTab = defineAsyncComponent(() => import("@/views/SCLManagementView/SCLManagementTab.vue"));
 const SCLImportSubtreeTab = defineAsyncComponent(() => import("@/views/SCLManagementView/SCLImportSubtreeTab.vue"));
 const SettingCompareTab = defineAsyncComponent(() => import("@/views/SettingCompareView/SettingCompareTab.vue"));
+const CommunicationServicesTab = defineAsyncComponent(() => import("@/views/CommunicationView/CommunicationServicesTab.vue"));
 
 export default {
   name: "Tabs",
-  components: { SystemSettingTab, TestManagementTab, AddDevice, OwnerView, AddOrganisation, AddSubstation, SubstationView, HardWareInfoView, AddVoltageLevel, VoltageLevelView, DeviceListView, SCLManagementTab, SCLImportSubtreeTab, SettingCompareTab },
+  components: { SystemSettingTab, TestManagementTab, AddDevice, OwnerView, AddOrganisation, AddSubstation, SubstationView, HardWareInfoView, AddVoltageLevel, VoltageLevelView, DeviceListView, SCLManagementTab, SCLImportSubtreeTab, SettingCompareTab, CommunicationServicesTab },
 
   props: {
     modelValue: { type: Object, default: () => ({}) },
@@ -245,6 +246,7 @@ export default {
       if (tab?.component === "VoltageLevelView") return "VoltageLevelView";
       if (tab?.component === "HardWareInfoView") return "HardWareInfoView";
       if (tab?.component === "SCLManagementTab") return "SCLManagementTab";
+      if (tab?.component === "CommunicationServicesTab") return "CommunicationServicesTab";
       if (tab?.component === "SCLImportSubtreeTab") return "SCLImportSubtreeTab";
       if (tab?.component === "SettingCompareTab") return "SettingCompareTab";
 

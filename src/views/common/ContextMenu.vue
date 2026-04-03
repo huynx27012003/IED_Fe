@@ -20,7 +20,7 @@
         <li @click="emitAction('copy')">Copy</li>
         <li :class="{ disabled: !canPasteHere, 'paste-enabled': canPasteHere }" @click="emitAction('paste')">{{ pasteActionLabel }}</li>
         <li>Cut</li>
-        <li @click="emitAction('edit')">Rename</li>
+        <li @click="startRename">Rename</li>
         <li @click="triggerFileInput">Import</li>
         <li>Export</li>
         <li>Sync</li>
@@ -50,7 +50,6 @@
             </div>
           </div>
         </li>
-        <li>System Integration Design</li>
         <li @click="emitAction('sclManagement')">SCL Management</li>
         <li @click="emitAction('test')">Test Management</li>
         <li>Event Management</li>
@@ -60,7 +59,7 @@
         <li @click="emitAction('copy')">Copy</li>
         <li :class="{ disabled: !canPasteHere, 'paste-enabled': canPasteHere }" @click="emitAction('paste')">{{ pasteActionLabel }}</li>
         <li>Cut</li>
-        <li @click="emitAction('edit')">Rename</li>
+        <li @click="startRename">Rename</li>
         <li @click="triggerFileInput">Import</li>
         <li>Export</li>
         <li>Sync</li>
@@ -103,7 +102,7 @@
         <li @click="emitAction('copy')">Copy</li>
         <li :class="{ disabled: !canPasteHere, 'paste-enabled': canPasteHere }" @click="emitAction('paste')">{{ pasteActionLabel }}</li>
         <li @click="emitAction('show')">Show</li>
-        <li @click="emitAction('edit')">Edit</li>
+        <li @click="startRename">Rename</li>
         <li @click="emitAction('download')">Download</li>
         <li class="danger" @click="emitAction('delete')">Delete</li>
         <li @click="emitAction('duplicate')">Duplicate</li>
@@ -117,7 +116,7 @@
         <li @click="emitAction('copy')">Copy</li>
         <li :class="{ disabled: !canPasteHere, 'paste-enabled': canPasteHere }" @click="emitAction('paste')">{{ pasteActionLabel }}</li>
         <li @click="emitAction('show')">Show</li>
-        <li @click="emitAction('edit')">Edit</li>
+        <li @click="startRename">Rename</li>
         <li @click="emitAction('download')">Download</li>
         <li class="danger" @click="emitAction('delete')">Delete</li>
         <li @click="emitAction('duplicate')">Duplicate</li>
@@ -131,12 +130,16 @@
         <li @click="emitAction('copy')">Copy</li>
         <li :class="{ disabled: !canPasteHere, 'paste-enabled': canPasteHere }" @click="emitAction('paste')">{{ pasteActionLabel }}</li>
         <li @click="emitAction('show')">Show</li>
-        <li @click="emitAction('edit')">Edit</li>
+        <li @click="startRename">Rename</li>
         <li @click="emitAction('download')">Download</li>
         <li class="danger" @click="emitAction('delete')">Delete</li>
         <li @click="emitAction('duplicate')">Duplicate</li>
         <li @click="emitAction('export')">Export</li>
         <li @click="triggerFileInput">Import</li>
+      </ul>
+
+      <ul v-if="!isLoading && selectedNode?.id">
+        <li @click="emitAction('communicationServices')">Communication &amp; Services</li>
       </ul>
 
       <input
@@ -215,8 +218,8 @@ export default {
     "open-show-substation",
     "open-show-voltagelevel",
     "add-group",
-    "show-all-group",
-    "show-all-group",
+    "rename-node",
+    "start-rename",
     "open-add-voltage-level",
     "open-add-bay",
     "set-clipboard",
@@ -294,6 +297,10 @@ export default {
       this._menuFrame = requestAnimationFrame(() => {
         this.adjustMenuPosition();
       });
+    },
+    startRename() {
+      this.$emit("start-rename", this.selectedNode);
+      this.$emit("close");
     },
     cancelDelete() {
       this.showDeleteDialog = false;
@@ -496,6 +503,19 @@ export default {
         tab.id = `${this.selectedNode.id}-testManagement`;
         tab.name = `${this.selectedNode.name} - Test Management`;
         tab.component = "TestManagementTab";
+      }
+
+      if (action === "communicationServices") {
+        tab.id = `${this.selectedNode.id}-communicationServices`;
+        tab.name = `${this.selectedNode.name} - Communication & Services`;
+        tab.mode = this.nodeMode;
+        tab.component = "CommunicationServicesTab";
+        tab.node = this.selectedNode;
+        tab.focusNode = this.selectedNode;
+
+        this.$emit("open-tab", tab);
+        this.$nextTick(() => this.$emit("close"));
+        return;
       }
 
       if (action === "addGroup") {
