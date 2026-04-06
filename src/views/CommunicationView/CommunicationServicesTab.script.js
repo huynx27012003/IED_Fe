@@ -1,5 +1,6 @@
 import TreeNode from "@/views/common/TreeNode.vue";
 import { getAncestorByMode } from "@/api/treenode";
+import { getAssetCommunication, importCommunicationServices } from "@/api/asset";
 
 export default {
   name: "CommunicationServicesTab",
@@ -20,6 +21,15 @@ export default {
       freshFocusNode: null,
       isEditing: false,
       renderTable: false,
+      communicationRowsData: [],
+      showContextMenu: false,
+      menuX: 0,
+      menuY: 0,
+      contextTargetNode: null,
+      selectedFile: null,
+      selectedFileName: "",
+      showImportConfirm: false,
+      importLoading: false,
     };
   },
   computed: {
@@ -30,39 +40,7 @@ export default {
       return String(this.currentNode?.name || this.currentNode?.serial_no || "Communication");
     },
     communicationRows() {
-      const node = this.currentNode || {};
-      const pick = (...keys) => {
-        for (const key of keys) {
-          const value = node?.[key];
-          if (value !== null && value !== undefined && String(value).trim() !== "") {
-            return value;
-          }
-        }
-        return "";
-      };
-
-      return [
-        {
-          port: pick("port"),
-          name: pick("name", "serial_no"),
-          operation: this.findNodeOperation(node),
-          redundancy: pick("redundancy"),
-          subnetwork: pick("subnetwork"),
-          ipAddress: pick("ipAddress", "ip", "ip_address"),
-          subnetMask: pick("subnetMask", "subnet_mask"),
-          defaultGateway: pick("defaultGateway", "default_gateway", "gateway"),
-          mms: pick("mms"),
-          goose: pick("goose"),
-          smv: pick("smv"),
-          https: pick("https"),
-          ftp: pick("ftp"),
-          dnp3: pick("dnp3", "dnp30", "dnp3_0"),
-          snmp: pick("snmp"),
-          sntp: pick("sntp"),
-          ptp: pick("ptp"),
-          networkSwitch1: pick("networkSwitch1", "network_switch_1", "networkSwitch"),
-        },
-      ];
+      return this.communicationRowsData;
     },
     paramTreeRoot() {
       return Array.isArray(this.paramTreeData) && this.paramTreeData.length
@@ -115,6 +93,81 @@ export default {
     handleParamTreeNodeOpen(node) {
       this.handleParamTreeSelect(node);
     },
+    async handleCommunicationNodeClick(node) {
+      if (!node) return;
+      this.handleParamTreeSelect(node);
+      await this.fetchCommunicationRows(node);
+    },
+    handleParamTreeContextMenu(event, node) {
+      if (node?.mode !== "ied") return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      this.contextTargetNode = node;
+      this.menuX = event.clientX;
+      this.menuY = event.clientY;
+      this.showContextMenu = true;
+      this.$nextTick(() => {
+        document.addEventListener("click", this.closeContextMenu);
+      });
+    },
+    closeContextMenu() {
+      this.showContextMenu = false;
+      document.removeEventListener("click", this.closeContextMenu);
+    },
+    triggerFileInput() {
+      this.closeContextMenu();
+      this.$nextTick(() => {
+        this.$refs.commFileInput?.click?.();
+      });
+    },
+    handleFileSelect(event) {
+      const file = event.target?.files?.[0];
+      if (!file) return;
+      this.selectedFile = file;
+      this.selectedFileName = file.name;
+      this.showImportConfirm = true;
+      event.target.value = "";
+    },
+    async confirmImport() {
+      if (!this.selectedFile) return;
+      const node = this.contextTargetNode || this.currentNode;
+      const iedId = node?.mode === "ied" ? node.id : null;
+
+      if (!iedId) {
+        this.$message?.warning?.("Cannot determine IED id for import");
+        return;
+      }
+      this.importLoading = true;
+      try {
+        await importCommunicationServices(iedId, this.selectedFile);
+        this.$message?.success?.("Import communication services successfully");
+        this.showImportConfirm = false;
+        this.selectedFile = null;
+        this.selectedFileName = "";
+        if (this.currentNode) {
+          await this.fetchCommunicationRows(this.currentNode);
+        }
+      } catch (error) {
+        console.error("Import communication services failed:", error);
+        this.$message?.error?.("Failed to import communication services");
+      } finally {
+        this.importLoading = false;
+      }
+    },
+    resolveCurrentIedId() {
+      const node = this.currentNode || this.ownerData?.node;
+      if (!node) return null;
+      if (node.mode === "ied") return node.id;
+      
+      if (this.ownerData?.node?.mode === "ied") return this.ownerData.node.id;
+      
+      if (this.tree?.length) {
+        const ancestor = getAncestorByMode(this.tree, node.id, "ied");
+        if (ancestor) return ancestor.id;
+      }
+      return null;
+    },
     toggleParamNode(node) {
       if (!node) return;
       node.expanded = !node.expanded;
@@ -162,6 +215,48 @@ export default {
     },
     findNodeOperation(node) {
       return this.findOperationNode(node)?.value ?? "";
+    },
+    normalizeCommunicationValue(value) {
+      return value === null || value === undefined ? "" : String(value);
+    },
+    mapCommunicationRow(item = {}) {
+      return {
+        port: this.normalizeCommunicationValue(item.port),
+        name: this.normalizeCommunicationValue(item.name),
+        operation: this.normalizeCommunicationValue(item.operation),
+        redundancy: this.normalizeCommunicationValue(item.redundancy),
+        subnetwork: this.normalizeCommunicationValue(item.subNetwork ?? item.subnetwork),
+        ipAddress: this.normalizeCommunicationValue(item.ipAddress),
+        subnetMask: this.normalizeCommunicationValue(item.subnetMask),
+        defaultGateway: this.normalizeCommunicationValue(item.defaultGateway),
+        mms: this.normalizeCommunicationValue(item.mms),
+        goose: this.normalizeCommunicationValue(item.goose),
+        smv: this.normalizeCommunicationValue(item.smv),
+        https: this.normalizeCommunicationValue(item.https),
+        ftp: this.normalizeCommunicationValue(item.ftp),
+        dnp3: this.normalizeCommunicationValue(item.dnp3),
+        snmp: this.normalizeCommunicationValue(item.snmp),
+        sntp: this.normalizeCommunicationValue(item.sntp),
+        ptp: this.normalizeCommunicationValue(item.ptp),
+        networkSwitch1: this.normalizeCommunicationValue(item.destination),
+      };
+    },
+    async fetchCommunicationRows(node) {
+      const mode = node?.mode;
+      const id = node?.id;
+      if (!mode || id === null || id === undefined) {
+        this.communicationRowsData = [];
+        return;
+      }
+
+      try {
+        const response = await getAssetCommunication(mode, id);
+        const list = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : [];
+        this.communicationRowsData = list.map((item) => this.mapCommunicationRow(item));
+      } catch (error) {
+        console.error("Failed to fetch communication rows:", error);
+        this.communicationRowsData = [];
+      }
     },
     isCommunicationTreeMode(mode) {
       return ["organisation", "substation", "voltageLevel", "bay", "ied"].includes(
@@ -247,6 +342,7 @@ export default {
     setTimeout(() => {
       this.renderTable = true;
     }, 0);
+    this.fetchCommunicationRows(this.currentNode);
   },
   beforeUnmount() {
     document.removeEventListener("mousemove", this.resizeParamTree);

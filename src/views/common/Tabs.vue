@@ -57,20 +57,18 @@
 
     <div class="tabs-content">
       <div
-        v-for="(item, idx) in tabs"
-        :key="item?.id || 'tab-' + idx"
+        v-if="modelActive"
         class="tab-pane"
-        :style="modelActive?.id === item?.id ? { zIndex: 1 } : { zIndex: 0 }"
       >
         <component
-          v-show="modelActive?.id === item?.id"
+          :key="modelActive?.id"
           ref="componentLoadData"
           :sideData="sideSign"
-          :is="checkTab(item)"
-          :ownerData="item"
+          :is="checkTab(modelActive)"
+          :ownerData="modelActive"
           :tree="tree"
-          :expandedGroup="item.node?.id"
-          :focusNode="item.focusNode"
+          :expandedGroup="modelActive.node?.id"
+          :focusNode="modelActive.focusNode"
           @edit-start="handleEditStart"
           @device-saved="$emit('refresh-tree')"
           @device-created="$emit('refresh-tree')"
@@ -376,10 +374,9 @@ export default {
   position: relative;
 }
 .tab-pane {
-  position: absolute;
-  inset: 0;
+  width: 100%;
+  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  z-index: 0;
 }
 </style>

@@ -196,6 +196,7 @@
         @request-tree-refresh="$emit('request-tree-refresh')"
         @rename-node="$emit('rename-node', $event)"
         @cancel-rename="$emit('cancel-rename')"
+        @node-right-click="$emit('node-right-click', $event)"
       />
     </ul>
   </li>
@@ -334,6 +335,7 @@ export default {
     "request-tree-refresh",
     "rename-node",
     "cancel-rename",
+    "node-right-click",
   ],
   components: {
     icon,
@@ -778,7 +780,10 @@ export default {
     handleRightClick(event, node) {
       event.preventDefault();
       event.stopPropagation();
-      if (this.disableContextMenu) return;
+      if (this.disableContextMenu) {
+        this.$emit("node-right-click", node);
+        return;
+      }
 
       const fastOpenModes = new Set([
         "protectionFunction",

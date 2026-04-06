@@ -1,4 +1,4 @@
-import { post } from "@/api/helpers";
+import { get, post } from "@/api/helpers";
 
 export function moveAsset(mode, id, ownerId) {
   return post(
@@ -39,5 +39,24 @@ export function renameAsset(mode, id, newName) {
       },
     },
     `Error renaming asset mode=${mode}, id=${id}`
+  );
+}
+
+export function getAssetCommunication(mode, id) {
+  return get(
+    "/asset/communication",
+    { mode, id },
+    `Error fetching communication mode=${mode}, id=${id}`
+  );
+}
+
+export function importCommunicationServices(iedId, file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return post(
+    "/ied/import/communication-services",
+    formData,
+    { params: { iedId }, headers: { "Content-Type": "multipart/form-data" } },
+    `Error importing communication services`
   );
 }

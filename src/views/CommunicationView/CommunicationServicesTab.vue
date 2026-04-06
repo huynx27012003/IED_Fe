@@ -14,13 +14,13 @@
               :node="paramTreeRoot"
               :selectedNodes="paramSelectedNodes"
               :hide-operation-off="hideOperationOffTree"
-              :disable-context-menu="true"
               @fetch-children="noopFetchChildren"
-              @show-properties="handleParamTreeSelect"
               @update-selection="updateParamSelection"
               @clear-selection="clearParamSelection"
               @toggle-node="toggleParamNode"
               @node-dblclick="handleParamTreeNodeOpen"
+              @show-properties="handleCommunicationNodeClick"
+              @open-context-menu="handleParamTreeContextMenu"
             />
           </ul>
         </div>
@@ -152,6 +152,25 @@
       </div>
     </div>
   </div>
+
+  <div v-if="showContextMenu" class="comm-context-menu" :style="{ left: menuX + 'px', top: menuY + 'px' }">
+    <ul>
+      <li @click="triggerFileInput">Import</li>
+    </ul>
+  </div>
+
+  <input ref="commFileInput" type="file" style="display: none" @change="handleFileSelect" />
+
+  <el-dialog v-model="showImportConfirm" title="Import Communication Services" width="400px">
+    <div class="import-confirm-content">
+      <p>File: <strong>{{ selectedFileName }}</strong></p>
+      <p>Import communication services for <strong>{{ currentNode?.name || currentNode?.serial_no }}</strong>?</p>
+    </div>
+    <template #footer>
+      <el-button @click="showImportConfirm = false">Cancel</el-button>
+      <el-button type="primary" @click="confirmImport" :loading="importLoading">Import</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script src="./CommunicationServicesTab.script.js"></script>
@@ -378,5 +397,39 @@
 .communication-table thead tr:nth-child(2) th,
 .communication-table thead tr:nth-child(3) th {
   text-align: center;
+}
+
+.comm-context-menu {
+  position: fixed;
+  z-index: 9999;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  min-width: 140px;
+}
+
+.comm-context-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.comm-context-menu li {
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+}
+
+.comm-context-menu li:hover {
+  background: #f0f4f8;
+}
+
+.import-confirm-content p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #333;
 }
 </style>
