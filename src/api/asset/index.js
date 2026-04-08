@@ -60,3 +60,24 @@ export function importCommunicationServices(iedId, file) {
     `Error importing communication services`
   );
 }
+
+export function getAllIeds() {
+  return get(
+    "/ied/get-all",
+    {},
+    `Error fetching all IEDs`
+  );
+}
+
+export function editCommunicationDestination(payload) {
+  return post(
+    "/asset/communication/edit-destination",
+    payload,
+    {
+      headers: {
+        accept: "*/*",
+      },
+    },
+    `Error editing communication destination`
+  );
+}

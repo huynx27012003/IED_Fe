@@ -1,10 +1,11 @@
 import TreeNode from "@/views/common/TreeNode.vue";
+import NetworkTopology from "./NetworkTopology.vue";
 import { getAncestorByMode } from "@/api/treenode";
-import { getAssetCommunication, importCommunicationServices } from "@/api/asset";
+import { getAssetCommunication, importCommunicationServices, getAllIeds, editCommunicationDestination } from "@/api/asset";
 
 export default {
   name: "CommunicationServicesTab",
-  components: { TreeNode },
+  components: { TreeNode, NetworkTopology },
   props: {
     ownerData: { type: Object, required: true },
     focusNode: { type: Object, default: null },
@@ -22,6 +23,7 @@ export default {
       isEditing: false,
       renderTable: false,
       communicationRowsData: [],
+      allCommunicationData: [],
       showContextMenu: false,
       menuX: 0,
       menuY: 0,
@@ -30,6 +32,8 @@ export default {
       selectedFileName: "",
       showImportConfirm: false,
       importLoading: false,
+      iedOptions: [],
+      showDiagramDialog: false,
     };
   },
   computed: {
@@ -41,6 +45,20 @@ export default {
     },
     communicationRows() {
       return this.communicationRowsData;
+    },
+    groupedCommunicationRows() {
+      const groups = [];
+      let currentGroup = null;
+      this.communicationRowsData.forEach((row) => {
+        if (row.isFirstInGroup) {
+          currentGroup = { iedName: row.iedName, rows: [] };
+          groups.push(currentGroup);
+        }
+        if (currentGroup) {
+          currentGroup.rows.push(row);
+        }
+      });
+      return groups;
     },
     paramTreeRoot() {
       return Array.isArray(this.paramTreeData) && this.paramTreeData.length
@@ -96,6 +114,22 @@ export default {
     async handleCommunicationNodeClick(node) {
       if (!node) return;
       this.handleParamTreeSelect(node);
+
+      if (node.mode === "ied") {
+        // Nếu đã có data của IED này trong cache → chỉ filter, không gọi API
+        const alreadyCached = this.allCommunicationData.some(
+          (g) => String(g.iedId) === String(node.id)
+        );
+        if (alreadyCached) {
+          this.filterRowsByIed(node.id);
+          return;
+        }
+        // Chưa có → gọi API để lấy data IED này, merge vào cache
+        await this.fetchCommunicationRows(node);
+        return;
+      }
+
+      // Node không phải IED → gọi API
       await this.fetchCommunicationRows(node);
     },
     handleParamTreeContextMenu(event, node) {
@@ -190,15 +224,56 @@ export default {
       document.removeEventListener("mousemove", this.resizeParamTree);
       document.removeEventListener("mouseup", this.stopResizeParamTree);
     },
-    onClickEdit() {
+    async onClickEdit() {
       this.isEditing = true;
+      if (!this.iedOptions.length) {
+        try {
+          const response = await getAllIeds();
+          const list = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : [];
+          this.iedOptions = list.map((item) => ({ mrid: item.mrid, name: item.name }));
+        } catch (error) {
+          console.error("Failed to fetch IED options:", error);
+        }
+      }
     },
-    saveAll() {
-      this.isEditing = false;
+    async saveAll() {
+      const payload = [];
+      this.communicationRowsData.forEach((row) => {
+        if (row.mrid && row.networkSwitch1) {
+          const ied = this.iedOptions.find((o) => o.name === row.networkSwitch1);
+          if (ied) {
+            payload.push({ communicationId: row.mrid, destinationId: ied.mrid });
+          }
+        }
+      });
+
+      if (payload.length) {
+        try {
+          await editCommunicationDestination(payload);
+          this.$message?.success?.("Saved successfully");
+          this.isEditing = false;
+          if (this.currentNode) {
+            await this.fetchCommunicationRows(this.currentNode);
+          }
+        } catch (error) {
+          console.error("Failed to save:", error);
+          this.$message?.error?.("Failed to save");
+        }
+      } else {
+        this.isEditing = false;
+      }
     },
-    cancelAll() {
-      this.isEditing = false;
+    getIedOptionsForRow(row) {
+      if (!row.iedId) return this.iedOptions;
+      return this.iedOptions.filter((ied) => String(ied.mrid) !== String(row.iedId));
     },
+      cancelAll() {
+        this.isEditing = false;
+      },
+      handleCloseDialog() {
+        this.showDiagramDialog = false;
+        return true;
+      },
     onClickSetOperation(value) {
       const opNode = this.findOperationNode(this.currentNode);
       if (opNode) {
@@ -219,8 +294,12 @@ export default {
     normalizeCommunicationValue(value) {
       return value === null || value === undefined ? "" : String(value);
     },
-    mapCommunicationRow(item = {}) {
+    mapCommunicationRow(item = {}, iedName = '', isFirstInGroup = false) {
       return {
+        mrid: item.mrid || null,
+        iedId: item.iedId || null,
+        iedName,
+        isFirstInGroup,
         port: this.normalizeCommunicationValue(item.port),
         name: this.normalizeCommunicationValue(item.name),
         operation: this.normalizeCommunicationValue(item.operation),
@@ -252,11 +331,54 @@ export default {
       try {
         const response = await getAssetCommunication(mode, id);
         const list = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : [];
-        this.communicationRowsData = list.map((item) => this.mapCommunicationRow(item));
+
+        // Merge vào cache: replace các IED đã có, thêm mới các IED chưa có
+        list.forEach((group) => {
+          const gid = String(group.iedId);
+          const idx = this.allCommunicationData.findIndex((g) => String(g.iedId) === gid);
+          if (idx >= 0) {
+            this.allCommunicationData.splice(idx, 1, group);
+          } else {
+            this.allCommunicationData.push(group);
+          }
+        });
+
+        // Nếu click vào IED cụ thể → chỉ hiện rows của IED đó
+        if (node.mode === "ied") {
+          this.filterRowsByIed(node.id);
+        } else {
+          // Node không phải IED (bay, substation...) → chỉ hiện data mới từ API response, không hiện toàn bộ cache
+          this.buildCommunicationRows(list);
+        }
       } catch (error) {
         console.error("Failed to fetch communication rows:", error);
         this.communicationRowsData = [];
       }
+    },
+    buildCommunicationRows(list) {
+      const rows = [];
+      list.forEach((iedGroup) => {
+        const comms = Array.isArray(iedGroup?.communication) ? iedGroup.communication : [];
+        const iedName = iedGroup?.iedName || '';
+        comms.forEach((item, idx) => {
+          rows.push(this.mapCommunicationRow(item, iedName, idx === 0));
+        });
+      });
+      this.communicationRowsData = rows;
+    },
+    filterRowsByIed(iedId) {
+      const iedGroup = this.allCommunicationData.find(
+        (g) => String(g.iedId) === String(iedId)
+      );
+      if (!iedGroup) {
+        this.communicationRowsData = [];
+        return;
+      }
+      const comms = Array.isArray(iedGroup.communication) ? iedGroup.communication : [];
+      const iedName = iedGroup.iedName || '';
+      this.communicationRowsData = comms.map((item, idx) =>
+        this.mapCommunicationRow(item, iedName, idx === 0)
+      );
     },
     isCommunicationTreeMode(mode) {
       return ["organisation", "substation", "voltageLevel", "bay", "ied"].includes(
@@ -313,7 +435,7 @@ export default {
         id: node?.id ?? null,
         name: node?.name ?? "",
         mode,
-        expanded: mode !== "ied",
+        expanded: false,
         showParamTree: false,
         isSclTree: false,
         children: children.map((child) => this.cloneCommunicationNode(child)),
@@ -342,7 +464,9 @@ export default {
     setTimeout(() => {
       this.renderTable = true;
     }, 0);
-    this.fetchCommunicationRows(this.currentNode);
+    if (this.currentNode) {
+      this.fetchCommunicationRows(this.currentNode);
+    }
   },
   beforeUnmount() {
     document.removeEventListener("mousemove", this.resizeParamTree);

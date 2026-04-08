@@ -3,7 +3,7 @@
     <div class="communication-layout">
       <div class="param-tree-pane" :style="{ width: paramTreeWidthPx + 'px' }">
         <div class="param-tree-header">
-          <div class="param-tree-title">Parameter Setting</div>
+          <div class="param-tree-title">Tree View</div>
         </div>
 
         <div class="param-tree-body">
@@ -31,66 +31,53 @@
       <div class="table-pane">
         <div class="table-pane-title">
           <div class="table-pane-title-left">
-            <span>Data</span>
-            <span
-              v-if="currentNode?.name || currentNode?.serial_no"
-              class="pane-subtitle"
-            >
-              for {{ currentNode?.name || currentNode?.serial_no }}
-            </span>
+            <span>Communications and Services</span>
           </div>
 
-          <div class="table-pane-actions">
-            <button
-              v-if="!isEditing"
-              type="button"
-              class="table-pane-action-btn"
-              @click="onClickEdit"
-              aria-label="Edit"
-              title="Edit"
-            >
-              <i class="fa-solid fa-pen"></i>
-            </button>
+           <div class="table-pane-actions">
+             <button
+               v-if="!isEditing"
+               type="button"
+               class="table-pane-action-btn"
+               @click="onClickEdit"
+               aria-label="Edit"
+               title="Edit"
+             >
+               <i class="fa-solid fa-pen"></i>
+             </button>
+             
+             <button
+               v-if="!isEditing"
+               type="button"
+               class="table-pane-action-btn"
+               @click="showDiagramDialog = true"
+               aria-label="Show Diagram"
+               title="Show Diagram"
+             >
+               <i class="fa-solid fa-project-diagram"></i>
+             </button>
 
-            <div v-else class="edit-mode-group">
-              <button
-                type="button"
-                class="table-pane-action-btn"
-                @click="saveAll"
-                aria-label="Save"
-                title="Save"
-              >
-                <i class="fa-solid fa-check"></i>
-              </button>
-              <button
-                type="button"
-                class="table-pane-action-btn"
-                @click="cancelAll"
-                aria-label="Cancel"
-                title="Cancel"
-              >
-                <i class="fa-solid fa-times"></i>
-              </button>
-              <button
-                type="button"
-                class="table-pane-action-btn"
-                @click="onClickSetOperation('On')"
-                aria-label="Turn On"
-                title="Turn On"
-              >
-                <i class="fa-solid fa-toggle-on"></i>
-              </button>
-              <button
-                type="button"
-                class="table-pane-action-btn"
-                @click="onClickSetOperation('Off')"
-                aria-label="Turn Off"
-                title="Turn Off"
-              >
-                <i class="fa-solid fa-toggle-off"></i>
-              </button>
-            </div>
-          </div>
+             <div v-else class="edit-mode-group">
+               <button
+                 type="button"
+                 class="table-pane-action-btn"
+                 @click="saveAll"
+                 aria-label="Save"
+                 title="Save"
+               >
+                 <i class="fa-solid fa-check"></i>
+               </button>
+               <button
+                 type="button"
+                 class="table-pane-action-btn"
+                 @click="cancelAll"
+                 aria-label="Cancel"
+                 title="Cancel"
+               >
+                 <i class="fa-solid fa-times"></i>
+               </button>
+             </div>
+           </div>
         </div>
 
         <div class="table-pane-body">
@@ -98,54 +85,74 @@
           <table v-else class="parameter-table communication-table">
             <thead>
               <tr>
-                <th colspan="18" class="comm-device-title">{{ communicationDeviceTitle }}</th>
+                <th colspan="19" class="comm-device-title">{{ communicationDeviceTitle }}</th>
               </tr>
               <tr>
-                <th rowspan="2">Port</th>
-                <th rowspan="2">Name</th>
-                <th rowspan="2">Operation</th>
-                <th rowspan="2">Redundancy</th>
-                <th rowspan="2">Subnetwork</th>
-                <th rowspan="2">IP Address</th>
-                <th rowspan="2">Subnet mask</th>
-                <th rowspan="2">Default gateway</th>
+                <th rowspan="2" class="info-col">IED Name</th>
+                <th rowspan="2" class="info-col">Port</th>
+                <th rowspan="2" class="info-col">Name</th>
+                <th rowspan="2" class="info-col">Operation</th>
+                <th rowspan="2" class="info-col">Redundancy</th>
+                <th rowspan="2" class="info-col">Subnetwork</th>
+                <th rowspan="2" class="info-col">IP Address</th>
+                <th rowspan="2" class="info-col">Subnet mask</th>
+                <th rowspan="2" class="info-col">Default gateway</th>
                 <th colspan="9">Services</th>
-                <th colspan="1">Destination</th>
+                <th rowspan="2" class="dest-col">Destination</th>
               </tr>
               <tr>
-                <th>MMS</th>
-                <th>GOOSE</th>
-                <th>SMV</th>
-                <th>HTTPS</th>
-                <th>FTP</th>
-                <th>DNP3.0</th>
-                <th>SNMP</th>
-                <th>SNTP</th>
-                <th>PTP</th>
-                <th>Network switch 1</th>
+                <th class="svc-col">MMS</th>
+                <th class="svc-col">GOOSE</th>
+                <th class="svc-col">SMV</th>
+                <th class="svc-col">HTTPS</th>
+                <th class="svc-col">FTP</th>
+                <th class="svc-col">DNP3.0</th>
+                <th class="svc-col">SNMP</th>
+                <th class="svc-col">SNTP</th>
+                <th class="svc-col">PTP</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(row, idx) in communicationRows" :key="`comm-row-${idx}`">
-                <td>{{ row.port }}</td>
-                <td>{{ row.name }}</td>
-                <td>{{ row.operation }}</td>
-                <td>{{ row.redundancy }}</td>
-                <td>{{ row.subnetwork }}</td>
-                <td>{{ row.ipAddress }}</td>
-                <td>{{ row.subnetMask }}</td>
-                <td>{{ row.defaultGateway }}</td>
-                <td>{{ row.mms }}</td>
-                <td>{{ row.goose }}</td>
-                <td>{{ row.smv }}</td>
-                <td>{{ row.https }}</td>
-                <td>{{ row.ftp }}</td>
-                <td>{{ row.dnp3 }}</td>
-                <td>{{ row.snmp }}</td>
-                <td>{{ row.sntp }}</td>
-                <td>{{ row.ptp }}</td>
-                <td>{{ row.networkSwitch1 }}</td>
-              </tr>
+              <template v-for="(group, gIdx) in groupedCommunicationRows" :key="`ied-group-${gIdx}`">
+                <tr v-for="(row, rIdx) in group.rows" :key="`comm-row-${gIdx}-${rIdx}`" :class="{ 'ied-group-start': rIdx === 0 && gIdx > 0 }">
+                  <td v-if="rIdx === 0" :rowspan="group.rows.length" class="ied-name-cell info-col">{{ group.iedName }}</td>
+                  <td class="info-col">{{ row.port }}</td>
+                  <td class="info-col">{{ row.name }}</td>
+                  <td class="info-col">{{ row.operation }}</td>
+                  <td class="info-col">{{ row.redundancy }}</td>
+                  <td class="info-col">{{ row.subnetwork }}</td>
+                  <td class="info-col">{{ row.ipAddress }}</td>
+                  <td class="info-col">{{ row.subnetMask }}</td>
+                  <td class="info-col">{{ row.defaultGateway }}</td>
+                  <td class="svc-cell">{{ row.mms }}</td>
+                  <td class="svc-cell">{{ row.goose }}</td>
+                  <td class="svc-cell">{{ row.smv }}</td>
+                  <td class="svc-cell">{{ row.https }}</td>
+                  <td class="svc-cell">{{ row.ftp }}</td>
+                  <td class="svc-cell">{{ row.dnp3 }}</td>
+                  <td class="svc-cell">{{ row.snmp }}</td>
+                  <td class="svc-cell">{{ row.sntp }}</td>
+                  <td class="svc-cell">{{ row.ptp }}</td>
+                  <td class="dest-col">
+                    <el-select
+                      v-if="isEditing"
+                      v-model="row.networkSwitch1"
+                      placeholder="Select IED"
+                      size="small"
+                      filterable
+                      clearable
+                    >
+                      <el-option
+                        v-for="ied in getIedOptionsForRow(row)"
+                        :key="ied.mrid"
+                        :label="ied.name"
+                        :value="ied.name"
+                      />
+                    </el-select>
+                    <span v-else>{{ row.networkSwitch1 }}</span>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
@@ -161,17 +168,24 @@
 
   <input ref="commFileInput" type="file" style="display: none" @change="handleFileSelect" />
 
-  <el-dialog v-model="showImportConfirm" title="Import Communication Services" width="400px">
-    <div class="import-confirm-content">
-      <p>File: <strong>{{ selectedFileName }}</strong></p>
-      <p>Import communication services for <strong>{{ currentNode?.name || currentNode?.serial_no }}</strong>?</p>
-    </div>
-    <template #footer>
-      <el-button @click="showImportConfirm = false">Cancel</el-button>
-      <el-button type="primary" @click="confirmImport" :loading="importLoading">Import</el-button>
-    </template>
-  </el-dialog>
-</template>
+   <el-dialog
+  v-model="showDiagramDialog"
+  title="Network Topology Diagram"
+  width="66%"
+  top="4vh"
+  :before-close="handleCloseDialog"
+  class="network-topology-dialog"
+>
+  <NetworkTopology
+    v-if="communicationRowsData && communicationRowsData.length > 0"
+    class="network-topology-host"
+    :ieds="allCommunicationData"
+  />
+  <div v-else class="empty-diagram-state">
+    <p>No communication data available to display diagram</p>
+  </div>
+</el-dialog>
+ </template>
 
 <script src="./CommunicationServicesTab.script.js"></script>
 
@@ -339,7 +353,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
 }
 
 .table-loading {
@@ -353,9 +367,10 @@
 }
 
 .parameter-table {
-  width: 100%;
+  width: auto;
+  min-width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: auto;
   margin-bottom: 80px;
 }
 
@@ -372,19 +387,25 @@
 }
 
 .parameter-table thead {
-  background-color: #e1e1e1;
+  background-color: #b0dce8;
 }
 
 .parameter-table thead th {
   position: sticky;
   top: 0;
   z-index: 20;
-  background-color: #e1e1e1;
+  background-color: #b0dce8;
   border-bottom: 2px solid #999;
 }
 
 .communication-table {
-  font-size: 11px;
+  font-size: 14px;
+}
+
+.communication-table th,
+.communication-table td {
+  padding: 6px 5px;
+  line-height: 1.5;
 }
 
 .communication-table .comm-device-title {
@@ -397,6 +418,47 @@
 .communication-table thead tr:nth-child(2) th,
 .communication-table thead tr:nth-child(3) th {
   text-align: center;
+}
+
+.communication-table tbody tr.ied-group-start {
+  border-top: 3px solid #999;
+}
+
+.communication-table .ied-name-cell {
+  font-weight: 700;
+  text-align: center;
+  vertical-align: middle;
+  background: #f8f9fa;
+}
+
+.communication-table th.svc-col,
+.communication-table td.svc-cell {
+  white-space: nowrap;
+  width: auto;
+  min-width: 40px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.communication-table th.dest-col,
+.communication-table td.dest-col {
+  white-space: nowrap;
+  width: auto;
+  min-width: 60px;
+}
+
+.communication-table th.info-col,
+.communication-table td.info-col {
+  white-space: nowrap;
+  width: auto;
+}
+
+.communication-table th.info-col {
+  min-width: 50px;
+}
+
+.communication-table td.info-col {
+  min-width: 60px;
 }
 
 .comm-context-menu {
@@ -431,5 +493,52 @@
   margin: 8px 0;
   font-size: 14px;
   color: #333;
+}
+:deep(.network-topology-dialog) {
+  margin: 0 !important;
+}
+
+:deep(.network-topology-dialog .el-dialog) {
+  position: fixed;
+  top: 6vh;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0 !important;
+  width: 66vw !important;
+  max-width: 66vw !important;
+  height: 72vh !important;
+  max-height: 72vh !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+:deep(.network-topology-dialog .el-dialog__header) {
+  flex: 0 0 auto;
+}
+
+:deep(.network-topology-dialog .el-dialog__body) {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  overflow: hidden;
+  padding: 8px !important;
+  display: flex;
+}
+
+:deep(.network-topology-dialog .el-dialog__body > *) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.network-topology-host {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.network-topology-host :deep(.topology-root) {
+  height: 100%;
+  min-height: 0;
 }
 </style>

@@ -271,7 +271,7 @@ export default {
 
 <style scoped>
 .properties {
-  width: 25%;
+  width: 12.5%;
   height: 100%;
   box-sizing: border-box;
   overflow: hidden;
