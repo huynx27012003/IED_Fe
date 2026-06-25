@@ -116,8 +116,7 @@ export function useSclImportState() {
         }
 
       } catch (err) {
-        console.error("Import SCL failed:", err);
-        this.$message?.error?.("Failed to import SCL file");
+        this.$notifyApiError?.(err, "Failed to import SCL file");
         this.state.sclTreeData = [];
         this.state.selectedNodes = [];
         this.state.tableRootNode = null;
@@ -140,7 +139,7 @@ export function useSclImportState() {
         const payload = response?.data ?? response;
         this.state.sclImportList = Array.isArray(payload) ? payload : [];
       } catch (err) {
-        console.error("Load SCL import list failed:", err);
+        console.error(this.$apiErrorMessage?.(err, "Load SCL import list failed"), err);
         this.state.sclImportList = [];
       } finally {
         this.state.isListLoading = false;
@@ -192,7 +191,7 @@ export function useSclImportState() {
           this.emitControlBlockUpdate(null);
         }
       } catch (err) {
-        console.error("Load SCL snapshot failed:", err);
+        console.error(this.$apiErrorMessage?.(err, "Load SCL snapshot failed"), err);
         this.state.sclTreeData = [];
         this.state.selectedNodes = [];
         this.state.tableRootNode = null;

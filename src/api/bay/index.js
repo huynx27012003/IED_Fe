@@ -1,4 +1,5 @@
 import client from '@/api/client';
+import { logApiError } from '@/helpers/apiFeedback';
 
 export async function createBay(payload) {
     try {
@@ -10,7 +11,22 @@ export async function createBay(payload) {
         });
         return response.data;
     } catch (error) {
-        console.error('Error creating bay:', error);
+        logApiError(error, 'Error creating bay');
+        throw error;
+    }
+}
+
+export async function updateBay(payload) {
+    try {
+        const response = await client.post('/bay/update', payload, {
+            headers: {
+                accept: '*/*',
+                'Content-Type': 'application/json',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        logApiError(error, 'Error updating bay');
         throw error;
     }
 }
@@ -26,7 +42,7 @@ export async function deleteBay(bayId) {
         });
         return response.data;
     } catch (error) {
-        console.error(`Error deleting bay id=${bayId}:`, error);
+        logApiError(error, `Error deleting bay id=${bayId}`);
         throw error;
     }
 }
@@ -39,7 +55,22 @@ export async function getDeviceListByBay(bayId) {
         });
         return response.data;
     } catch (error) {
-        console.error(`Error fetching device list for bay id=${bayId}:`, error);
+        logApiError(error, `Error fetching device list for bay id=${bayId}`);
+        throw error;
+    }
+}
+
+export async function getBayById(bayId) {
+    if (bayId === undefined || bayId === null || bayId === '') {
+        throw new Error('bayId is required');
+    }
+    try {
+        const response = await client.get(`/bay/${bayId}`, {
+            headers: { accept: 'application/json' },
+        });
+        return response.data;
+    } catch (error) {
+        logApiError(error, `Error fetching bay id=${bayId}`);
         throw error;
     }
 }

@@ -72,9 +72,8 @@ export default {
         const data = await getHardwareByIed(iedId);
         this.hardwareData = data;
         this.visibleRows = this.flattenHardware(data);
-        console.log("Hardware Info Response:", data);
       } catch (error) {
-        console.error("Failed to fetch hardware info:", error);
+        console.error(this.$apiErrorMessage?.(error, "Failed to fetch hardware info"), error);
         this.hardwareData = null;
         this.visibleRows = [];
       } finally {

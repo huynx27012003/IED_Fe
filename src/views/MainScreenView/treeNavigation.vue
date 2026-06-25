@@ -234,7 +234,7 @@
           ></div>
           </div>
 
-          <div v-show="activeView === 'mock1'" class="mock-view-container">
+          <div v-show="activeView === 'sclImport'" class="activity-view-container">
             <SCLManage
               mode="global"
               layout="tree"
@@ -242,10 +242,6 @@
               @open-context-menu="openContextMenu"
               @control-block-update="handleControlBlockUpdate"
             />
-          </div>
-
-          <div v-show="activeView === 'mock2'" class="mock-view-container">
-            <MockView2 />
           </div>
 
         </div>
@@ -326,9 +322,11 @@
       @open-add-device="openAddDeviceDialog"
       @open-add-organisation="openAddOrganisationDialog"
       @open-add-substation="openAddSubstationDialog"
-      @open-show-organisation="openShowOrganisationDialog"
-      @open-show-substation="openShowSubstationDialog"
-      @open-show-voltagelevel="openShowVoltageLevelDialog"
+      @open-show-organisation="openShowAssetDialog"
+      @open-show-substation="openShowAssetDialog"
+      @open-show-voltagelevel="openShowAssetDialog"
+      @open-show-bay="openShowAssetDialog"
+      @open-show-ied="openShowAssetDialog"
       @open-add-voltage-level="openAddVoltageLevelDialog"
       @open-add-bay="openAddBayDialog"
       @add-group="handleAddGroup"
@@ -407,41 +405,19 @@
     </el-dialog>
 
     <el-dialog
-      v-model="showOrganisationDialogVisible"
-      title="Organisation"
-      width="70%"
+      v-model="showAssetInfoDialogVisible"
+      title=""
+      width="80%"
+      class="asset-info-dialog"
+      :show-close="false"
       :close-on-click-modal="true"
       :destroy-on-close="true"
     >
-      <OwnerView
-        v-if="showOrganisationDialogVisible"
-        :ownerData="showOrganisationNode ? { node: showOrganisationNode } : {}"
-      />
-    </el-dialog>
-
-    <el-dialog
-      v-model="showSubstationDialogVisible"
-      title="Substation"
-      width="70%"
-      :close-on-click-modal="true"
-      :destroy-on-close="true"
-    >
-      <SubstationView
-        v-if="showSubstationDialogVisible"
-        :ownerData="showSubstationNode ? { node: showSubstationNode } : {}"
-      />
-    </el-dialog>
-
-    <el-dialog
-      v-model="showVoltageLevelDialogVisible"
-      title="Voltage Level"
-      width="70%"
-      :close-on-click-modal="true"
-      :destroy-on-close="true"
-    >
-      <VoltageLevelView
-        v-if="showVoltageLevelDialogVisible"
-        :ownerData="showVoltageLevelNode ? { node: showVoltageLevelNode } : {}"
+      <AssetInfoView
+        v-if="showAssetInfoDialogVisible"
+        :ownerData="showAssetInfoNode ? { node: showAssetInfoNode } : {}"
+        @close="showAssetInfoDialogVisible = false"
+        @refresh-tree="reloadTree"
       />
     </el-dialog>
   </div>
@@ -549,7 +525,7 @@
   flex: 1;
 }
 
-.mock-view-container {
+.activity-view-container {
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -1103,5 +1079,20 @@
 
 .break-word {
   word-break: break-word;
+}
+
+:deep(.asset-info-dialog .el-dialog__header) {
+  display: none;
+}
+
+:deep(.el-dialog.asset-info-dialog) {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+:deep(.asset-info-dialog .el-dialog__body) {
+  padding: 0;
+  background: transparent;
 }
 </style>

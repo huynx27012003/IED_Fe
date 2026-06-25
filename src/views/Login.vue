@@ -63,7 +63,7 @@ export default {
       };
       window.addEventListener('message', handler, false);
     })
-    .catch(() => this.$message.error('Không lấy được SSO login URL'));
+    .catch((error) => this.$notifyApiError?.(error, 'Không lấy được SSO login URL'));
 }
 ,
     exchangeCodeForToken(code) {
@@ -102,7 +102,7 @@ export default {
           this.setUser(userData);
           this.$router.replace({ name: 'tree' });
         })
-        .catch(() => this.$message.error('Không đổi code lấy token được'));
+        .catch((error) => this.$notifyApiError?.(error, 'Không đổi code lấy token được'));
     }
   },
 };

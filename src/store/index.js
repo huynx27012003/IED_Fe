@@ -10,7 +10,9 @@ const store = createStore({
       user: savedUser || null,
       serverAddr: localStorage.getItem('SERVER_ADDR') || 'http://103.163.118.212:30827',
       selectedOwner: null,
-      language: 'en-vi'
+      language: 'en-vi',
+      apiPendingCount: 0,
+      lastApiError: null
     }
   },
   mutations: {
@@ -43,6 +45,18 @@ const store = createStore({
     setServerAddr(state, addr) {
       state.serverAddr = addr
       localStorage.setItem('SERVER_ADDR', addr)
+    },
+    startApiRequest(state) {
+      state.apiPendingCount += 1
+    },
+    endApiRequest(state) {
+      state.apiPendingCount = Math.max(0, state.apiPendingCount - 1)
+    },
+    setLastApiError(state, error) {
+      state.lastApiError = error || null
+    },
+    clearLastApiError(state) {
+      state.lastApiError = null
     }
   },
   getters: {

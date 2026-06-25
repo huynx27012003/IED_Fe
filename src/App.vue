@@ -18,9 +18,6 @@ export default {
       return this.isAuthenticated === false || this.user !== null;
     },
   },
-  mounted() {
-    console.log("User from store (mounted):", this.user);
-  },
 };
 </script>
 <style>

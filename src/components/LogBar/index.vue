@@ -5,7 +5,7 @@
         <span>
           {{ currentTime }} &nbsp; | &nbsp; User:
           {{ $store.state.user.username || username }}
-          &nbsp; | &nbsp; Roles: Administrator
+          &nbsp; | &nbsp; Roles: {{ roleDisplay }}
           <i
             class="fa-solid fa-lock"
             style="color: #4caf50; margin-left: 10px"
@@ -31,6 +31,16 @@ export default {
     ...mapState(["user"]),
     username() {
       return this.user?.username || "";
+    },
+    roleDisplay() {
+      const roles = this.user?.roles;
+      if (Array.isArray(roles) && roles.length) return roles.join(", ");
+      if (this.user?.role) return this.user.role;
+
+      const authorities = this.user?.authorities;
+      if (Array.isArray(authorities) && authorities.length) return authorities.join(", ");
+
+      return "";
     },
   },
   methods: {

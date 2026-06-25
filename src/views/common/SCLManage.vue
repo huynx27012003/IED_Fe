@@ -462,8 +462,7 @@ export default {
           includeRoot ? nextRoot || null : nextRoot?.children?.[0] || null
         );
       } catch (err) {
-        console.error("Filter SCL snapshot failed:", err);
-        this.$message?.error?.("Failed to filter SCL data");
+        this.$notifyApiError?.(err, "Failed to filter SCL data");
       } finally {
         this.isFilterLoading = false;
       }

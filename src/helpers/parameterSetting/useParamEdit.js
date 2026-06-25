@@ -275,10 +275,10 @@ export function useParamEdit() {
         this.$emit("device-saved");
         this.emitUpdateFocus();
       } catch (e) {
-        let msg = this.language === "vi-vi" ? "Lưu thất bại!" : "Save failed!";
-        if (e?.response?.data) msg = e.response.data.message || JSON.stringify(e.response.data);
-        else if (e?.message) msg = e.message;
-        this.$message.error(msg);
+        this.$notifyApiError?.(
+          e,
+          this.language === "vi-vi" ? "Lưu thất bại!" : "Save failed!"
+        );
       }
     },
     hasOperationOff(node) {
@@ -394,10 +394,7 @@ export function useParamEdit() {
         this.$emit("device-saved");
         this.emitUpdateFocus();
       } catch (e) {
-        let msg = this.failureMessage;
-        if (e?.response?.data) msg = e.response.data.message || JSON.stringify(e.response.data);
-        else if (e?.message) msg = e.message;
-        this.$message.error(msg);
+        this.$notifyApiError?.(e, this.failureMessage);
       } finally {
         this.loadingSave = false;
       }

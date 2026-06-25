@@ -131,8 +131,7 @@ export default {
           this.$emit("refresh-tree");
           this.resetForm();
         } catch (error) {
-          console.error("Create substation failed:", error);
-          this.$message?.error?.("Failed to create substation");
+          this.$notifyApiError?.(error, "Failed to create substation");
         } finally {
           this.submitting = false;
         }

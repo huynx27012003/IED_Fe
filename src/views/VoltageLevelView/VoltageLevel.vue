@@ -130,8 +130,8 @@ export default {
         const data = response?.data ?? response;
         this.voltageLevel = this.normalizeVoltageLevel(data);
       } catch (error) {
-        console.error("Failed to load voltage level info:", error);
-        this.errorMessage = "Unable to load voltage level information.";
+        this.errorMessage = this.$apiErrorMessage?.(error, "Unable to load voltage level information.") || "Unable to load voltage level information.";
+        console.error(this.errorMessage, error);
         this.voltageLevel = defaultVoltageLevel();
       } finally {
         this.isLoading = false;

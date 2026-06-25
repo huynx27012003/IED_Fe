@@ -9,12 +9,12 @@
 
         <div class="param-tree-body">
           <div v-if="paramTreeLoading" class="param-tree-loading">Loading...</div>
-          <div v-else-if="!paramTreeRoot" class="param-tree-empty">
+          <div v-else-if="!filteredParamTreeRoot" class="param-tree-empty">
             No parameter tree
           </div>
           <ul v-else class="param-tree-list">
             <TreeNode
-              :node="paramTreeRoot"
+              :node="filteredParamTreeRoot"
               :selectedNodes="paramSelectedNodes"
               :hide-operation-off="hideOperationOffTree"
               @fetch-children="noopFetchChildren"
@@ -24,7 +24,24 @@
               @open-context-menu="handleParamTreeContextMenu"
               @toggle-node="toggleParamNode"
               @node-dblclick="handleParamTreeNodeOpen"
-            />
+            >
+              <template #node-append="{ node }">
+                <div
+                  v-if="isParamTreeIedNode(node) && paramGroupOptions.length > 1"
+                  class="param-group-selector"
+                >
+                  <button
+                    type="button"
+                    class="param-group-trigger"
+                    @click.stop="toggleParamGroupDropdown"
+                    :title="`${paramGroupOptions.length} groups available`"
+                  >
+                    {{ paramGroupOptions.length }} groups available
+                    <i class="fa-solid fa-caret-down"></i>
+                  </button>
+                </div>
+              </template>
+            </TreeNode>
           </ul>
         </div>
       </div>
@@ -51,6 +68,19 @@
           </div>
 
           <div class="table-pane-actions">
+            <button
+              type="button"
+              class="table-pane-action-btn display-mode-toggle"
+              :class="{ active: isConvertedDisplayMode }"
+              :disabled="isEditing"
+              @click="toggleParameterDisplayMode"
+              :aria-label="`Display ${parameterDisplayModeLabel} values`"
+              :title="`Display mode: ${parameterDisplayModeLabel}`"
+            >
+              <i class="fa-solid fa-repeat"></i>
+              <span>{{ parameterDisplayModeLabel }}</span>
+            </button>
+
             <button
               v-if="!isEditing"
               type="button"
@@ -102,6 +132,7 @@
             </div>
 
             <button
+              v-if="showZoneDiagramAction"
               type="button"
               class="table-pane-action-btn"
               @click="openZonePreview"
@@ -109,6 +140,16 @@
               title="Zone diagram"
             >
               <i class="fa-solid fa-chart-line"></i>
+            </button>
+
+            <button
+              type="button"
+              class="table-pane-action-btn"
+              @click="openOvercurrentCurve"
+              aria-label="Overcurrent curve"
+              title="Overcurrent curve"
+            >
+              <i class="fa-solid fa-bolt"></i>
             </button>
 
             <div class="table-pane-action-divider"></div>
@@ -149,7 +190,27 @@
                     <div class="resizer-handle" @mousedown="startColumnResize($event, 0)"></div>
                   </th>
                   <th class="value-col">
-                    {{ tableHeaders.value }}
+                    <div class="value-header-content">
+                      <span>{{ tableHeaders.value }}</span>
+                      <span v-if="showCurrentSideToggle" class="current-side-toggle">
+                        <button
+                          type="button"
+                          :class="{ active: !isPrimaryCurrentDisplay }"
+                          @click.stop="setConvertedCurrentSide('secondary')"
+                          title="Show secondary values"
+                        >
+                          Sec
+                        </button>
+                        <button
+                          type="button"
+                          :class="{ active: isPrimaryCurrentDisplay }"
+                          @click.stop="setConvertedCurrentSide('primary')"
+                          title="Show primary values"
+                        >
+                          Prim
+                        </button>
+                      </span>
+                    </div>
                     <div class="resizer-handle" @mousedown="startColumnResize($event, 1)"></div>
                   </th>
                   <th>
@@ -196,6 +257,7 @@
               { 'muted-row': row.muted || row.characteristicMuted },
               { 'only-value': row.onlyValue },
               { 'signal-row': row.isSignal },
+              { 'invalid-value-row': row.isInvalidPcDataObject },
             ]"
           >
             <td class="param-name" :style="{ paddingLeft: row.padding + 'px' }">
@@ -218,7 +280,7 @@
                     disabled
                   />
                   <span v-else class="cell-text">{{
-                    formatValue(row, row.value)
+                    formatValue(row, row.displayValue)
                   }}</span>
                 </template>
 
@@ -264,13 +326,13 @@
             </td>
 
             <template v-if="!row.isSignal">
-              <td :class="cellClass(row.unit)">
+              <td :class="cellClass(row.displayUnit)">
                 <span class="cell-text">{{ row.displayUnit }}</span>
               </td>
-              <td :class="cellClass(row.minVal)">
+              <td :class="cellClass(row.displayMin)">
                 <span class="cell-text">{{ row.displayMin }}</span>
               </td>
-              <td :class="cellClass(row.maxVal)">
+              <td :class="cellClass(row.displayMax)">
                 <span class="cell-text">{{ row.displayMax }}</span>
               </td>
               <td :class="cellClass(row.description)">
@@ -295,6 +357,36 @@
         :polygons="diagramPolygons"
         :loading="diagramLoading"
       />
+
+      <OvercurrentCurveDialog
+        v-model="showOvercurrentDialog"
+        :ied-id="currentIedId"
+      />
+
+      <Teleport to="body">
+        <div
+          v-if="showParamGroupDropdown"
+          class="param-group-menu"
+          :style="paramGroupDropdownStyle"
+          @click.stop
+          @mousedown.stop
+        >
+          <label
+            v-for="group in paramGroupOptions"
+            :key="group.id"
+            class="param-group-option"
+            :class="{ disabled: group.isDefault }"
+          >
+            <input
+              type="checkbox"
+              :checked="isParamGroupSelected(group.id)"
+              :disabled="group.isDefault"
+              @change="toggleParamGroupSelection(group)"
+            />
+            <span>{{ group.name }}</span>
+          </label>
+        </div>
+      </Teleport>
    </div>
  </div>
 </template>
@@ -312,6 +404,14 @@
   background-color: #f3f3f3;
   color: #666;
   font-style: italic;
+}
+
+.invalid-value-row td,
+.invalid-value-row.muted-row td,
+.invalid-value-cell {
+  background-color: #fff176 !important;
+  color: #4f3f00 !important;
+  font-style: normal !important;
 }
 
 .signal-row .value-col {
@@ -490,6 +590,46 @@ thead {
   width: 220px;
 }
 
+.value-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  padding-right: 4px;
+}
+
+.current-side-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.current-side-toggle button {
+  height: 22px;
+  border-radius: 5px;
+  border: 1px solid #e5e5e5;
+  background: transparent;
+  color: #222;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.current-side-toggle button:hover {
+  background: #f0f8ff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.current-side-toggle button.active {
+  background: #eef6ff;
+  border-color: #409eff;
+  color: #1f6fbf;
+}
+
 .cell {
   display: flex;
   align-items: center;
@@ -538,6 +678,63 @@ thead {
 .param-tree-title {
   font-weight: 600;
   color: #555;
+}
+
+.param-group-selector {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 2px;
+  z-index: 100;
+}
+
+.param-group-trigger {
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d6e4f5;
+  border-radius: 999px;
+  padding: 0 10px;
+  background: #f4f8ff;
+  color: #146ebe;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.param-group-menu {
+  position: fixed;
+  transform: none;
+  z-index: 9999;
+  width: 190px;
+  max-height: 220px;
+  overflow: auto;
+  padding: 6px;
+  border: 1px solid #d9e2ef;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+}
+
+.param-group-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: #334155;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.param-group-option:hover {
+  background: #f1f5f9;
+}
+
+.param-group-option.disabled {
+  color: #64748b;
+  cursor: not-allowed;
 }
 
 .param-tree-actions {
@@ -657,6 +854,12 @@ thead {
   transform: scale(0.97);
 }
 
+.table-pane-action-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+}
+
 .table-pane-action-divider {
   width: 1px;
   height: 18px;
@@ -671,6 +874,25 @@ thead {
   display: flex;
   align-items: center;
   white-space: nowrap;
+}
+
+.display-mode-toggle {
+  width: auto !important;
+  padding: 0 8px;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.display-mode-toggle.active {
+  background: #eef6ff;
+  border-color: #409eff;
+  color: #1f6fbf;
+}
+
+.display-mode-toggle span {
+  line-height: 1;
 }
 
 .edit-mode-group {

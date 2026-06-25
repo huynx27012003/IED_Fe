@@ -1,4 +1,5 @@
 import client from '@/api/client';
+import { logApiError } from '@/helpers/apiFeedback';
 
 export async function createSubstation(payload) {
   try {
@@ -10,7 +11,22 @@ export async function createSubstation(payload) {
     });
     return response.data;
   } catch (error) {
-    console.error('Error creating substation:', error);
+    logApiError(error, 'Error creating substation');
+    throw error;
+  }
+}
+
+export async function updateSubstation(payload) {
+  try {
+    const response = await client.post('/substation/update', payload, {
+      headers: {
+        accept: '*/*',
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    logApiError(error, 'Error updating substation');
     throw error;
   }
 }
@@ -26,7 +42,7 @@ export async function deleteSubstation(substationId) {
     });
     return response.data;
   } catch (error) {
-    console.error(`Error deleting substation id=${substationId}:`, error);
+    logApiError(error, `Error deleting substation id=${substationId}`);
     throw error;
   }
 }
@@ -41,7 +57,7 @@ export async function getSubstationById(substationId) {
     });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching substation id=${substationId}:`, error);
+    logApiError(error, `Error fetching substation id=${substationId}`);
     throw error;
   }
 }
@@ -54,7 +70,7 @@ export async function getDeviceListBySubstation(substationId) {
     });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching device list for substation id=${substationId}:`, error);
+    logApiError(error, `Error fetching device list for substation id=${substationId}`);
     throw error;
   }
 }

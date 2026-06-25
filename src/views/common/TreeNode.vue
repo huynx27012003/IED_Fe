@@ -167,6 +167,7 @@
             'name-missing': isMissingNode,
           }"
         >{{ node.name || node.serial_no }}</span>
+        <slot name="node-append" :node="node"></slot>
       </div>
     </span>
 
@@ -197,7 +198,11 @@
         @rename-node="$emit('rename-node', $event)"
         @cancel-rename="$emit('cancel-rename')"
         @node-right-click="$emit('node-right-click', $event)"
-      />
+      >
+        <template #node-append="slotProps">
+          <slot name="node-append" v-bind="slotProps"></slot>
+        </template>
+      </TreeNode>
     </ul>
   </li>
 </template>
@@ -540,8 +545,7 @@ export default {
         this.$message?.success?.("Renamed successfully");
         this.$emit("request-tree-refresh");
       } catch (error) {
-        console.error("Rename failed:", error);
-        this.$message?.error?.("Failed to rename");
+        this.$notifyApiError?.(error, "Failed to rename");
       }
       this.$emit("cancel-rename");
     },
@@ -884,9 +888,7 @@ export default {
         this.$message?.success?.("Node moved successfully");
         this.$emit("request-tree-refresh");
       } catch (error) {
-        console.error("Move node failed:", error);
-        const errMsg = error?.response?.data?.message || "Failed to move node";
-        this.$message?.error?.(errMsg);
+        this.$notifyApiError?.(error, "Failed to move node");
       }
     },
   },

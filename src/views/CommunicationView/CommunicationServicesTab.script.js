@@ -160,7 +160,7 @@ export default {
       if (!file) return;
       this.selectedFile = file;
       this.selectedFileName = file.name;
-      this.showImportConfirm = true;
+      this.confirmImport();
       event.target.value = "";
     },
     async confirmImport() {
@@ -183,8 +183,7 @@ export default {
           await this.fetchCommunicationRows(this.currentNode);
         }
       } catch (error) {
-        console.error("Import communication services failed:", error);
-        this.$message?.error?.("Failed to import communication services");
+        this.$notifyApiError?.(error, "Failed to import communication services");
       } finally {
         this.importLoading = false;
       }
@@ -232,7 +231,7 @@ export default {
           const list = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : [];
           this.iedOptions = list.map((item) => ({ mrid: item.mrid, name: item.name }));
         } catch (error) {
-          console.error("Failed to fetch IED options:", error);
+          console.error(this.$apiErrorMessage?.(error, "Failed to fetch IED options"), error);
         }
       }
     },
@@ -256,8 +255,7 @@ export default {
             await this.fetchCommunicationRows(this.currentNode);
           }
         } catch (error) {
-          console.error("Failed to save:", error);
-          this.$message?.error?.("Failed to save");
+          this.$notifyApiError?.(error, "Failed to save");
         }
       } else {
         this.isEditing = false;
@@ -351,7 +349,7 @@ export default {
           this.buildCommunicationRows(list);
         }
       } catch (error) {
-        console.error("Failed to fetch communication rows:", error);
+        console.error(this.$apiErrorMessage?.(error, "Failed to fetch communication rows"), error);
         this.communicationRowsData = [];
       }
     },

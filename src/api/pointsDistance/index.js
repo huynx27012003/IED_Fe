@@ -1,4 +1,5 @@
 import client from "@/api/client";
+import { logApiError } from "@/helpers/apiFeedback";
 
 export async function getPointsDistanceByIedId(iedId) {
   if (iedId == null || iedId === "") {
@@ -11,7 +12,7 @@ export async function getPointsDistanceByIedId(iedId) {
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching points-distance data:", error);
+    logApiError(error, "Error fetching points-distance data");
     throw error;
   }
 }

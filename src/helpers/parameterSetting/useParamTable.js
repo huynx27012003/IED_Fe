@@ -39,15 +39,19 @@ export function useParamTable() {
         return v === true || v === 1 || v === "On" ? "On" : "Off";
       }
       if (typeof v === "number" && Number.isFinite(v)) {
-        return v.toFixed(1);
+        return this.formatNumberForDisplay(v);
       }
       if (typeof v === "string") {
         const s = v.trim();
         if (/^-?\d+(\.\d+)?$/.test(s)) {
-          return Number(s).toFixed(1);
+          return this.formatNumberForDisplay(Number(s));
         }
       }
       return v;
+    },
+    formatNumberForDisplay(value) {
+      const rounded = Math.round((Number(value) + Number.EPSILON) * 1000000) / 1000000;
+      return rounded.toFixed(6).replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1");
     },
     isNullish(v) {
       return (
@@ -59,6 +63,38 @@ export function useParamTable() {
     cellClass(v) {
       return this.isNullish(v) ? "null-cell" : "";
     },
+    getDisplayField(rawValue, convertedValue) {
+      if (!this.isConvertedDisplayMode) return rawValue;
+      return this.isNullish(convertedValue) ? rawValue : convertedValue;
+    },
+    getParamDisplayFields(node, inSystemSetting = false) {
+      const hasConvertedNumeric =
+        !this.isNullish(node.convertedValue) ||
+        !this.isNullish(node.convertedMinVal) ||
+        !this.isNullish(node.convertedMaxVal);
+      const useConverted = this.isConvertedDisplayMode && hasConvertedNumeric;
+      const convertedDisplayValue = this.isPrimaryCurrentDisplay && !inSystemSetting && !this.isNullish(node.primaryValue)
+        ? node.primaryValue
+        : node.convertedValue;
+      const value = useConverted ? this.getDisplayField(node.value, convertedDisplayValue) : node.value;
+      const unit = useConverted ? this.getDisplayField(node.unit, node.convertedUnit) : node.unit;
+      const minVal = useConverted ? this.getDisplayField(node.minVal, node.convertedMinVal) : node.minVal;
+      const maxVal = useConverted ? this.getDisplayField(node.maxVal, node.convertedMaxVal) : node.maxVal;
+
+      return {
+        value,
+        unit,
+        minVal,
+        maxVal,
+        hasConvertedValue: hasConvertedNumeric,
+      };
+    },
+    isInvalidPcDataObject(row, value = row?.value) {
+      return (
+        this.normalize(row?.mode) === "pcdataobject" &&
+        this.normalize(value) === "invalid"
+      );
+    },
     renderParamRows(
       children,
       level,
@@ -66,7 +102,8 @@ export function useParamTable() {
       seen = new Set(),
       inProtectionGroup = false,
       protectionGroupId = null,
-      arOffInThisPG = false
+      arOffInThisPG = false,
+      inSystemSetting = false
     ) {
       const rows = [];
       const padding = level * 20;
@@ -106,6 +143,7 @@ export function useParamTable() {
         let nextInPG = inProtectionGroup;
         let nextPGId = protectionGroupId;
         let nextArOffInPG = arOffInThisPG;
+        let nextInSystemSetting = inSystemSetting || this.normalize(child.mode) === "systemsetting";
         if (
           isGroup &&
           this.normalize(child.mode) === "protectiongroup"
@@ -136,6 +174,8 @@ export function useParamTable() {
           child.options.includes("On") &&
           child.options.includes("Off");
 
+        const invalidPcDataObject = this.isInvalidPcDataObject(child);
+        const displayFields = this.getParamDisplayFields(child, nextInSystemSetting);
         const rowData = {
           key: (isGroup ? "group-" : "param-") + child.id,
           isGroup,
@@ -146,12 +186,19 @@ export function useParamTable() {
           isSignal,
           isOnOff,
           protectionGroupId: nextPGId,
-          displayUnit: this.displayValue(child.unit),
-          displayMin: this.displayValue(child.minVal),
-          displayMax: this.displayValue(child.maxVal),
+          inSystemSetting: nextInSystemSetting,
+          displayValue: displayFields.value,
+          displayUnit: this.displayValue(displayFields.unit),
+          displayMin: this.displayValue(displayFields.minVal),
+          displayMax: this.displayValue(displayFields.maxVal),
           displayDesc: this.displayValue(child.description),
-          valueClass: this.isNullish(child.value) ? "null-cell" : "",
+          valueClass: invalidPcDataObject
+            ? "invalid-value-cell"
+            : this.isNullish(displayFields.value)
+              ? "null-cell"
+              : "",
           isEffectivelyMuted: isMuted || characteristicMuted,
+          isInvalidPcDataObject: invalidPcDataObject,
         };
 
         if (isGroup) {
@@ -164,7 +211,8 @@ export function useParamTable() {
               seen,
               nextInPG,
               nextPGId,
-              nextArOffInPG
+              nextArOffInPG,
+              nextInSystemSetting
             )
           );
         } else {

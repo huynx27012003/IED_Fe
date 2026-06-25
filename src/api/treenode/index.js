@@ -1,4 +1,5 @@
 ﻿import client from '@/api/client';
+import { logApiError } from '@/helpers/apiFeedback';
 
 export async function getEntityTreeRaw() {
   try {
@@ -22,7 +23,7 @@ export async function getEntityTreeRaw() {
 
     return filteredData;
   } catch (error) {
-    console.error('getEntityTreeRaw: Error:', error.message, error.response?.data);
+    logApiError(error, 'getEntityTreeRaw: Error');
     throw error;
   }
 }
@@ -42,6 +43,11 @@ export function normalizeNode(n = {}) {
     description: n.description ?? null,
     value: n.value ?? null,
     unit: n.unit ?? null,
+    convertedValue: n.convertedValue ?? null,
+    primaryValue: n.primaryValue ?? null,
+    convertedMinVal: n.convertedMinVal ?? null,
+    convertedMaxVal: n.convertedMaxVal ?? null,
+    convertedUnit: n.convertedUnit ?? null,
     minVal: n.minVal ?? null,
     maxVal: n.maxVal ?? null,
     options: Array.isArray(n.options) ? [...n.options] : [],

@@ -5,9 +5,13 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import store from './store'
+import { installApiActionFeedback } from '@/helpers/apiActionFeedback'
+import { installApiFeedback } from '@/helpers/apiFeedback'
 
 function bootstrapApp() {
   const app = createApp(App)
+  installApiFeedback(app)
+  installApiActionFeedback()
   app.use(router)
   app.use(ElementPlus)
   app.use(store)

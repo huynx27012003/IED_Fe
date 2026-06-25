@@ -136,8 +136,8 @@ export default {
         const data = response?.data ?? response;
         this.substation = this.normalizeSubstation(data);
       } catch (error) {
-        console.error("Failed to load substation info:", error);
-        this.errorMessage = "Unable to load substation information.";
+        this.errorMessage = this.$apiErrorMessage?.(error, "Unable to load substation information.") || "Unable to load substation information.";
+        console.error(this.errorMessage, error);
         this.substation = defaultSubstation();
       } finally {
         this.isLoading = false;

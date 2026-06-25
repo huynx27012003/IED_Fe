@@ -1,4 +1,5 @@
 import client from '@/api/client';
+import { logApiError } from '@/helpers/apiFeedback';
 
 export async function getOrganisationById(organisationId) {
   if (!organisationId) {
@@ -9,7 +10,7 @@ export async function getOrganisationById(organisationId) {
     const response = await client.get(`/organisation/${organisationId}`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching organisation id=${organisationId}:`, error);
+    logApiError(error, `Error fetching organisation id=${organisationId}`);
     throw error;
   }
 }
@@ -24,7 +25,22 @@ export async function createOrganisation(payload) {
     });
     return response.data;
   } catch (error) {
-    console.error('Error creating organisation:', error);
+    logApiError(error, 'Error creating organisation');
+    throw error;
+  }
+}
+
+export async function updateOrganisation(payload) {
+  try {
+    const response = await client.post('/organisation/update', payload, {
+      headers: {
+        accept: '*/*',
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    logApiError(error, 'Error updating organisation');
     throw error;
   }
 }
@@ -40,7 +56,7 @@ export async function deleteOrganisation(organisationId) {
     });
     return response.data;
   } catch (error) {
-    console.error(`Error deleting organisation id=${organisationId}:`, error);
+    logApiError(error, `Error deleting organisation id=${organisationId}`);
     throw error;
   }
 }
@@ -53,7 +69,7 @@ export async function getDeviceListByOrganisation(organisationId) {
     });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching device list for organisation id=${organisationId}:`, error);
+    logApiError(error, `Error fetching device list for organisation id=${organisationId}`);
     throw error;
   }
 }
@@ -78,7 +94,27 @@ export async function importOrganisationScd(file, organisationId) {
     });
     return response.data;
   } catch (error) {
-    console.error(`Error importing SCD for organisation id=${organisationId}:`, error);
+    logApiError(error, `Error importing SCD for organisation id=${organisationId}`);
+    throw error;
+  }
+}
+
+export async function exportOrganisationScd(organisationId) {
+  if (!organisationId && organisationId !== 0) {
+    throw new Error('organisationId is required');
+  }
+
+  try {
+    const response = await client.get('/organisation/export-scd', {
+      params: { organisationId },
+      responseType: 'blob',
+      headers: {
+        accept: 'application/xml',
+      },
+    });
+    return response;
+  } catch (error) {
+    logApiError(error, `Error exporting SCD for organisation id=${organisationId}`);
     throw error;
   }
 }

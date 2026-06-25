@@ -236,8 +236,6 @@ export default {
         }
       });
 
-      console.log("Các giá trị thay đổi:", JSON.stringify(this.changedValues));
-
       this.isEditing = false;
       this.editStates = {};
     },

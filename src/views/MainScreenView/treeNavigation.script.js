@@ -4,11 +4,8 @@ import Tabs from "../common/Tabs.vue";
 import ContextMenu from "../common/ContextMenu.vue";
 import ActivityBar from "../common/ActivityBar.vue";
 import SCLManage from "../common/SCLManage.vue";
-import MockView2 from "../common/MockView2.vue";
 import PropertiesPane from "../common/PropertiesPane.vue";
-import OwnerView from "@/views/OrganisationView/index.vue";
-import SubstationView from "@/views/OrganisationView/Substation.vue";
-import VoltageLevelView from "@/views/VoltageLevelView/VoltageLevel.vue";
+import AssetInfoView from "@/views/common/AssetInfoView.vue";
 import { findNodeById } from "@/api/treenode";
 import AddDevice from "@/views/AddDeviceView/AddDevice.vue";
 import AddOrganisation from "@/views/OrganisationView/AddOrganisation.vue";
@@ -150,11 +147,8 @@ export default {
     ContextMenu,
     ActivityBar,
     SCLManage,
-    MockView2,
     PropertiesPane,
-    OwnerView,
-    SubstationView,
-    VoltageLevelView,
+    AssetInfoView,
     AddDevice,
     AddOrganisation,
     AddSubstation,
@@ -205,16 +199,12 @@ export default {
       addOrganisationDialogVisible: false,
       addSubstationDialogVisible: false,
       addVoltageLevelDialogVisible: false,
-      showOrganisationDialogVisible: false,
-      showSubstationDialogVisible: false,
-      showVoltageLevelDialogVisible: false,
+      showAssetInfoDialogVisible: false,
       addDeviceNode: null,
       addOrganisationNode: null,
       addSubstationNode: null,
       addVoltageLevelNode: null,
-      showOrganisationNode: null,
-      showSubstationNode: null,
-      showVoltageLevelNode: null,
+      showAssetInfoNode: null,
       addBayDialogVisible: false,
       addBayNode: null,
       currentNodeId: null,
@@ -477,7 +467,6 @@ export default {
     },
 
     handleNodeDblClick(node) {
-      console.log("Node double-clicked, focusing existing tab:", node);
       if (!node) return;
       if (node.mode === "ied") {
         const existingTab = this.tabs.find((t) => t.node?.id === node.id);
@@ -573,7 +562,7 @@ export default {
         if (!tab) {
           tab = {
             id: hardwareTabId,
-            name: `${iedName} - Hardware Infomation`,
+            name: `${iedName} - Hardware Information`,
             mode: iedNode?.mode || "ied",
             component: "HardWareInfoView",
             node: iedNode || { id: iedId, name: iedName },
@@ -582,7 +571,7 @@ export default {
           this.tabs.push(tab);
         } else {
           tab.component = "HardWareInfoView";
-          tab.name = `${iedName} - Hardware Infomation`;
+          tab.name = `${iedName} - Hardware Information`;
           tab.node = iedNode || tab.node;
           tab.focusNode = iedNode || tab.focusNode;
         }
@@ -763,7 +752,7 @@ export default {
         this.restoreExpandedState(this.ownerServerList);
         this.ownerTreeLoaded = true;
       } catch (e) {
-        console.error("reloadTree failed:", e);
+        console.error(this.$apiErrorMessage?.(e, "reloadTree failed"), e);
         this.ownerServerList = [];
         this.ownerTreeLoaded = true;
       } finally {
@@ -876,17 +865,9 @@ export default {
       this.addSubstationNode = node || null;
       this.addSubstationDialogVisible = true;
     },
-    openShowOrganisationDialog(node) {
-      this.showOrganisationNode = node || null;
-      this.showOrganisationDialogVisible = true;
-    },
-    openShowSubstationDialog(node) {
-      this.showSubstationNode = node || null;
-      this.showSubstationDialogVisible = true;
-    },
-    openShowVoltageLevelDialog(node) {
-      this.showVoltageLevelNode = node || null;
-      this.showVoltageLevelDialogVisible = true;
+    openShowAssetDialog(node) {
+      this.showAssetInfoNode = node || null;
+      this.showAssetInfoDialogVisible = true;
     },
     openAddVoltageLevelDialog(node) {
       this.addVoltageLevelNode = node || null;
@@ -1125,8 +1106,7 @@ export default {
             });
         }
       } catch (error) {
-        this.$message.error("Some error occur");
-        console.error(error);
+        this.$notifyApiError?.(error, "Some error occur");
       }
     },
 
@@ -1182,7 +1162,7 @@ export default {
             roles: deviceInfo.role || "",
           };
         } catch (err) {
-          console.error("Không lấy được thông tin device:", err);
+          console.error(this.$apiErrorMessage?.(err, "Không lấy được thông tin device"), err);
           this.Information = {
             name: node.name || "",
             description: node.description || "",
@@ -1212,7 +1192,7 @@ export default {
             node.parentArr = [...ancestors];
           }
         } catch (e) {
-          console.error("showPropertiesData: Error fetching ancestors:", e);
+          console.error(this.$apiErrorMessage?.(e, "showPropertiesData: Error fetching ancestors"), e);
           node.parentArr = [];
         }
       }
@@ -1327,8 +1307,7 @@ export default {
       }
       this.ownerTreeLoaded = true;
     } catch (err) {
-      console.error("Lỗi khi tải entity tree:", err);
-      this.$message?.error?.("Không tải được dữ liệu cây");
+      this.$notifyApiError?.(err, "Không tải được dữ liệu cây");
       this.ownerServerList = [];
       this.ownerTreeLoaded = true;
     } finally {

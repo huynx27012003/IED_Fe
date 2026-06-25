@@ -1,4 +1,5 @@
 import client from '@/api/client';
+import { logApiError } from '@/helpers/apiFeedback';
 
 /**
  * Import an SCL file content.
@@ -31,7 +32,7 @@ export async function importScl(file, iedId = null) {
     );
     return response.data;
   } catch (error) {
-    console.error('Error importing SCL file:', error);
+    logApiError(error, 'Error importing SCL file');
     throw error;
   }
 }
@@ -46,7 +47,7 @@ export async function getSclSnapshot({ iedId, sclId = '' } = {}) {
     const response = await client.get('/scl', { params });
     return response.data;
   } catch (error) {
-    console.error('Error fetching SCL snapshot:', error);
+    logApiError(error, 'Error fetching SCL snapshot');
     throw error;
   }
 }
@@ -56,7 +57,7 @@ export async function listSclImports() {
     const response = await client.get('/scl/list');
     return response.data;
   } catch (error) {
-    console.error('Error fetching SCL import list:', error);
+    logApiError(error, 'Error fetching SCL import list');
     throw error;
   }
 }
@@ -71,7 +72,50 @@ export async function filterSclSnapshot({ sclId = "", iedId = "", name } = {}) {
     const response = await client.get('/scl/filter', { params });
     return response.data;
   } catch (error) {
-    console.error('Error filtering SCL snapshot:', error);
+    logApiError(error, 'Error filtering SCL snapshot');
+    throw error;
+  }
+}
+
+export async function exportSclByIed(iedId) {
+  if (iedId == null || iedId === "") {
+    throw new Error("iedId is required");
+  }
+
+  try {
+    const response = await client.get("/scl/export", {
+      params: { iedId },
+      responseType: "blob",
+      headers: {
+        accept: "*/*",
+      },
+    });
+    return response;
+  } catch (error) {
+    logApiError(error, `Error exporting SCL for iedId=${iedId}`);
+    throw error;
+  }
+}
+
+export async function exportSignalList(mode, id) {
+  if (!mode) {
+    throw new Error("mode is required");
+  }
+  if (id == null || id === "") {
+    throw new Error("id is required");
+  }
+
+  try {
+    const response = await client.get("/scl/export/signal-list", {
+      params: { mode, id },
+      responseType: "blob",
+      headers: {
+        accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      },
+    });
+    return response;
+  } catch (error) {
+    logApiError(error, `Error exporting Signal List for mode=${mode}, id=${id}`);
     throw error;
   }
 }

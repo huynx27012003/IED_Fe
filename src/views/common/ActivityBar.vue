@@ -1,60 +1,42 @@
 <template>
   <div class="activity-bar">
     <div class="activity-bar-top">
-      <button
-        class="sidebar-toggle-modern"
-        :title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-        @click="$emit('toggle-sidebar')"
-      >
-        <i :class="sidebarCollapsed ? 'fa-solid fa-angles-right' : 'fa-solid fa-angles-left'"></i>
-      </button>
+      <SidebarToggleButton
+        :collapsed="sidebarCollapsed"
+        @toggle="handleSidebarToggle"
+      />
 
-      <div
+      <ActivityBarItem
         v-for="item in topItems"
         :key="item.id"
-        :class="['activity-bar-item', { active: activeView === item.id }]"
+        :icon="item.icon"
         :title="item.title"
-        @click="$emit('view-change', item.id)"
-      >
-        <i :class="item.icon"></i>
-        <div v-if="activeView === item.id" class="active-indicator"></div>
-      </div>
+        :active="activeView === item.id"
+        @click="handleTopClick(item)"
+      />
     </div>
+
     <div class="activity-bar-bottom">
-      <div
-        v-for="item in bottomItems"
-        :key="item.id"
-        :class="[
-          'activity-bar-item',
-          {
-            active:
-              item.action === 'toggleSidebar'
-                ? !sidebarCollapsed
-                : activeView === item.id,
-          },
-        ]"
-        :title="getBottomTitle(item)"
-        @click="handleBottomClick(item)"
-      >
-        <i :class="[getBottomIcon(item), getBottomIconClass(item)]"></i>
-        <div
-          v-if="
-            item.action === 'toggleSidebar'
-              ? !sidebarCollapsed
-              : item.action === 'noop'
-                ? false
-                : activeView === item.id
-          "
-          class="active-indicator"
-        ></div>
-      </div>
+      <WhatsNewDrawer ref="whatsNewDrawer" />
+      <HelpCenter @open-whats-new="openWhatsNew" />
     </div>
   </div>
 </template>
 
 <script>
+import ActivityBarItem from './activity-bar/ActivityBarItem.vue';
+import HelpCenter from './activity-bar/HelpCenter.vue';
+import SidebarToggleButton from './activity-bar/SidebarToggleButton.vue';
+import WhatsNewDrawer from './activity-bar/WhatsNewDrawer.vue';
+
 export default {
   name: 'ActivityBar',
+  components: {
+    ActivityBarItem,
+    HelpCenter,
+    SidebarToggleButton,
+    WhatsNewDrawer
+  },
   props: {
     activeView: {
       type: String,
@@ -75,60 +57,22 @@ export default {
           title: 'Explorer - Tree View'
         },
         {
-          id: 'mock1',
+          id: 'sclImport',
           icon: 'fa-solid fa-file-import',
           title: 'SCL Import'
-        },
-        // {
-        //   id: 'mock2',
-        //   icon: 'fa-brands fa-github',
-        //   title: 'Source Control (Mock View 2)'
-        // }
-      ],
-      bottomItems: [
-        {
-          id: 'whatsNew',
-          icon: 'fa-solid fa-compass',
-          title: "What's new",
-          action: 'noop'
-        },
-        {
-          id: 'help',
-          icon: 'fa-solid fa-circle-question',
-          title: 'Help',
-          action: 'noop'
         }
       ]
     };
   },
   methods: {
-    getBottomTitle(item) {
-      if (item.action === 'toggleSidebar') {
-        return this.sidebarCollapsed
-          ? item.titleExpand || 'Expand sidebar'
-          : item.titleCollapse || 'Collapse sidebar';
-      }
-      return item.title || '';
+    handleSidebarToggle() {
+      this.$emit('toggle-sidebar');
     },
-    getBottomIcon(item) {
-      if (item.action === 'toggleSidebar') {
-        return 'fa-solid fa-right-to-bracket';
-      }
-      return item.icon || '';
-    },
-    getBottomIconClass(item) {
-      if (item.action === 'toggleSidebar' && !this.sidebarCollapsed) {
-        return 'toggle-collapse';
-      }
-      return '';
-    },
-    handleBottomClick(item) {
-      if (item.action === 'toggleSidebar') {
-        this.$emit('toggle-sidebar');
-        return;
-      }
-      if (item.action === 'noop') return;
+    handleTopClick(item) {
       this.$emit('view-change', item.id);
+    },
+    openWhatsNew() {
+      this.$refs.whatsNewDrawer?.open?.();
     }
   }
 };
@@ -160,80 +104,5 @@ export default {
 
 .activity-bar-top {
   padding-top: 10px;
-}
-
-.sidebar-toggle-modern {
-  width: 34px;
-  height: 34px;
-  margin-bottom: 10px;
-  border: 1px solid rgba(191, 220, 255, 0.35);
-  border-radius: 10px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.07));
-  color: rgba(255, 255, 255, 0.95);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 6px 12px rgba(8, 22, 47, 0.25);
-}
-
-.sidebar-toggle-modern:hover {
-  transform: translateY(-1px);
-  border-color: rgba(191, 220, 255, 0.55);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.12));
-}
-
-.sidebar-toggle-modern i {
-  font-size: 14px;
-}
-
-.activity-bar-item {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.2s ease;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.activity-bar-item:hover {
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.activity-bar-item.active {
-  color: #fff;
-}
-
-.activity-bar-item i {
-  font-size: 22px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-  transition: transform 0.2s ease;
-}
-.activity-bar-item:hover i {
-  transform: scale(1.1);
-}
-
-.activity-bar-item i.toggle-collapse {
-  transform: scaleX(-1);
-}
-
-.activity-bar-item:hover i.toggle-collapse {
-  transform: scaleX(-1) scale(1.1);
-}
-
-.active-indicator {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 3px;
-  height: 100%;
-  background: #00d2ff;
-  box-shadow: 0 0 10px rgba(0, 210, 255, 0.8);
-  border-radius: 0 2px 2px 0;
 }
 </style>

@@ -128,18 +128,12 @@ export default {
             aliasName: toNull(this.form.aliasName),
             description: toNull(this.form.description),
           };
-          console.debug("createVoltageLevel payload", payload);
           await createVoltageLevel(payload);
           this.$message?.success?.("Voltage Level created successfully");
           this.$emit("refresh-tree");
           this.resetForm();
         } catch (error) {
-          console.error("Create voltage level failed:", error?.response || error);
-          const errMsg =
-            error?.response?.data?.message ||
-            error?.response?.data?.error ||
-            "Failed to create voltage level";
-          this.$message?.error?.(errMsg);
+          this.$notifyApiError?.(error, "Failed to create voltage level");
         } finally {
           this.submitting = false;
         }

@@ -312,18 +312,12 @@ export default {
             cfax: toNull(this.form.cfax),
             cemail: toNull(this.form.cemail),
           };
-          console.debug("createOrganisation payload", payload);
           await createOrganisation(payload);
           this.$message?.success?.("Organisation created successfully");
           this.$emit("refresh-tree");
           this.resetForm();
         } catch (error) {
-          console.error("Create organisation failed:", error?.response || error);
-          const errMsg =
-            error?.response?.data?.message ||
-            error?.response?.data?.error ||
-            "Failed to create organisation";
-          this.$message?.error?.(errMsg);
+          this.$notifyApiError?.(error, "Failed to create organisation");
         } finally {
           this.submitting = false;
         }

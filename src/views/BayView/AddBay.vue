@@ -137,9 +137,7 @@ export default {
             this.$emit("success");
             this.resetForm();
           } catch (error) {
-            console.error(error);
-            const msg = error.response?.data?.message || "Failed to create bay";
-            this.$message.error(msg);
+            this.$notifyApiError?.(error, "Failed to create bay");
           } finally {
             this.loading = false;
           }

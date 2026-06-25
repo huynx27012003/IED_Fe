@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "headroom": {
+      "type": "stdio",
+      "command": "/Users/huynx/.local/bin/headroom",
+      "args": ["mcp", "serve"]
+    }
+  }
+}

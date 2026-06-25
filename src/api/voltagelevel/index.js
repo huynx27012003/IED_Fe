@@ -1,4 +1,5 @@
 import client from '@/api/client';
+import { logApiError } from '@/helpers/apiFeedback';
 
 export async function createVoltageLevel(payload) {
     try {
@@ -10,7 +11,22 @@ export async function createVoltageLevel(payload) {
         });
         return response.data;
     } catch (error) {
-        console.error('Error creating voltage level:', error);
+        logApiError(error, 'Error creating voltage level');
+        throw error;
+    }
+}
+
+export async function updateVoltageLevel(payload) {
+    try {
+        const response = await client.post('/voltage-level/update', payload, {
+            headers: {
+                accept: '*/*',
+                'Content-Type': 'application/json',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        logApiError(error, 'Error updating voltage level');
         throw error;
     }
 }
@@ -26,7 +42,7 @@ export async function deleteVoltageLevel(voltageLevelId) {
         });
         return response.data;
     } catch (error) {
-        console.error(`Error deleting voltage level id=${voltageLevelId}:`, error);
+        logApiError(error, `Error deleting voltage level id=${voltageLevelId}`);
         throw error;
   }
 }
@@ -41,7 +57,7 @@ export async function getVoltageLevelById(voltageLevelId) {
     });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching voltage level id=${voltageLevelId}:`, error);
+    logApiError(error, `Error fetching voltage level id=${voltageLevelId}`);
     throw error;
   }
 }
@@ -54,7 +70,7 @@ export async function getDeviceListByVoltageLevel(voltageLevelId) {
         });
         return response.data;
     } catch (error) {
-        console.error(`Error fetching device list for voltage level id=${voltageLevelId}:`, error);
+        logApiError(error, `Error fetching device list for voltage level id=${voltageLevelId}`);
         throw error;
     }
 }

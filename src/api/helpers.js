@@ -1,4 +1,5 @@
 import client from './client'
+import { logApiError } from '@/helpers/apiFeedback'
 
 /**
  * Wrapper cho HTTP GET requests
@@ -13,7 +14,7 @@ export async function get(url, params = {}, errorMessage = null) {
     return response.data
   } catch (error) {
     const message = errorMessage || `Error fetching from ${url}`
-    console.error(message, error)
+    logApiError(error, message)
     throw error
   }
 }
@@ -32,7 +33,7 @@ export async function post(url, data = {}, config = {}, errorMessage = null) {
     return response.data
   } catch (error) {
     const message = errorMessage || `Error posting to ${url}`
-    console.error(message, error)
+    logApiError(error, message)
     throw error
   }
 }
@@ -50,7 +51,7 @@ export async function put(url, data = {}, errorMessage = null) {
     return response.data
   } catch (error) {
     const message = errorMessage || `Error updating ${url}`
-    console.error(message, error)
+    logApiError(error, message)
     throw error
   }
 }
@@ -68,7 +69,7 @@ export async function del(url, params = {}, errorMessage = null) {
     return response.data
   } catch (error) {
     const message = errorMessage || `Error deleting from ${url}`
-    console.error(message, error)
+    logApiError(error, message)
     throw error
   }
 }
@@ -86,7 +87,7 @@ export async function patch(url, data = {}, errorMessage = null) {
     return response.data
   } catch (error) {
     const message = errorMessage || `Error patching ${url}`
-    console.error(message, error)
+    logApiError(error, message)
     throw error
   }
 }

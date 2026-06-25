@@ -2,146 +2,16 @@
   <div v-if="visible" class="context-menu-wrapper" v-bind="$attrs">
     <Loading v-if="isLoading" />
     <div v-else class="context-menu" ref="menu">
-      <ul v-if="!isLoading && nodeMode === 'bay'">
-        <li @click="openSub(0, 'addDevices')">
-          + Add Devices <span class="arrow">▶</span>
-          <div v-if="isOpen(0, 'addDevices')" class="submenu">
-            <div class="submenu-item" @click="emitAction('addDevice')">
-              IEC 61850 IEDs
-            </div>
-            <div class="submenu-item">Network Switches</div>
-            <div class="submenu-item">Router/Firewall</div>
-            <div class="submenu-item">Engineering PC</div>
-            <div class="submenu-item">GPS</div>
-            <div class="submenu-item danger">Cancel</div>
-          </div>
-        </li>
-        <li @click="emitAction('deviceList')">Device List</li>
-        <li @click="emitAction('copy')">Copy</li>
-        <li :class="{ disabled: !canPasteHere, 'paste-enabled': canPasteHere }" @click="emitAction('paste')">{{ pasteActionLabel }}</li>
-        <li>Cut</li>
-        <li @click="startRename">Rename</li>
-        <li @click="triggerFileInput">Import</li>
-        <li>Export</li>
-        <li>Sync</li>
-        <li class="danger" @click="emitAction('delete')">Delete</li>
-      </ul>
-      <ul v-else-if="!isLoading && nodeMode === 'ied'">
-        <li @click="emitAction('hardware')">Hardware Infomation</li>
-        <li @click="emitAction('parameter')">Parameter Settings</li>
-        <li @click.stop="emitAction('compareSetting')">
-          Compare Setting <span class="arrow">▶</span>
-          <div v-if="isOpen(0, 'compareSetting')" class="submenu compare-submenu" @click.stop>
-            <div v-if="compareSettingLoading" class="submenu-item compare-submenu-status">
-              Loading IED list...
-            </div>
-            <div v-else-if="!compareSettingOptions.length" class="submenu-item compare-submenu-status">
-              No IED available
-            </div>
-            <div
-              v-else
-              v-for="item in compareSettingOptions"
-              :key="`compare-ied-${item.id}`"
-              class="submenu-item"
-              :class="{ 'compare-submenu-item-selected': selectedCompareIedId === item.id }"
-              @click.stop="selectCompareSetting(item)"
-            >
-              {{ item.name }}
-            </div>
-          </div>
-        </li>
-        <li @click="emitAction('sclManagement')">SCL Management</li>
-        <li @click="emitAction('test')">Test Management</li>
-        <li>Event Management</li>
-        <li @click="emitAction('addGroup')">Add Group</li>
-        <li @click="emitAction('showAllGroup')">Show All Group</li>
-        <li>Add Setting Group</li>
-        <li @click="emitAction('copy')">Copy</li>
-        <li :class="{ disabled: !canPasteHere, 'paste-enabled': canPasteHere }" @click="emitAction('paste')">{{ pasteActionLabel }}</li>
-        <li>Cut</li>
-        <li @click="startRename">Rename</li>
-        <li @click="triggerFileInput">Import</li>
-        <li>Export</li>
-        <li>Sync</li>
-        <li class="danger" @click="emitAction('delete')">Delete</li>
-      </ul>
-
-      <ul v-else-if="!isLoading && nodeMode === 'sclFile'">
-        <li @click="emitAction('openSclFile')">Open</li>
-      </ul>
-
-      <ul v-else-if="!isLoading && nodeMode === 'settingFunction'">
-        <li @click="emitAction('settingFunction')">Open</li>
-        <li class="danger" @click="emitAction('delete')">Delete</li>
-      </ul>
-      <ul v-else-if="!isLoading && nodeMode === 'protectionFunction'">
-        <li @click="emitAction('protectionFunction')">Open</li>
-        <li class="danger" @click="emitAction('delete')">Delete</li>
-      </ul>
-      <ul v-else-if="!isLoading && nodeMode === 'protectionLevel'">
-        <li @click="emitAction('protectionLevel')">Open</li>
-        <li class="danger" @click="emitAction('delete')">Delete</li>
-      </ul>
-      <ul v-else-if="!isLoading && nodeMode === 'protectionGroup'">
-        <li @click="emitAction('protectionGroup')">Open</li>
-        <li class="danger" @click="emitAction('delete')">Delete</li>
-      </ul>
-      <ul v-else-if="!isLoading && nodeMode === 'systemSetting'">
-        <li @click="emitAction('systemSetting')">Open</li>
-        <li class="danger" @click="emitAction('delete')">Delete</li>
-      </ul>
-      <ul v-else-if="!isLoading && nodeMode === 'lineParameters'">
-        <li @click="emitAction('lineParameters')">Open</li>
-        <li class="danger" @click="emitAction('delete')">Delete</li>
-      </ul>
-      <ul v-else-if="!isLoading && nodeMode === 'substation'">
-        <li @click="emitAction('addVoltageLevel')">+ Add voltage level</li>
-        <li @click="emitAction('addBay')">+ Add bay</li>
-        <li @click="emitAction('addAsset')">+ Add asset</li>
-        <li @click="emitAction('deviceList')">Device List</li>
-        <li @click="emitAction('copy')">Copy</li>
-        <li :class="{ disabled: !canPasteHere, 'paste-enabled': canPasteHere }" @click="emitAction('paste')">{{ pasteActionLabel }}</li>
-        <li @click="emitAction('show')">Show</li>
-        <li @click="startRename">Rename</li>
-        <li @click="emitAction('download')">Download</li>
-        <li class="danger" @click="emitAction('delete')">Delete</li>
-        <li @click="emitAction('duplicate')">Duplicate</li>
-        <li @click="emitAction('export')">Export</li>
-        <li @click="emitAction('import')">Import</li>
-      </ul>
-      <ul v-else-if="!isLoading && nodeMode === 'voltageLevel'">
-        <li @click="emitAction('addBay')">+ Add bay</li>
-        <li @click="emitAction('addAsset')">+ Add asset</li>
-        <li @click="emitAction('deviceList')">Device List</li>
-        <li @click="emitAction('copy')">Copy</li>
-        <li :class="{ disabled: !canPasteHere, 'paste-enabled': canPasteHere }" @click="emitAction('paste')">{{ pasteActionLabel }}</li>
-        <li @click="emitAction('show')">Show</li>
-        <li @click="startRename">Rename</li>
-        <li @click="emitAction('download')">Download</li>
-        <li class="danger" @click="emitAction('delete')">Delete</li>
-        <li @click="emitAction('duplicate')">Duplicate</li>
-        <li @click="emitAction('export')">Export</li>
-        <li @click="emitAction('import')">Import</li>
-      </ul>
-      <ul v-else-if="!isLoading && ownerModes.includes(nodeMode)">
-        <li @click="emitAction('addOrganisation')">+ Add organisation</li>
-        <li @click="emitAction('addSubstation')">+ Add substation</li>
-        <li @click="emitAction('deviceList')">Device List</li>
-        <li @click="emitAction('copy')">Copy</li>
-        <li :class="{ disabled: !canPasteHere, 'paste-enabled': canPasteHere }" @click="emitAction('paste')">{{ pasteActionLabel }}</li>
-        <li @click="emitAction('show')">Show</li>
-        <li @click="startRename">Rename</li>
-        <li @click="emitAction('download')">Download</li>
-        <li class="danger" @click="emitAction('delete')">Delete</li>
-        <li @click="emitAction('duplicate')">Duplicate</li>
-        <li @click="emitAction('export')">Export</li>
-        <li @click="triggerFileInput">Import</li>
-      </ul>
-
-      <ul v-if="!isLoading && selectedNode?.id">
-        <li @click="emitAction('communicationServices')">Communication &amp; Services</li>
-      </ul>
-
+      <ContextMenuList
+        :sections="menuSections"
+        :active-path="activePath"
+        :compare-setting-loading="compareSettingLoading"
+        :compare-setting-options="compareSettingOptions"
+        :selected-compare-ied-id="selectedCompareIedId"
+        @action="handleMenuAction"
+        @open-submenu="openSub(0, $event)"
+        @select-compare-setting="selectCompareSetting"
+      />
       <input
         ref="fileInput"
         type="file"
@@ -190,14 +60,21 @@
 </template>
 <script>
 import { getAncestorByMode } from "@/api/treenode";
-import { importDevice, deleteDevice, getAllActiveIeds } from "@/api/device";
-import { deleteOrganisation, importOrganisationScd } from "@/api/organisation";
+import { importDevice, deleteDevice, getAllActiveIeds, exportIedXrio, exportPcdDocx, exportBbtnDocx } from "@/api/device";
+import { importScl, exportSclByIed, exportSignalList } from "@/api/scl";
+import {
+  deleteOrganisation,
+  importOrganisationScd,
+  exportOrganisationScd,
+} from "@/api/organisation";
 import { pasteAsset } from "@/api/asset";
 
 import { deleteSubstation } from "@/api/substation";
 import { deleteVoltageLevel } from "@/api/voltagelevel";
 import { deleteBay } from "@/api/bay";
 import Loading from "@/components/Loading.vue";
+import ContextMenuList from "./context-menu/ContextMenuList.vue";
+import { buildContextMenuSections } from "./context-menu/contextMenuItems";
 
 let copiedAssetCache = null;
 
@@ -205,6 +82,7 @@ export default {
   inheritAttrs: false,
   components: {
     Loading,
+    ContextMenuList,
   },
   emits: [
     "refresh-tree",
@@ -217,6 +95,8 @@ export default {
     "open-show-organisation",
     "open-show-substation",
     "open-show-voltagelevel",
+    "open-show-bay",
+    "open-show-ied",
     "add-group",
     "rename-node",
     "start-rename",
@@ -243,6 +123,7 @@ export default {
       compareSettingLoading: false,
       compareSettingOptions: [],
       selectedCompareIedId: null,
+      pendingFileAction: "",
       selectedFile: null,
       isLoading: false,
     };
@@ -273,6 +154,15 @@ export default {
       if (!expected) return false;
       if (String(this.selectedNode?.mode || "") !== expected) return false;
       return String(this.activeClipboardAsset?.id || "") !== String(this.selectedNode?.id || "");
+    },
+    menuSections() {
+      return buildContextMenuSections({
+        nodeMode: this.nodeMode,
+        isOwnerMode: this.ownerModes.includes(this.nodeMode),
+        hasSelectedNode: !!this.selectedNode?.id,
+        pasteActionLabel: this.pasteActionLabel,
+        canPasteHere: this.canPasteHere,
+      });
     },
   },
   watch: {
@@ -321,10 +211,7 @@ export default {
         this.$emit("close");
         this.$emit("refresh-tree");
       } catch (error) {
-        console.error("Error deleting device:", error);
-        this.$message.error(
-          `Failed to delete device with ID: ${this.selectedNode.id}`
-        );
+        this.$notifyApiError?.(error, `Failed to delete device with ID: ${this.selectedNode.id}`);
       } finally {
         this.isLoading = false;
       }
@@ -381,9 +268,8 @@ export default {
         const response = await getAllActiveIeds();
         this.compareSettingOptions = this.normalizeCompareIedList(response);
       } catch (error) {
-        console.error("Load compare IED list failed:", error);
         this.compareSettingOptions = [];
-        this.$message?.error?.("Failed to load IED list");
+        this.$notifyApiError?.(error, "Failed to load IED list");
       } finally {
         this.compareSettingLoading = false;
       }
@@ -417,6 +303,17 @@ export default {
     isOpen(level, key) {
       return this.activePath[level] === key;
     },
+    handleMenuAction(action) {
+      if (action === "rename") {
+        this.startRename();
+        return;
+      }
+      if (action === "triggerImport") {
+        this.triggerFileInput();
+        return;
+      }
+      this.emitAction(action);
+    },
     getExpectedTargetMode(mode) {
       const m = String(mode || "");
       const map = {
@@ -432,7 +329,7 @@ export default {
     },
     async emitAction(action) {
       if (!this.selectedNode || !this.selectedNode.id) {
-        console.error("selectedNode khong hop le:", this.selectedNode);
+        this.$message?.warning?.("Invalid node selected");
         this.$emit("close");
         return;
       }
@@ -444,6 +341,10 @@ export default {
         component: "",
       };
       let nodeForParent = this.selectedNode;
+
+      if (action === "parameterSettingsShow") {
+        action = "parameter";
+      }
 
       if (action === "parameter" || action === "hardware") {
         const iedNode =
@@ -464,7 +365,7 @@ export default {
 
             if (existingHardware) {
               existingHardware.component = "HardWareInfoView";
-              existingHardware.name = `${iedNode.name} - Hardware Infomation`;
+              existingHardware.name = `${iedNode.name} - Hardware Information`;
               existingHardware.node = iedNode;
               existingHardware.focusNode = iedNode;
 
@@ -479,7 +380,7 @@ export default {
 
             tab = {
               id: hardwareTabId,
-              name: `${iedNode.name} - Hardware Infomation`,
+              name: `${iedNode.name} - Hardware Information`,
               mode: iedNode.mode,
               component: "HardWareInfoView",
               node: iedNode,
@@ -539,6 +440,56 @@ export default {
         return;
       }
 
+      if (action === "parameterSettings") {
+        if (this.isOpen(0, "parameterSettings")) {
+          this.activePath = [];
+          return;
+        }
+        this.openSub(0, "parameterSettings");
+        return;
+      }
+
+      if (action === "parameterSettingsImport") {
+        this.pendingFileAction = "parameterSettingsImport";
+        this.triggerFileInput();
+        return;
+      }
+
+      if (action === "parameterSettingsExport") {
+        await this.exportIedXRIO();
+        return;
+      }
+
+      if (action === "parameterSettingsGenerateReport") {
+        await this.exportPcdDocx();
+        return;
+      }
+
+      if (action === "parameterSettingsExportTestReport") {
+        await this.exportBbtnTestReport();
+        return;
+      }
+
+      if (action === "sclManagement") {
+        if (this.isOpen(0, "sclManagement")) {
+          this.activePath = [];
+          return;
+        }
+        this.openSub(0, "sclManagement");
+        return;
+      }
+
+      if (action === "sclManagementImport") {
+        this.pendingFileAction = "sclManagementImport";
+        this.triggerFileInput();
+        return;
+      }
+
+      if (action === "sclManagementExport") {
+        await this.exportSclFile();
+        return;
+      }
+
       if (action === "copy") {
         if (!this.isCopyableMode(this.nodeMode)) {
           this.$message?.warning?.("This node type cannot be copied");
@@ -572,9 +523,7 @@ export default {
           this.$emit("refresh-tree");
           this.$nextTick(() => this.$emit("close"));
         } catch (error) {
-          console.error("Paste asset failed:", error);
-          const errMsg = error?.response?.data?.message || "Failed to paste";
-          this.$message?.error?.(errMsg);
+          this.$notifyApiError?.(error, "Failed to paste");
         } finally {
           this.isLoading = false;
         }
@@ -650,10 +599,7 @@ export default {
             return;
           }
         } else {
-          console.warn(
-            "Khong tim thay ancestor IED cho node:",
-            this.selectedNode
-          );
+          this.$message?.warning?.("IED not found");
         }
       }
 
@@ -676,10 +622,18 @@ export default {
         return;
       }
 
+      if (action === "exportSignalList") {
+        await this.exportSignalListFile();
+        return;
+      }
+
       if (this.ownerModes.includes(this.nodeMode)) {
         if (action === "show") {
           this.$emit("open-show-organisation", this.selectedNode);
           this.$nextTick(() => this.$emit("close"));
+          return;
+        } else if (action === "export") {
+          await this.exportOrganisationSCD();
           return;
         } else if (action === "addOrganisation") {
           this.$emit("open-add-organisation", this.selectedNode);
@@ -689,16 +643,14 @@ export default {
           this.$emit("open-add-substation", this.selectedNode);
           this.$nextTick(() => this.$emit("close"));
           return;
-        } else if (
-          ["download", "move", "duplicate", "export", "import"].includes(action)
-        ) {
+        } else if (["download", "move", "duplicate", "import"].includes(action)) {
           this.$message?.info?.("Action not implemented");
           this.$nextTick(() => this.$emit("close"));
           return;
         }
       }
 
-      if (action === "sclManagement") {
+      if (action === "sclManagementShow") {
         const iedNode =
           this.nodeMode === "ied"
             ? this.selectedNode
@@ -788,10 +740,26 @@ export default {
       }
 
       if (this.nodeMode === "bay") {
-         if (action === "delete") {
-             await this.confirmDeleteBay();
-             return;
-         }
+        if (action === "show") {
+          this.$emit("open-show-bay", this.selectedNode);
+          this.$nextTick(() => this.$emit("close"));
+          return;
+        }
+        if (action === "delete") {
+          await this.confirmDeleteBay();
+          return;
+        }
+      }
+
+      if (this.nodeMode === "ied") {
+        if (action === "show") {
+          this.$emit("open-show-ied", this.selectedNode);
+          this.$nextTick(() => this.$emit("close"));
+          return;
+        } else if (action === "export") {
+          await this.exportIedXRIO();
+          return;
+        }
       }
 
       if (tab.id) {
@@ -817,14 +785,21 @@ export default {
       this.$nextTick(() => this.$emit("close"));
     },
 
-    async confirmDeleteOwner() {
+    async confirmDeleteTreeEntity({
+      entityName,
+      invalidMessage,
+      deleteFn,
+      successMessage,
+      errorMessage,
+    }) {
       if (!this.selectedNode?.id) {
-        this.$message?.error?.("Invalid organisation id");
+        this.$message?.error?.(invalidMessage);
         return;
       }
+
       try {
         await this.$confirm(
-          `Delete organisation "${this.selectedNode.name || this.selectedNode.id}"?`,
+          `Delete ${entityName} "${this.selectedNode.name || this.selectedNode.id}"?`,
           "Confirm",
           { type: "warning" }
         );
@@ -832,99 +807,56 @@ export default {
         this.$emit("close");
         return;
       }
+
       try {
-        await deleteOrganisation(this.selectedNode.id);
-        this.$message?.success?.("Organisation deleted");
+        await deleteFn(this.selectedNode.id);
+        this.$message?.success?.(successMessage);
         this.$emit("refresh-tree");
       } catch (error) {
-        console.error("Delete organisation failed:", error);
-        this.$message?.error?.("Failed to delete organisation");
+        this.$notifyApiError?.(error, errorMessage);
       } finally {
         this.$nextTick(() => this.$emit("close"));
       }
     },
 
-    async confirmDeleteSubstation() {
-      if (!this.selectedNode?.id) {
-        this.$message?.error?.("Invalid substation id");
-        return;
-      }
-      try {
-        await this.$confirm(
-          `Delete substation "${this.selectedNode.name || this.selectedNode.id}"?`,
-          "Confirm",
-          { type: "warning" }
-        );
-      } catch {
-        this.$emit("close");
-        return;
-      }
-      try {
-        await deleteSubstation(this.selectedNode.id);
-        this.$message?.success?.("Substation deleted");
-        this.$emit("refresh-tree");
-      } catch (error) {
-        console.error("Delete substation failed:", error);
-        this.$message?.error?.("Failed to delete substation");
-      } finally {
-        this.$nextTick(() => this.$emit("close"));
-      }
+    confirmDeleteOwner() {
+      return this.confirmDeleteTreeEntity({
+        entityName: "organisation",
+        invalidMessage: "Invalid organisation id",
+        deleteFn: deleteOrganisation,
+        successMessage: "Organisation deleted",
+        errorMessage: "Failed to delete organisation",
+      });
     },
 
-    async confirmDeleteVoltageLevel() {
-      if (!this.selectedNode?.id) {
-        this.$message?.error?.("Invalid voltage level id");
-        return;
-      }
-      try {
-        await this.$confirm(
-          `Delete voltage level "${this.selectedNode.name || this.selectedNode.id}"?`,
-          "Confirm",
-          { type: "warning" }
-        );
-      } catch {
-        this.$emit("close");
-        return;
-      }
-      try {
-        await deleteVoltageLevel(this.selectedNode.id);
-        this.$message?.success?.("Voltage Level deleted");
-        this.$emit("refresh-tree");
-      } catch (error) {
-        console.error("Delete voltage level failed:", error);
-        const errMsg = error?.response?.data?.message || "Failed to delete voltage level";
-        this.$message?.error?.(errMsg);
-      } finally {
-        this.$nextTick(() => this.$emit("close"));
-      }
+    confirmDeleteSubstation() {
+      return this.confirmDeleteTreeEntity({
+        entityName: "substation",
+        invalidMessage: "Invalid substation id",
+        deleteFn: deleteSubstation,
+        successMessage: "Substation deleted",
+        errorMessage: "Failed to delete substation",
+      });
     },
 
-    async confirmDeleteBay() {
-      if (!this.selectedNode?.id) {
-        this.$message?.error?.("Invalid bay id");
-        return;
-      }
-      try {
-        await this.$confirm(
-          `Delete bay "${this.selectedNode.name || this.selectedNode.id}"?`,
-          "Confirm",
-          { type: "warning" }
-        );
-      } catch {
-        this.$emit("close");
-        return;
-      }
-      try {
-        await deleteBay(this.selectedNode.id);
-        this.$message?.success?.("Bay deleted");
-        this.$emit("refresh-tree");
-      } catch (error) {
-        console.error("Delete bay failed:", error);
-        const errMsg = error?.response?.data?.message || "Failed to delete bay";
-        this.$message?.error?.(errMsg);
-      } finally {
-        this.$nextTick(() => this.$emit("close"));
-      }
+    confirmDeleteVoltageLevel() {
+      return this.confirmDeleteTreeEntity({
+        entityName: "voltage level",
+        invalidMessage: "Invalid voltage level id",
+        deleteFn: deleteVoltageLevel,
+        successMessage: "Voltage Level deleted",
+        errorMessage: "Failed to delete voltage level",
+      });
+    },
+
+    confirmDeleteBay() {
+      return this.confirmDeleteTreeEntity({
+        entityName: "bay",
+        invalidMessage: "Invalid bay id",
+        deleteFn: deleteBay,
+        successMessage: "Bay deleted",
+        errorMessage: "Failed to delete bay",
+      });
     },
 
     triggerFileInput() {
@@ -933,14 +865,43 @@ export default {
     handleFileSelect(event) {
       this.selectedFile = event.target.files[0];
       if (this.selectedFile) {
+        if (this.pendingFileAction === "sclManagementImport") {
+          this.confirmImportSclFromMenu();
+          return;
+        }
         this.showImportDialog = true;
       }
     },
     cancelImport() {
       this.showImportDialog = false;
       this.selectedFile = null;
+      this.pendingFileAction = "";
       this.isLoading = false;
       this.$refs.fileInput.value = "";
+    },
+    async confirmImportSclFromMenu() {
+      const file = this.selectedFile;
+      const iedId = this.selectedNode?.id;
+
+      if (!file || iedId == null || iedId === "") {
+        this.$message?.error?.("No file selected or invalid IED ID");
+        this.pendingFileAction = "";
+        return;
+      }
+
+      this.isLoading = true;
+      try {
+        await importScl(file, iedId);
+        this.$message?.success?.("SCL imported successfully.");
+      } catch (error) {
+        this.$notifyApiError?.(error, "Failed to import SCL file.");
+      } finally {
+        this.isLoading = false;
+        this.pendingFileAction = "";
+        this.selectedFile = null;
+        if (this.$refs.fileInput) this.$refs.fileInput.value = "";
+        this.$nextTick(() => this.$emit("close"));
+      }
     },
     async confirmImport() {
       const file = this.selectedFile;
@@ -989,16 +950,196 @@ export default {
         };
         if (newTree) restoreExpanded(newTree);
       } catch (error) {
-        this.$message.error(`Failed to import: ${error.message}`);
-        console.error("Import error:", error);
+        this.$notifyApiError?.(error, "Failed to import");
       } finally {
         this.isLoading = false;
         this.showImportDialog = false;
+        this.pendingFileAction = "";
         this.selectedFile = null;
         if (this.$refs.fileInput) {
           this.$refs.fileInput.value = "";
         }
         this.$emit("close");
+      }
+    },
+
+    extractFilenameFromDisposition(dispositionHeader) {
+      const raw = String(dispositionHeader || "");
+      if (!raw) return "";
+
+      const utfMatch = raw.match(/filename\*=UTF-8''([^;]+)/i);
+      if (utfMatch?.[1]) {
+        try {
+          return decodeURIComponent(utfMatch[1]).replace(/^"|"$/g, "");
+        } catch {
+          return utfMatch[1].replace(/^"|"$/g, "");
+        }
+      }
+
+      const plainMatch = raw.match(/filename=([^;]+)/i);
+      if (plainMatch?.[1]) {
+        return plainMatch[1].trim().replace(/^"|"$/g, "");
+      }
+
+      return "";
+    },
+
+    triggerBrowserDownload(blob, fileName, defaultName = "download") {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName || defaultName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    },
+
+    getSignalListExportMode() {
+      if (this.ownerModes.includes(this.nodeMode)) return "organisation";
+      if (this.nodeMode === "substation") return "substation";
+      if (this.nodeMode === "voltageLevel") return "voltageLevel";
+      return "";
+    },
+
+    async exportSignalListFile() {
+      const mode = this.getSignalListExportMode();
+      const id = this.selectedNode?.id;
+      if (!mode || id === null || id === undefined || id === "") {
+        this.$message?.error?.("Invalid Signal List export target");
+        this.$nextTick(() => this.$emit("close"));
+        return;
+      }
+
+      this.isLoading = true;
+      try {
+        const response = await exportSignalList(mode, id);
+        const disposition = response?.headers?.["content-disposition"];
+        const fallbackFileName = `signal-list-${mode}-${id}.xlsx`;
+        const fileName = this.extractFilenameFromDisposition(disposition) || fallbackFileName;
+        this.triggerBrowserDownload(response.data, fileName, fallbackFileName);
+        this.$message?.success?.("Exported Signal List successfully.");
+      } catch (error) {
+        this.$notifyApiError?.(error, "Failed to export Signal List.");
+      } finally {
+        this.isLoading = false;
+        this.$nextTick(() => this.$emit("close"));
+      }
+    },
+
+    async exportOrganisationSCD() {
+      const organisationId = this.selectedNode?.id;
+      if (organisationId === null || organisationId === undefined || organisationId === "") {
+        this.$message?.error?.("Invalid organisation id");
+        this.$nextTick(() => this.$emit("close"));
+        return;
+      }
+
+      this.isLoading = true;
+      try {
+        const response = await exportOrganisationScd(organisationId);
+        const disposition = response?.headers?.["content-disposition"];
+        const fallbackFileName = `organisation-${organisationId}.scd`;
+        const fileName = this.extractFilenameFromDisposition(disposition) || fallbackFileName;
+        this.triggerBrowserDownload(response.data, fileName, `organisation-${organisationId}`);
+        this.$message?.success?.("Exported organisation SCD successfully.");
+      } catch (error) {
+        this.$notifyApiError?.(error, "Failed to export organisation SCD.");
+      } finally {
+        this.isLoading = false;
+        this.$nextTick(() => this.$emit("close"));
+      }
+    },
+
+    async exportIedXRIO() {
+      const iedId = this.selectedNode?.id;
+      if (iedId === null || iedId === undefined || iedId === "") {
+        this.$message?.error?.("Invalid IED id");
+        this.$nextTick(() => this.$emit("close"));
+        return;
+      }
+
+      this.isLoading = true;
+      try {
+        const response = await exportIedXrio(iedId);
+        const disposition = response?.headers?.["content-disposition"];
+        const fallbackFileName = `ied-${iedId}.xrio`;
+        const fileName = this.extractFilenameFromDisposition(disposition) || fallbackFileName;
+        this.triggerBrowserDownload(response.data, fileName, `ied-${iedId}.xrio`);
+        this.$message?.success?.("Exported IED XRIO successfully.");
+      } catch (error) {
+        this.$notifyApiError?.(error, "Failed to export IED XRIO.");
+      } finally {
+        this.isLoading = false;
+        this.$nextTick(() => this.$emit("close"));
+      }
+    },
+    async exportPcdDocx() {
+      const iedId = this.selectedNode?.id;
+      if (iedId === null || iedId === undefined || iedId === "") {
+        this.$message?.error?.("Invalid IED id");
+        this.$nextTick(() => this.$emit("close"));
+        return;
+      }
+
+      this.isLoading = true;
+      try {
+        const response = await exportPcdDocx(iedId);
+        const disposition = response?.headers?.["content-disposition"];
+        const fallbackFileName = `pcd-report-${iedId}.docx`;
+        const fileName = this.extractFilenameFromDisposition(disposition) || fallbackFileName;
+        this.triggerBrowserDownload(response.data, fileName, fallbackFileName);
+        this.$message?.success?.("Exported PCD report successfully.");
+      } catch (error) {
+        this.$notifyApiError?.(error, "Failed to export PCD report.");
+      } finally {
+        this.isLoading = false;
+        this.$nextTick(() => this.$emit("close"));
+      }
+    },
+    async exportBbtnTestReport() {
+      const iedId = this.selectedNode?.id;
+      if (iedId === null || iedId === undefined || iedId === "") {
+        this.$message?.error?.("Invalid IED id");
+        this.$nextTick(() => this.$emit("close"));
+        return;
+      }
+
+      this.isLoading = true;
+      try {
+        const response = await exportBbtnDocx(iedId);
+        const disposition = response?.headers?.["content-disposition"];
+        const fallbackFileName = `bbtn-test-report-${iedId}.docx`;
+        const fileName = this.extractFilenameFromDisposition(disposition) || fallbackFileName;
+        this.triggerBrowserDownload(response.data, fileName, fallbackFileName);
+        this.$message?.success?.("Exported test report successfully.");
+      } catch (error) {
+        this.$notifyApiError?.(error, "Failed to export test report.");
+      } finally {
+        this.isLoading = false;
+        this.$nextTick(() => this.$emit("close"));
+      }
+    },
+    async exportSclFile() {
+      const iedId = this.selectedNode?.id;
+      if (iedId === null || iedId === undefined || iedId === "") {
+        this.$message?.error?.("Invalid IED id");
+        this.$nextTick(() => this.$emit("close"));
+        return;
+      }
+
+      this.isLoading = true;
+      try {
+        const response = await exportSclByIed(iedId);
+        const disposition = response?.headers?.["content-disposition"];
+        const fileName = this.extractFilenameFromDisposition(disposition);
+        this.triggerBrowserDownload(response.data, fileName, `ied-${iedId}.cid`);
+        this.$message?.success?.("Exported SCL successfully.");
+      } catch (error) {
+        this.$notifyApiError?.(error, "Failed to export SCL.");
+      } finally {
+        this.isLoading = false;
+        this.$nextTick(() => this.$emit("close"));
       }
     },
 
@@ -1072,102 +1213,10 @@ export default {
   pointer-events: auto;
 }
 
-.context-menu ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.context-menu li {
-  padding: 10px 10px;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: relative;
-  transition: background 0.2s;
-}
-
-.context-menu li:hover {
-  background-color: #f5f5f5;
-}
-
-.context-menu li.disabled {
-  color: #9aa3af;
-  cursor: not-allowed;
-}
-
-.context-menu li.disabled:hover {
-  background-color: transparent;
-}
-
-.context-menu li.paste-enabled {
-  color: #111;
-  font-weight: 500;
-}
-
-.context-menu li .arrow {
-  font-size: 12px;
-  color: #999;
-}
-
-.submenu {
-  position: absolute;
-  top: 0;
-  left: calc(100% + 2px);
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.08);
-  min-width: 180px;
-  padding: 8px 0;
-  z-index: 1001;
-}
-
-.submenu-item {
-  padding: 10px 16px;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: background 0.2s;
-  white-space: nowrap;
-}
-
-.submenu-item:hover {
-  background-color: #f5f5f5;
-}
-
-.danger {
-  color: red;
-  font-weight: 500;
-}
-
-.context-menu li.danger:hover,
-.submenu-item.danger:hover {
-  background-color: #ffeaea;
-  color: #d60000;
-}
-
 .confirm-text {
   white-space: normal;
   word-break: break-word;
   line-height: 1.5;
   color: #333;
-}
-
-.compare-submenu {
-  max-height: 300px;
-  overflow: auto;
-}
-
-.compare-submenu-status {
-  color: #666;
-  cursor: default;
-}
-
-.compare-submenu-item-selected {
-  background: #eaf4ff;
-  color: #174f8f;
 }
 </style>

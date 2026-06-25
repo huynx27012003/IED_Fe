@@ -1,4 +1,5 @@
 ﻿import client from './client'
+import { logApiError } from '@/helpers/apiFeedback'
 
 export const login = async (username, password) => {
   try {
@@ -8,7 +9,7 @@ export const login = async (username, password) => {
     })
     return response.data 
   } catch (error) {
-    console.error('Login error:', error)
+    logApiError(error, 'Login error')
     throw error
   }
 }
@@ -22,7 +23,7 @@ export const getUserFromToken = async (token) => {
     })
     return response.data
   } catch (error) {
-    console.error('Error decoding token:', error)
+    logApiError(error, 'Error decoding token')
     throw error
   }
 }

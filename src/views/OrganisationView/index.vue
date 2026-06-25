@@ -182,8 +182,8 @@ export default {
         const data = response?.data ?? response;
         this.organisation = this.normalizeOrganisation(data);
       } catch (error) {
-        console.error("Failed to load organisation info:", error);
-        this.errorMessage = "Unable to load organisation information.";
+        this.errorMessage = this.$apiErrorMessage?.(error, "Unable to load organisation information.") || "Unable to load organisation information.";
+        console.error(this.errorMessage, error);
         this.organisation = defaultOrganisation();
       } finally {
         this.isLoading = false;

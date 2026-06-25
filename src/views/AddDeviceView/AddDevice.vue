@@ -264,14 +264,14 @@ export default {
       try {
         this.vendors = await getVendors();
       } catch (error) {
-        this.$message.error("Failed to load vendors");
+        this.$notifyApiError?.(error, "Failed to load vendors");
       }
     },
     async fetchDeviceTypes() {
       try {
         this.deviceTypes = await getDeviceTypes();
       } catch (error) {
-        this.$message.error("Failed to load device types");
+        this.$notifyApiError?.(error, "Failed to load device types");
       }
     },
     fetchModels: debounce(async function () {
@@ -299,10 +299,9 @@ export default {
           });
         }
       } catch (error) {
-        this.$message.error("Failed to load models");
+        this.$notifyApiError?.(error, "Failed to load models");
         this.models = [];
         this.deviceForm.model = "";
-        console.error("Fetch models error:", error);
       } finally {
         this.modelLoading = false;
       }
@@ -345,9 +344,8 @@ export default {
         this.confirmDialogVisible = false;
         this.$emit("device-created");
       } catch (error) {
-        this.$message.error("Failed to create device");
+        this.$notifyApiError?.(error, "Failed to create device");
         this.confirmDialogVisible = false;
-        console.error("Create device error:", error);
       }
     },
     handleCancel() {

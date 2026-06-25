@@ -1,4 +1,5 @@
 import client from './client'
+import { logApiError } from '@/helpers/apiFeedback'
 
 export const searchItems = async (keyword) => {
   try {
@@ -7,7 +8,7 @@ export const searchItems = async (keyword) => {
     })
     return response.data
   } catch (error) {
-    console.error('Error searching keyword:', error)
+    logApiError(error, 'Error searching keyword')
     throw error
   }
 }
@@ -17,7 +18,7 @@ export const addNewAssociation = async (classId, associationData) => {
     const response = await client.post(`/association/${classId}`, associationData)
     return response.data
   } catch (error) {
-    console.error('Error adding new association:', error)
+    logApiError(error, 'Error adding new association')
     throw error
   }
 }
@@ -29,7 +30,7 @@ export const getAssociationByAttrId = async (attrId) => {
     })
     return response.data
   } catch (error) {
-    console.error('Error fetching association by attrId:', error)
+    logApiError(error, 'Error fetching association by attrId')
     throw error
   }
 }
@@ -39,7 +40,7 @@ export const updateAssociation = async (associationData) => {
     const response = await client.put('/association', associationData)
     return response.data
   } catch (error) {
-    console.error('Error updating association:', error)
+    logApiError(error, 'Error updating association')
     throw error
   }
 }
@@ -51,7 +52,7 @@ export const deleteAssociation = async (assocId) => {
     })
     return response.data
   } catch (error) {
-    console.error('Error deleting association:', error)
+    logApiError(error, 'Error deleting association')
     throw error
   }
 }

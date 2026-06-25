@@ -69,8 +69,7 @@ export function useSclImportStore() {
         this.showSCL = true;
         this.$message?.success?.("SCL imported");
       } catch (err) {
-        console.error("Import SCL failed:", err);
-        this.$message?.error?.("Import SCL failed");
+        this.$notifyApiError?.(err, "Import SCL failed");
       } finally {
         this.sclLoading = false;
         if (event?.target) event.target.value = "";

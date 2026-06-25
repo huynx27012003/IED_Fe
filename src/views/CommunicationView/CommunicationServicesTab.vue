@@ -25,9 +25,8 @@
           </ul>
         </div>
       </div>
-
+      
       <div class="param-tree-resizer" @mousedown="startResizeParamTree"></div>
-
       <div class="table-pane">
         <div class="table-pane-title">
           <div class="table-pane-title-left">

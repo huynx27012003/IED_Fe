@@ -2,6 +2,8 @@ import { mapState } from "vuex";
 import Loading from "@/components/Loading.vue";
 import TreeNode from "@/views/common/TreeNode.vue";
 import Diagram from "@/views/ParameterSettingView/Diagram.vue";
+import OvercurrentCurveDialog from "@/views/ParameterSettingView/OvercurrentCurveDialog.vue";
+import { getIedInfoById } from "@/api/device";
 import { getPointsDistanceByIedId } from "@/api/pointsDistance";
 import { getAncestorByMode } from "@/api/treenode";
 import { useParamTree } from "@/helpers/parameterSetting/useParamTree";
@@ -9,7 +11,7 @@ import { useParamTable } from "@/helpers/parameterSetting/useParamTable";
 import { useParamEdit } from "@/helpers/parameterSetting/useParamEdit";
 export default {
   name: "SystemSettingTab",
-  components: { Loading, TreeNode, Diagram },
+  components: { Loading, TreeNode, Diagram, OvercurrentCurveDialog },
   props: {
     ownerData: { type: Object, required: true },
     focusNode: { type: Object, default: null },
@@ -42,6 +44,12 @@ export default {
         }
       },
     },
+    currentIedId: {
+      handler() {
+        this.loadCurrentIedModel();
+      },
+      immediate: true,
+    },
     // If IED context changes (ownerData.node.id), refresh our backing data too
     'ownerData.node.id': {
       handler() {
@@ -70,6 +78,12 @@ export default {
       handler() {
         this.$nextTick(() => this.syncTableViewport());
       },
+    },
+    paramGroupOptions: {
+      handler() {
+        this.syncParamGroupSelection();
+      },
+      immediate: true,
     },
   },
   data() {
@@ -109,6 +123,9 @@ export default {
       hideOperationOffTree: false,
       paramTreeWidthPx: 320,
       resizingParamTree: false,
+      selectedParamGroupIds: [],
+      showParamGroupDropdown: false,
+      paramGroupDropdownPos: { top: 0, left: 0 },
 
       // Defer heavy table render so parameter tree paints first
       renderTable: false,
@@ -124,15 +141,33 @@ export default {
       showZoneDialog: false,
       diagramLoading: false,
       diagramPolygons: [],
+      showOvercurrentDialog: false,
+      iedInfoModel: "",
+      iedModelRequestId: 0,
       
       // View mode dropdown
       showViewModeDropdown: false,
+      parameterDisplayMode: "raw",
+      convertedCurrentSide: "secondary",
     };
   },
   computed: {
     ...mapState(["language"]),
     isFilteredView() {
       return this.hideOperationOffTree || !this.showMutedRows;
+    },
+    isConvertedDisplayMode() {
+      return this.parameterDisplayMode === "converted";
+    },
+    parameterDisplayModeLabel() {
+      return this.isConvertedDisplayMode ? "Converted" : "Raw";
+    },
+    isPrimaryCurrentDisplay() {
+      return this.isConvertedDisplayMode && this.convertedCurrentSide === "primary";
+    },
+    showCurrentSideToggle() {
+      const node = this.freshFocusNode || this.focusNode || this.ownerData.node;
+      return this.isConvertedDisplayMode && !this.isSystemSettingContext(node);
     },
     tableColumnStyles() {
       if (!this.hasUserResized || !Array.isArray(this.columnWidths) || !this.columnWidths.length) {
@@ -221,7 +256,11 @@ export default {
         const groups = this.parameterGroups.length
           ? this.parameterGroups
           : children.filter((c) => c.mode === "protectionGroup");
-        const source = [...base, ...groups];
+        const selectedGroupIds = this.selectedParamGroupIdSet;
+        const visibleGroups = this.paramGroupOptions.length
+          ? groups.filter((group) => selectedGroupIds.has(String(group.id)))
+          : groups;
+        const source = [...base, ...visibleGroups];
         return this.renderParamRows(
           source,
           1,
@@ -229,6 +268,7 @@ export default {
           new Set(),
           false,
           null,
+          false,
           false
         );
       }
@@ -246,6 +286,7 @@ export default {
         const inPG = mode === "protectionGroup";
         const arOff = inPG ? this.hasAutoRecloseOffDeep(node) : false;
         const pgId = inPG ? node.id : null;
+        const inSystemSetting = this.isSystemSettingContext(node);
 
         return this.renderParamRows(
           node.children || [],
@@ -254,7 +295,8 @@ export default {
           new Set(),
           inPG,
           pgId,
-          arOff
+          arOff,
+          inSystemSetting
         );
       }
       return [];
@@ -264,7 +306,7 @@ export default {
 
       const shouldHide = (row) =>
         !row.isGroup &&
-        (row.muted || row.characteristicMuted || this.isNullish(row.value));
+        (row.muted || row.characteristicMuted || this.isNullish(row.displayValue));
 
       // Keep set for rows that survive the muted filter
       const keptRowKeys = new Set(
@@ -305,11 +347,90 @@ export default {
         ? this.paramTreeData[0]
         : null;
     },
+    paramGroupOptions() {
+      const groups = Array.isArray(this.paramTreeRoot?.children)
+        ? this.paramTreeRoot.children.filter((child) => child?.mode === "protectionGroup")
+        : [];
+      const sorted = [...groups].sort((a, b) => {
+        const aNum = this.getParamGroupNumber(a);
+        const bNum = this.getParamGroupNumber(b);
+        if (aNum != null && bNum != null) return aNum - bNum;
+        if (aNum != null) return -1;
+        if (bNum != null) return 1;
+        return String(a?.name || "").localeCompare(String(b?.name || ""));
+      });
+      const defaultId = sorted.find((group) => this.getParamGroupNumber(group) === 1)?.id ?? sorted[0]?.id;
+
+      return sorted.map((group) => ({
+        id: group.id,
+        name: group.name || `Group ${this.getParamGroupNumber(group) || ""}`.trim(),
+        isDefault: String(group.id) === String(defaultId),
+      }));
+    },
+    selectedParamGroupIdSet() {
+      return new Set(this.selectedParamGroupIds.map((id) => String(id)));
+    },
+    paramGroupDropdownStyle() {
+      return {
+        top: `${this.paramGroupDropdownPos.top}px`,
+        left: `${this.paramGroupDropdownPos.left}px`,
+      };
+    },
+    filteredParamTreeRoot() {
+      if (!this.paramTreeRoot) return null;
+      if (!this.paramGroupOptions.length) return this.paramTreeRoot;
+
+      const selectedIds = this.selectedParamGroupIdSet;
+      const children = Array.isArray(this.paramTreeRoot.children)
+        ? this.paramTreeRoot.children.filter((child) => child?.mode !== "protectionGroup" || selectedIds.has(String(child.id)))
+        : [];
+
+      return { ...this.paramTreeRoot, children };
+    },
+    currentIedNode() {
+      const ownerNode = this.ownerData?.node || null;
+      if (ownerNode?.mode === "ied") return ownerNode;
+
+      const node = this.freshFocusNode || this.focusNode || ownerNode;
+      if (node?.mode === "ied") return node;
+      if (node?.id == null) return ownerNode;
+
+      return getAncestorByMode(this.tree, node.id, "ied") || ownerNode;
+    },
+    currentIedId() {
+      return this.currentIedNode?.id || null;
+    },
+    showZoneDiagramAction() {
+      const iedNode = this.currentIedNode || {};
+      const model = iedNode.model || iedNode.deviceModel || iedNode.modelName || this.iedInfoModel || "";
+      return String(model).trim().toUpperCase() === "REL650";
+    },
   },
   methods: {
     ...useParamTree(),
     ...useParamTable(),
     ...useParamEdit(),
+    onClickEdit() {
+      this.menuOpen = false;
+      this.parameterDisplayMode = "raw";
+      this.convertedCurrentSide = "secondary";
+      if (!this.isEditing) this.enterEditMode();
+    },
+    toggleParameterDisplayMode() {
+      if (this.isEditing) return;
+      this.parameterDisplayMode = this.isConvertedDisplayMode ? "raw" : "converted";
+      if (!this.isConvertedDisplayMode) this.convertedCurrentSide = "secondary";
+    },
+    setConvertedCurrentSide(side) {
+      if (!this.isConvertedDisplayMode) return;
+      this.convertedCurrentSide = side === "primary" ? "primary" : "secondary";
+    },
+    isSystemSettingContext(node) {
+      if (!node) return false;
+      if (node.mode === "systemSetting") return true;
+      if (node.id == null) return false;
+      return !!getAncestorByMode([this.paramTreeRoot].filter(Boolean), node.id, "systemSetting");
+    },
     toggleViewModeDropdown(event) {
       if (event) event.stopPropagation();
       this.showViewModeDropdown = !this.showViewModeDropdown;
@@ -318,6 +439,65 @@ export default {
       // Don't close if clicking inside the dropdown
       if (event && event.target.closest('.view-mode-dropdown')) return;
       this.showViewModeDropdown = false;
+      if (event && event.target.closest('.param-group-selector')) return;
+      this.showParamGroupDropdown = false;
+    },
+    getParamGroupNumber(group) {
+      const match = String(group?.name || "").match(/group\s*(\d+)/i);
+      return match ? Number(match[1]) : null;
+    },
+    syncParamGroupSelection() {
+      const options = this.paramGroupOptions;
+      if (!options.length) {
+        this.selectedParamGroupIds = [];
+        this.showParamGroupDropdown = false;
+        return;
+      }
+
+      const validIds = new Set(options.map((option) => String(option.id)));
+      const defaultGroup = options.find((option) => option.isDefault) || options[0];
+      const next = this.selectedParamGroupIds
+        .filter((id) => validIds.has(String(id)))
+        .map((id) => String(id));
+
+      if (defaultGroup && !next.includes(String(defaultGroup.id))) {
+        next.unshift(String(defaultGroup.id));
+      }
+
+      if (next.length !== this.selectedParamGroupIds.length || next.some((id, idx) => id !== String(this.selectedParamGroupIds[idx]))) {
+        this.selectedParamGroupIds = next;
+      }
+    },
+    isParamGroupSelected(groupId) {
+      return this.selectedParamGroupIdSet.has(String(groupId));
+    },
+    isParamTreeIedNode(node) {
+      return node?.mode === "ied" && String(node.id) === String(this.paramTreeRoot?.id);
+    },
+    toggleParamGroupDropdown(event) {
+      if (event) event.stopPropagation();
+      const shouldOpen = !this.showParamGroupDropdown;
+      if (shouldOpen && event?.currentTarget?.getBoundingClientRect) {
+        const rect = event.currentTarget.getBoundingClientRect();
+        const menuWidth = 190;
+        const left = Math.min(rect.left, window.innerWidth - menuWidth - 8);
+        this.paramGroupDropdownPos = {
+          top: rect.bottom + 4,
+          left: Math.max(8, left),
+        };
+      }
+      this.showParamGroupDropdown = shouldOpen;
+    },
+    toggleParamGroupSelection(group) {
+      if (!group || group.isDefault) return;
+      const id = String(group.id);
+      const selected = new Set(this.selectedParamGroupIds.map((item) => String(item)));
+      if (selected.has(id)) {
+        selected.delete(id);
+      } else {
+        selected.add(id);
+      }
+      this.selectedParamGroupIds = Array.from(selected);
     },
     handleShowAll() {
       this.hideOperationOffTree = false;
@@ -328,6 +508,40 @@ export default {
       this.hideOperationOffTree = true;
       this.showMutedRows = false;
       this.showViewModeDropdown = false;
+    },
+    openOvercurrentCurve() {
+      if (!this.currentIedId) {
+        this.$message?.warning?.("Cannot determine IED id for overcurrent curve");
+        return;
+      }
+
+      this.showOvercurrentDialog = true;
+    },
+    async loadCurrentIedModel() {
+      const iedId = this.currentIedId;
+      const requestId = this.iedModelRequestId + 1;
+      this.iedModelRequestId = requestId;
+      this.iedInfoModel = "";
+
+      if (!iedId) return;
+
+      const nodeModel = this.currentIedNode?.model || this.currentIedNode?.deviceModel || this.currentIedNode?.modelName;
+      if (nodeModel) {
+        this.iedInfoModel = nodeModel;
+        return;
+      }
+
+      try {
+        const deviceInfo = await getIedInfoById(iedId);
+        if (this.iedModelRequestId === requestId) {
+          this.iedInfoModel = deviceInfo?.model || "";
+        }
+      } catch (error) {
+        if (this.iedModelRequestId === requestId) {
+          this.iedInfoModel = "";
+        }
+        console.error(this.$apiErrorMessage?.(error, "Failed to load IED model"), error);
+      }
     },
     resolveCurrentIedId() {
       const node = this.freshFocusNode || this.focusNode || this.ownerData?.node;
@@ -409,8 +623,7 @@ export default {
         const payload = response?.data ?? response;
         this.diagramPolygons = this.buildDiagramPolygons(payload);
       } catch (error) {
-        console.error("Load diagram points failed:", error);
-        this.$message?.error?.("Failed to load diagram points");
+        this.$notifyApiError?.(error, "Failed to load diagram points");
       } finally {
         this.diagramLoading = false;
       }
