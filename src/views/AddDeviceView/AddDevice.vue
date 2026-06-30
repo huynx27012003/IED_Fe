@@ -127,8 +127,8 @@
         <el-switch v-model="deviceForm.powerDirectionFlag" />
       </el-form-item> -->
       <el-form-item>
-        <el-button type="primary" @click="handleSave">{{ $tUi('save') }}</el-button>
-        <el-button @click="handleCancel">{{ $tUi('cancel') }}</el-button>
+        <el-button type="primary" @click="handleSave" :disabled="submitting">{{ $tUi('save') }}</el-button>
+        <el-button @click="handleCancel" :disabled="submitting">{{ $tUi('cancel') }}</el-button>
       </el-form-item>
     </el-form>
     <el-dialog
@@ -140,8 +140,10 @@
       <span>{{ $tUi('confirmSaveDevice') }}</span>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="cancelDialog">{{ $tUi('cancel') }}</el-button>
-          <el-button type="primary" @click="confirmSave">{{ $tUi('confirm') }}</el-button>
+          <el-button @click="cancelDialog" :disabled="submitting">{{ $tUi('cancel') }}</el-button>
+          <el-button type="primary" @click="confirmSave" :loading="submitting" :disabled="submitting">
+            {{ $tUi('confirm') }}
+          </el-button>
         </span>
       </template>
     </el-dialog>
@@ -233,6 +235,7 @@ export default {
       deviceTypes: [],
       models: [],
       modelLoading: false,
+      submitting: false,
       confirmDialogVisible: false,
       confirmTargetParam: null,
     };
@@ -323,6 +326,7 @@ export default {
       this.fetchModels();
     },
     handleSave() {
+      if (this.submitting) return;
       this.$refs.deviceForm.validate(async (valid) => {
         if (valid) {
           this.confirmDialogVisible = true;
@@ -332,6 +336,8 @@ export default {
       });
     },
     async confirmSave() {
+      if (this.submitting) return;
+      this.submitting = true;
       try {
         const deviceData = {
           ...this.deviceForm,
@@ -346,12 +352,16 @@ export default {
       } catch (error) {
         this.$notifyApiError?.(error, this.$tUi("failedToCreateDevice"));
         this.confirmDialogVisible = false;
+      } finally {
+        this.submitting = false;
       }
     },
     handleCancel() {
+      if (this.submitting) return;
       this.resetForm();
     },
     cancelDialog() {
+      if (this.submitting) return;
       this.confirmDialogVisible = false;
     },
     resetForm() {

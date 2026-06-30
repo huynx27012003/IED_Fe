@@ -186,6 +186,7 @@
           type="primary"
           @click="handleSubmit"
           :loading="submitting"
+          :disabled="submitting"
         >
           {{ $tUi('create') }}
         </el-button>
@@ -275,7 +276,7 @@ export default {
       }
     },
     async handleSubmit() {
-      if (!this.$refs.formRef) return;
+      if (this.submitting || !this.$refs.formRef) return;
       this.$refs.formRef.validate(async (valid) => {
         if (!valid) return;
         this.submitting = true;

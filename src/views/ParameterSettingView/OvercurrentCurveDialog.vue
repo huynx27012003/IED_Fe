@@ -1213,6 +1213,7 @@ export default {
       this.fetchCurve();
     },
     async fetchCurve() {
+      if (this.loading) return;
       const iedEntries = this.activeIedEntries;
       if (!iedEntries.length) {
         this.errorMessage = "Cannot determine IED id";

@@ -32,6 +32,7 @@ export default {
       selectedFileName: "",
       showImportConfirm: false,
       importLoading: false,
+      saveLoading: false,
       iedOptions: [],
       showDiagramDialog: false,
     };
@@ -164,7 +165,7 @@ export default {
       event.target.value = "";
     },
     async confirmImport() {
-      if (!this.selectedFile) return;
+      if (this.importLoading || !this.selectedFile) return;
       const node = this.contextTargetNode || this.currentNode;
       const iedId = node?.mode === "ied" ? node.id : null;
 
@@ -236,6 +237,7 @@ export default {
       }
     },
     async saveAll() {
+      if (this.saveLoading) return;
       const payload = [];
       this.communicationRowsData.forEach((row) => {
         if (row.mrid && row.networkSwitch1) {
@@ -247,6 +249,7 @@ export default {
       });
 
       if (payload.length) {
+        this.saveLoading = true;
         try {
           await editCommunicationDestination(payload);
           this.$message?.success?.(this.$tUi('saveCommSuccess'));
@@ -256,6 +259,8 @@ export default {
           }
         } catch (error) {
         this.$notifyApiError?.(error, "Failed to import communication services");
+        } finally {
+          this.saveLoading = false;
         }
       } else {
         this.isEditing = false;

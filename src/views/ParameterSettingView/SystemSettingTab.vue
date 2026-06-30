@@ -85,6 +85,7 @@
               v-if="!isEditing"
               type="button"
               class="table-pane-action-btn"
+              :disabled="isLoadingEdit || loadingSave"
               @click="onClickEdit"
               :aria-label="$tUi('edit')"
               :title="$tUi('edit')"
@@ -96,15 +97,17 @@
               <button
                 type="button"
                 class="table-pane-action-btn"
+                :disabled="loadingSave"
                 @click="saveAll"
                 :aria-label="$tUi('save')"
                 :title="$tUi('save')"
               >
-                <i class="fa-solid fa-check"></i>
+                <i :class="loadingSave ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-check'"></i>
               </button>
               <button
                 type="button"
                 class="table-pane-action-btn"
+                :disabled="loadingSave"
                 @click="cancelAll"
                 :aria-label="$tUi('cancel')"
                 :title="$tUi('cancel')"
@@ -114,6 +117,7 @@
               <button
                 type="button"
                 class="table-pane-action-btn"
+                :disabled="loadingSave"
                 @click="onClickSetOperation('On')"
                 :aria-label="$tUi('turnOn')"
                 :title="$tUi('turnOn')"
@@ -123,6 +127,7 @@
               <button
                 type="button"
                 class="table-pane-action-btn"
+                :disabled="loadingSave"
                 @click="onClickSetOperation('Off')"
                 :aria-label="$tUi('turnOff')"
                 :title="$tUi('turnOff')"

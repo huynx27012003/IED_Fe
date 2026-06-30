@@ -411,6 +411,7 @@ export default {
     ...useParamTable(),
     ...useParamEdit(),
     onClickEdit() {
+      if (this.isLoadingEdit || this.loadingSave) return;
       this.menuOpen = false;
       this.parameterDisplayMode = "raw";
       this.convertedCurrentSide = "secondary";

@@ -59,8 +59,10 @@
 
       <el-form-item>
         <div class="actions">
-          <el-button @click="$emit('cancel')">{{ $tUi('cancel') }}</el-button>
-          <el-button type="primary" @click="submitForm">{{ $tUi('create') }}</el-button>
+          <el-button @click="$emit('cancel')" :disabled="loading">{{ $tUi('cancel') }}</el-button>
+          <el-button type="primary" @click="submitForm" :loading="loading" :disabled="loading">
+            {{ $tUi('create') }}
+          </el-button>
         </div>
       </el-form-item>
     </el-form>
@@ -128,6 +130,7 @@ export default {
   },
   methods: {
     async submitForm() {
+      if (this.loading) return;
       this.$refs.form.validate(async (valid) => {
         if (valid) {
           this.loading = true;

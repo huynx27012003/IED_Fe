@@ -219,11 +219,14 @@ export function useParamEdit() {
       this.$nextTick(this.updateFloatingPos);
     },
     onClickEdit() {
+      if (this.isLoadingEdit || this.loadingSave) return;
       this.menuOpen = false;
       if (!this.isEditing) this.enterEditMode();
     },
     async onClickSetOperation(val) {
+      if (this.loadingSave) return;
       this.menuOpen = false;
+      this.loadingSave = true;
 
       const targets = this.rowsToRender.filter(
         (r) =>
@@ -234,6 +237,7 @@ export function useParamEdit() {
       );
 
       if (!targets.length) {
+        this.loadingSave = false;
         this.$message.info(
           this.language === "vi-vi"
             ? "Không có 'Operation' nào cần thay đổi."
@@ -279,6 +283,8 @@ export function useParamEdit() {
           e,
           this.language === "vi-vi" ? "Lưu thất bại!" : "Save failed!"
         );
+      } finally {
+        this.loadingSave = false;
       }
     },
     hasOperationOff(node) {
@@ -334,12 +340,14 @@ export function useParamEdit() {
       }, 200);
     },
     cancelAll() {
+      if (this.loadingSave) return;
       this.menuOpen = false;
       this.isEditing = false;
       this.editStates = {};
       this.changedValues = [];
     },
     async saveAll() {
+      if (this.loadingSave) return;
       this.menuOpen = false;
       this.loadingSave = true;
       const groups = new Map();

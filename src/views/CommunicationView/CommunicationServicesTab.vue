@@ -60,19 +60,21 @@
                <button
                  type="button"
                  class="table-pane-action-btn"
+                  :disabled="saveLoading"
                   @click="saveAll"
                   :aria-label="$tUi('save')"
                   :title="$tUi('save')"
-               >
-                 <i class="fa-solid fa-check"></i>
-               </button>
-               <button
-                 type="button"
-                 class="table-pane-action-btn"
+                >
+                  <i :class="saveLoading ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-check'"></i>
+                </button>
+                <button
+                  type="button"
+                  class="table-pane-action-btn"
+                  :disabled="saveLoading"
                   @click="cancelAll"
                   :aria-label="$tUi('cancel')"
                   :title="$tUi('cancel')"
-               >
+                >
                  <i class="fa-solid fa-times"></i>
                </button>
              </div>

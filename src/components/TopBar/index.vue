@@ -142,8 +142,8 @@
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogConfigVisible = false">{{ $tUi('cancel') }}</el-button>
-          <el-button type="primary" @click="setServerAddr">{{ $tUi('save') }}</el-button>
+          <el-button @click="dialogConfigVisible = false" :disabled="savingServerAddr">{{ $tUi('cancel') }}</el-button>
+          <el-button type="primary" @click="setServerAddr" :loading="savingServerAddr" :disabled="savingServerAddr">{{ $tUi('save') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -169,8 +169,8 @@
       </el-select>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogLanguageVisible = false">{{ $tUi('cancel') }}</el-button>
-          <el-button type="primary" @click="saveLanguage">{{ $tUi('save') }}</el-button>
+          <el-button @click="dialogLanguageVisible = false" :disabled="savingLanguage">{{ $tUi('cancel') }}</el-button>
+          <el-button type="primary" @click="saveLanguage" :loading="savingLanguage" :disabled="savingLanguage">{{ $tUi('save') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -196,6 +196,9 @@ export default {
         domain: "",
       },
       selectedLanguage: this.$store.state.language,
+      logoutLoading: false,
+      savingServerAddr: false,
+      savingLanguage: false,
     };
   },
   computed: {
@@ -224,6 +227,8 @@ export default {
   },
   methods: {
     saveLanguage() {
+      if (this.savingLanguage) return;
+      this.savingLanguage = true;
       this.$store.commit("setLanguage", this.selectedLanguage);
       this.$message.success(
         this.selectedLanguage === "en-vi"
@@ -231,6 +236,7 @@ export default {
           : this.$tUi("languageVietnameseSuccess")
       );
       this.dialogLanguageVisible = false;
+      this.savingLanguage = false;
     },
     expandSearch() {
       this.isExpanded = true;
@@ -281,6 +287,8 @@ export default {
         this.formConfig.domain = this.serverAddr;
       }
       if (command === "logout") {
+        if (this.logoutLoading) return;
+        this.logoutLoading = true;
         this.$store.commit("logout");
         try {
           localStorage.removeItem("accessToken1005");
@@ -297,7 +305,10 @@ export default {
             else this.$router.replace({ name: "login" });
           })
           .catch(() => this.$router.replace({ name: "login" }))
-          .finally(() => this.$message.success(this.$tUi("logoutSuccess")));
+          .finally(() => {
+            this.logoutLoading = false;
+            this.$message.success(this.$tUi("logoutSuccess"));
+          });
       }
       if (command === "language") {
         this.dialogLanguageVisible = true;
@@ -305,6 +316,8 @@ export default {
       }
     },
     setServerAddr() {
+      if (this.savingServerAddr) return;
+      this.savingServerAddr = true;
       if (
         this.formConfig.domain &&
         /^https?:\/\//.test(this.formConfig.domain)
@@ -315,6 +328,7 @@ export default {
       } else {
         this.$message.error(this.$tUi("invalidDomain"));
       }
+      this.savingServerAddr = false;
     },
   },
 };

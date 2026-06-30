@@ -33,8 +33,8 @@
         <div class="confirm-text">Do you want to import for {{ importTargetLabel }}: {{ selectedNode.name || selectedNode.id }}?</div>
         <template #footer>
           <span class="dialog-footer">
-            <el-button @click="cancelImport">Cancel</el-button>
-            <el-button type="primary" @click="confirmImport" :loading="isLoading">
+            <el-button @click="cancelImport" :disabled="isLoading">Cancel</el-button>
+            <el-button type="primary" @click="confirmImport" :loading="isLoading" :disabled="isLoading">
               {{ isLoading ? "Importing..." : "Confirm" }}
             </el-button>
           </span>
@@ -51,8 +51,8 @@
         <div class="confirm-text">Do you really want to delete device with ID: {{ selectedNode.id }}?</div>
         <template #footer>
           <span class="dialog-footer">
-            <el-button @click="cancelDelete">Cancel</el-button>
-            <el-button type="primary" @click="confirmDelete" :loading="isLoading">
+            <el-button @click="cancelDelete" :disabled="isLoading">Cancel</el-button>
+            <el-button type="primary" @click="confirmDelete" :loading="isLoading" :disabled="isLoading">
               {{ isLoading ? "Deleting..." : "Confirm" }}
             </el-button>
           </span>
@@ -201,6 +201,7 @@ export default {
       });
     },
     startRename() {
+      if (this.isLoading) return;
       this.$emit("start-rename", this.selectedNode);
       this.$emit("close");
     },
@@ -209,6 +210,7 @@ export default {
       this.isLoading = false;
     },
     async confirmDelete() {
+      if (this.isLoading) return;
       if (!this.selectedNode || !this.selectedNode.id) {
         this.$message.error("Invalid node selected.");
         return;
@@ -272,6 +274,7 @@ export default {
       return String(raw).trim();
     },
     async openCompareSettingSubmenu() {
+      if (this.compareSettingLoading) return;
       this.openSub(0, "compareSetting");
       this.compareSettingLoading = true;
       this.compareSettingOptions = [];
@@ -287,6 +290,7 @@ export default {
       }
     },
     async openCompareOvercurrentSubmenu() {
+      if (this.compareOvercurrentLoading) return;
       this.openSub(0, "compareOvercurrentCharacteristic");
       this.compareOvercurrentLoading = true;
       this.compareOvercurrentOptions = [];
@@ -352,6 +356,7 @@ export default {
       return this.activePath[level] === key;
     },
     handleMenuAction(action) {
+      if (this.isLoading) return;
       if (action === "rename") {
         this.startRename();
         return;
@@ -376,6 +381,7 @@ export default {
       return !!this.getExpectedTargetMode(mode);
     },
     async emitAction(action) {
+      if (this.isLoading) return;
       if (!this.selectedNode || !this.selectedNode.id) {
         this.$message?.warning?.("Invalid node selected");
         this.$emit("close");
@@ -853,6 +859,7 @@ export default {
       successMessage,
       errorMessage,
     }) {
+      if (this.isLoading) return;
       if (!this.selectedNode?.id) {
         this.$message?.error?.(invalidMessage);
         return;
@@ -869,6 +876,7 @@ export default {
         return;
       }
 
+      this.isLoading = true;
       try {
         await deleteFn(this.selectedNode.id);
         this.$message?.success?.(successMessage);
@@ -876,6 +884,7 @@ export default {
       } catch (error) {
         this.$notifyApiError?.(error, errorMessage);
       } finally {
+        this.isLoading = false;
         this.$nextTick(() => this.$emit("close"));
       }
     },
@@ -921,6 +930,7 @@ export default {
     },
 
     triggerFileInput() {
+      if (this.isLoading) return;
       this.$refs.fileInput.click();
     },
     handleFileSelect(event) {
@@ -941,6 +951,7 @@ export default {
       this.$refs.fileInput.value = "";
     },
     async confirmImportSclFromMenu() {
+      if (this.isLoading) return;
       const file = this.selectedFile;
       const iedId = this.selectedNode?.id;
 
@@ -965,6 +976,7 @@ export default {
       }
     },
     async confirmImport() {
+      if (this.isLoading) return;
       const file = this.selectedFile;
       const nodeId = this.selectedNode && this.selectedNode.id;
       const isOrganisationImport = this.ownerModes.includes(this.nodeMode);
@@ -1064,6 +1076,7 @@ export default {
     },
 
     async exportSignalListFile() {
+      if (this.isLoading) return;
       const mode = this.getSignalListExportMode();
       const id = this.selectedNode?.id;
       if (!mode || id === null || id === undefined || id === "") {
@@ -1089,6 +1102,7 @@ export default {
     },
 
     async exportOrganisationSCD() {
+      if (this.isLoading) return;
       const organisationId = this.selectedNode?.id;
       if (organisationId === null || organisationId === undefined || organisationId === "") {
         this.$message?.error?.("Invalid organisation id");
@@ -1113,6 +1127,7 @@ export default {
     },
 
     async exportIedXRIO() {
+      if (this.isLoading) return;
       const iedId = this.selectedNode?.id;
       if (iedId === null || iedId === undefined || iedId === "") {
         this.$message?.error?.("Invalid IED id");
@@ -1136,6 +1151,7 @@ export default {
       }
     },
     async exportPcdDocx() {
+      if (this.isLoading) return;
       const iedId = this.selectedNode?.id;
       if (iedId === null || iedId === undefined || iedId === "") {
         this.$message?.error?.("Invalid IED id");
@@ -1159,6 +1175,7 @@ export default {
       }
     },
     async exportBbtnTestReport() {
+      if (this.isLoading) return;
       const iedId = this.selectedNode?.id;
       if (iedId === null || iedId === undefined || iedId === "") {
         this.$message?.error?.("Invalid IED id");
@@ -1182,6 +1199,7 @@ export default {
       }
     },
     async exportSclFile() {
+      if (this.isLoading) return;
       const iedId = this.selectedNode?.id;
       if (iedId === null || iedId === undefined || iedId === "") {
         this.$message?.error?.("Invalid IED id");

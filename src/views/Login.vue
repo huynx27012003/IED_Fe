@@ -10,7 +10,12 @@
       <div class="login-title">{{ $tUi('iedManagementSystem') }}</div>
 
       <div class="login-form">
-        <el-button class="sso-button" @click="startSSOPopupLogin">
+        <el-button
+          class="sso-button"
+          :disabled="isLoginBusy"
+          :loading="isLoginBusy"
+          @click="startSSOPopupLogin"
+        >
           <i class="fa-solid fa-right-to-bracket"></i>
           {{ $tUi('loginWithSso') }}
         </el-button>
@@ -27,46 +32,70 @@ const CLIENT_ID = '1005';
 
 export default {
   name: "Login",
+  data() {
+    return {
+      loginUrlLoading: false,
+      tokenExchangeLoading: false,
+      popupMessageHandler: null,
+    };
+  },
+  computed: {
+    isLoginBusy() {
+      return this.loginUrlLoading || this.tokenExchangeLoading;
+    },
+  },
+  beforeUnmount() {
+    this.removePopupMessageHandler();
+  },
   methods: {
     ...mapMutations(["setAuthenticated", "setUser"]),
     startSSOPopupLogin() {
-  const callbackUrl = window.location.origin + '/oauth2-popup-callback.html';
-  client.get('/auth/sso/login_url', { params: { redirectUri: callbackUrl }})
-    .then(resp => {
-      const res = resp.data || {};
-      const loginUrl = res.data;
-      if (!loginUrl) {
-        this.$message.error(this.$tUi('ssoLoginUrlFailed'));
-        return;
-      }
+      if (this.isLoginBusy) return;
+      this.loginUrlLoading = true;
+      this.removePopupMessageHandler();
 
-      const width = 420;
-      const height = 560;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
+      const callbackUrl = window.location.origin + '/oauth2-popup-callback.html';
+      client.get('/auth/sso/login_url', { params: { redirectUri: callbackUrl }})
+        .then(resp => {
+          const res = resp.data || {};
+          const loginUrl = res.data;
+          if (!loginUrl) {
+            this.$message.error(this.$tUi('ssoLoginUrlFailed'));
+            return;
+          }
 
-      const url = (loginUrl.indexOf('?') === -1 ? (loginUrl + '?') : (loginUrl + '&')) + 'popup=true';
+          const width = 420;
+          const height = 560;
+          const left = window.screenX + (window.outerWidth - width) / 2;
+          const top = window.screenY + (window.outerHeight - height) / 2;
 
-      window.open(
-        url,
-        'smart-sso-login',
-        `width=${width},height=${height},top=${top},left=${left},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes`
-      );
+          const url = (loginUrl.indexOf('?') === -1 ? (loginUrl + '?') : (loginUrl + '&')) + 'popup=true';
 
-      const handler = (event) => {
-        if (event.origin !== window.location.origin) return;
-        const data = event.data || {};
-        if (data.type === 'smart-sso-oauth' && data.code) {
-          window.removeEventListener('message', handler);
-          this.exchangeCodeForToken(data.code);
-        }
-      };
-      window.addEventListener('message', handler, false);
-    })
-    .catch((error) => this.$notifyApiError?.(error, this.$tUi('ssoLoginUrlFailed')));
-}
-,
+          window.open(
+            url,
+            'smart-sso-login',
+            `width=${width},height=${height},top=${top},left=${left},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes`
+          );
+
+          const handler = (event) => {
+            if (event.origin !== window.location.origin) return;
+            const data = event.data || {};
+            if (data.type === 'smart-sso-oauth' && data.code) {
+              this.removePopupMessageHandler();
+              this.exchangeCodeForToken(data.code);
+            }
+          };
+          this.popupMessageHandler = handler;
+          window.addEventListener('message', handler, false);
+        })
+        .catch((error) => this.$notifyApiError?.(error, this.$tUi('ssoLoginUrlFailed')))
+        .finally(() => {
+          this.loginUrlLoading = false;
+        });
+    },
     exchangeCodeForToken(code) {
+      if (this.tokenExchangeLoading) return;
+      this.tokenExchangeLoading = true;
       client.get('/auth/sso/access-token', { params: { code }})
         .then(resp => {
           const res = resp.data || {};
@@ -102,8 +131,16 @@ export default {
           this.setUser(userData);
           this.$router.replace({ name: 'tree' });
         })
-        .catch((error) => this.$notifyApiError?.(error, this.$tUi('ssoTokenExchangeFailed')));
-    }
+        .catch((error) => this.$notifyApiError?.(error, this.$tUi('ssoTokenExchangeFailed')))
+        .finally(() => {
+          this.tokenExchangeLoading = false;
+        });
+    },
+    removePopupMessageHandler() {
+      if (!this.popupMessageHandler) return;
+      window.removeEventListener('message', this.popupMessageHandler);
+      this.popupMessageHandler = null;
+    },
   },
 };
 </script>
@@ -208,6 +245,19 @@ export default {
 
 .sso-button:hover {
   transform: translateY(-1px);
+}
+
+.sso-button.is-disabled,
+.sso-button.is-loading {
+  background: #9ca3af !important;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.78;
+}
+
+.sso-button.is-disabled:hover,
+.sso-button.is-loading:hover {
+  transform: none;
 }
 
 .sso-button :deep(i) {

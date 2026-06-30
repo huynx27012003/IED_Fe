@@ -54,7 +54,7 @@
           type="primary"
           @click="startImport"
           :loading="importing"
-          :disabled="!canClickImport && !importing"
+          :disabled="importing || !canClickImport"
         >
           {{ importing ? t('importing') : t('import') }}
         </el-button>
