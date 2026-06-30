@@ -9,43 +9,43 @@
     >
       <el-row :gutter="16">
         <el-col :span="12">
-          <el-form-item label="Substation ID" prop="subId">
+          <el-form-item :label="$tUi('substationId')" prop="subId">
             <el-input v-model="form.subId" disabled />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Name" prop="name">
-            <el-input v-model="form.name" placeholder="Enter name" />
+          <el-form-item :label="$tUi('name')" prop="name">
+            <el-input v-model="form.name" :placeholder="$tUi('enterName')" />
           </el-form-item>
         </el-col>
       </el-row>
 
       <el-row :gutter="16">
         <el-col :span="12">
-          <el-form-item label="Alias Name" prop="aliasName">
-            <el-input v-model="form.aliasName" placeholder="Enter alias name" />
+          <el-form-item :label="$tUi('aliasName')" prop="aliasName">
+            <el-input v-model="form.aliasName" :placeholder="$tUi('enterAliasName')" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Description" prop="description">
+          <el-form-item :label="$tUi('description')" prop="description">
             <el-input
               type="textarea"
               :rows="1"
               v-model="form.description"
-              placeholder="Enter description"
+              :placeholder="$tUi('enterDescription')"
             />
           </el-form-item>
         </el-col>
       </el-row>
 
       <div class="actions">
-        <el-button @click="resetForm" :disabled="submitting">Reset</el-button>
+        <el-button @click="resetForm" :disabled="submitting">{{ $tUi('reset') }}</el-button>
         <el-button
           type="primary"
           @click="handleSubmit"
           :loading="submitting"
         >
-          Create
+          {{ $tUi('create') }}
         </el-button>
       </div>
     </el-form>
@@ -65,8 +65,8 @@ export default {
       submitting: false,
       form: this.initialForm(),
       rules: {
-        subId: [{ required: true, message: "Substation ID is required", trigger: "blur" }],
-        name: [{ required: true, message: "Name is required", trigger: "blur" }],
+        subId: [{ required: true, message: this.$tUi("substationIdRequired"), trigger: "blur" }],
+        name: [{ required: true, message: this.$tUi("nameRequired"), trigger: "blur" }],
       },
     };
   },
@@ -129,11 +129,11 @@ export default {
             description: toNull(this.form.description),
           };
           await createVoltageLevel(payload);
-          this.$message?.success?.("Voltage Level created successfully");
+          this.$message?.success?.(this.$tUi("voltageLevelCreatedSuccess"));
           this.$emit("refresh-tree");
           this.resetForm();
         } catch (error) {
-          this.$notifyApiError?.(error, "Failed to create voltage level");
+          this.$notifyApiError?.(error, this.$tUi("failedToCreateVoltageLevel"));
         } finally {
           this.submitting = false;
         }

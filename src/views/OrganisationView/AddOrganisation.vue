@@ -9,46 +9,46 @@
     >
       <el-row :gutter="16">
         <el-col :span="12">
-          <el-form-item label="Owner ID" prop="ownerId">
+          <el-form-item :label="$tUi('ownerId')" prop="ownerId">
             <el-input v-model="form.ownerId" disabled />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Tax Code" prop="taxCode">
-            <el-input v-model="form.taxCode" placeholder="Enter tax code" />
+          <el-form-item :label="$tUi('taxCode')" prop="taxCode">
+            <el-input v-model="form.taxCode" :placeholder="$tUi('enterTaxCode')" />
           </el-form-item>
         </el-col>
       </el-row>
 
       <el-row :gutter="16">
         <el-col :span="12">
-          <el-form-item label="Name" prop="name">
-            <el-input v-model="form.name" placeholder="Enter name" />
+          <el-form-item :label="$tUi('name')" prop="name">
+            <el-input v-model="form.name" :placeholder="$tUi('enterName')" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Alias Name" prop="aliasName">
-            <el-input v-model="form.aliasName" placeholder="Enter alias name" />
+          <el-form-item :label="$tUi('aliasName')" prop="aliasName">
+            <el-input v-model="form.aliasName" :placeholder="$tUi('enterAliasName')" />
           </el-form-item>
         </el-col>
       </el-row>
 
       <el-row :gutter="16">
         <el-col :span="12">
-          <el-form-item label="Description" prop="description">
+          <el-form-item :label="$tUi('description')" prop="description">
             <el-input
               type="textarea"
               :rows="3"
               v-model="form.description"
-              placeholder="Enter description"
+              :placeholder="$tUi('enterDescription')"
             />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Parent Organisation" prop="parentOrganisation">
+          <el-form-item :label="$tUi('parentOrganisation')" prop="parentOrganisation">
             <el-input
               v-model="form.parentOrganisation"
-              placeholder="Enter parent organisation"
+              :placeholder="$tUi('enterParentOrg')"
             />
           </el-form-item>
         </el-col>
@@ -56,18 +56,18 @@
 
       <el-row :gutter="16">
         <el-col :span="12">
-          <el-form-item label="Street Address" prop="streetAddress">
+          <el-form-item :label="$tUi('streetAddress')" prop="streetAddress">
             <el-input
               v-model="form.streetAddress"
-              placeholder="Enter street address"
+              :placeholder="$tUi('enterStreetAddress')"
             />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Postal Address" prop="postalAddress">
+          <el-form-item :label="$tUi('postalAddress')" prop="postalAddress">
             <el-input
               v-model="form.postalAddress"
-              placeholder="Enter postal address"
+              :placeholder="$tUi('enterPostalAddress')"
             />
           </el-form-item>
         </el-col>
@@ -75,31 +75,31 @@
 
       <el-row :gutter="16">
         <el-col :span="12">
-          <el-form-item label="Electronic Address" prop="electronicAddress">
+          <el-form-item :label="$tUi('electronicAddress')" prop="electronicAddress">
             <el-input
               v-model="form.electronicAddress"
-              placeholder="Enter electronic address"
+              :placeholder="$tUi('enterElectronicAddress')"
             />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Address" prop="address">
-            <el-input v-model="form.address" placeholder="Enter address" />
+          <el-form-item :label="$tUi('address')" prop="address">
+            <el-input v-model="form.address" :placeholder="$tUi('enterAddress')" />
           </el-form-item>
         </el-col>
       </el-row>
 
       <el-row :gutter="16">
         <el-col :span="12">
-          <el-form-item label="City" prop="city">
-            <el-input v-model="form.city" placeholder="Enter city" />
+          <el-form-item :label="$tUi('city')" prop="city">
+            <el-input v-model="form.city" :placeholder="$tUi('enterCity')" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="State / Province" prop="stateProvince">
+          <el-form-item :label="$tUi('stateProvince')" prop="stateProvince">
             <el-input
               v-model="form.stateProvince"
-              placeholder="Enter state / province"
+              :placeholder="$tUi('enterStateProvince')"
             />
           </el-form-item>
         </el-col>
@@ -107,87 +107,87 @@
 
       <el-row :gutter="16">
         <el-col :span="12">
-          <el-form-item label="Country" prop="country">
-            <el-input v-model="form.country" placeholder="Enter country" />
+          <el-form-item :label="$tUi('country')" prop="country">
+            <el-input v-model="form.country" :placeholder="$tUi('enterCountry')" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Phone" prop="phone">
-            <el-input v-model="form.phone" placeholder="Enter phone" />
-          </el-form-item>
-        </el-col>
-      </el-row>
-
-      <el-row :gutter="16">
-        <el-col :span="12">
-          <el-form-item label="Company Fax" prop="cfax">
-            <el-input v-model="form.cfax" placeholder="Enter fax" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="Company Email" prop="cemail">
-            <el-input v-model="form.cemail" placeholder="Enter company email" />
-          </el-form-item>
-        </el-col>
-      </el-row>
-
-      <el-divider>Contact Person</el-divider>
-
-      <el-row :gutter="16">
-        <el-col :span="12">
-          <el-form-item label="Person Name" prop="personName">
-            <el-input v-model="form.personName" placeholder="Enter person name" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="Department" prop="department">
-            <el-input v-model="form.department" placeholder="Enter department" />
+          <el-form-item :label="$tUi('phone')" prop="phone">
+            <el-input v-model="form.phone" :placeholder="$tUi('enterPhone')" />
           </el-form-item>
         </el-col>
       </el-row>
 
       <el-row :gutter="16">
         <el-col :span="12">
-          <el-form-item label="Position" prop="position">
-            <el-input v-model="form.position" placeholder="Enter position" />
+          <el-form-item :label="$tUi('companyFax')" prop="cfax">
+            <el-input v-model="form.cfax" :placeholder="$tUi('enterPhone')" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Phone 1" prop="phone1">
-            <el-input v-model="form.phone1" placeholder="Enter phone 1" />
+          <el-form-item :label="$tUi('companyEmail')" prop="cemail">
+            <el-input v-model="form.cemail" :placeholder="$tUi('enterAliasName')" />
+          </el-form-item>
+        </el-col>
+      </el-row>
+
+      <el-divider>{{ $tUi('contactPerson') }}</el-divider>
+
+      <el-row :gutter="16">
+        <el-col :span="12">
+          <el-form-item :label="$tUi('personName')" prop="personName">
+            <el-input v-model="form.personName" :placeholder="$tUi('enterName')" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item :label="$tUi('department')" prop="department">
+            <el-input v-model="form.department" :placeholder="$tUi('enterDescription')" />
           </el-form-item>
         </el-col>
       </el-row>
 
       <el-row :gutter="16">
         <el-col :span="12">
-          <el-form-item label="Phone 2" prop="phone2">
-            <el-input v-model="form.phone2" placeholder="Enter phone 2" />
+          <el-form-item :label="$tUi('position')" prop="position">
+            <el-input v-model="form.position" :placeholder="$tUi('enterName')" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Contact Fax" prop="cpFax">
-            <el-input v-model="form.cpFax" placeholder="Enter fax" />
+          <el-form-item :label="$tUi('phone1')" prop="phone1">
+            <el-input v-model="form.phone1" :placeholder="$tUi('enterPhone')" />
           </el-form-item>
         </el-col>
       </el-row>
 
       <el-row :gutter="16">
         <el-col :span="12">
-          <el-form-item label="Contact Email" prop="cpEmail">
-            <el-input v-model="form.cpEmail" placeholder="Enter email" />
+          <el-form-item :label="$tUi('phone2')" prop="phone2">
+            <el-input v-model="form.phone2" :placeholder="$tUi('enterPhone')" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item :label="$tUi('contactFax')" prop="cpFax">
+            <el-input v-model="form.cpFax" :placeholder="$tUi('enterPhone')" />
+          </el-form-item>
+        </el-col>
+      </el-row>
+
+      <el-row :gutter="16">
+        <el-col :span="12">
+          <el-form-item :label="$tUi('contactEmail')" prop="cpEmail">
+            <el-input v-model="form.cpEmail" :placeholder="$tUi('enterAliasName')" />
           </el-form-item>
         </el-col>
       </el-row>
 
       <div class="actions">
-        <el-button @click="resetForm" :disabled="submitting">Reset</el-button>
+        <el-button @click="resetForm" :disabled="submitting">{{ $tUi('reset') }}</el-button>
         <el-button
           type="primary"
           @click="handleSubmit"
           :loading="submitting"
         >
-          Create
+          {{ $tUi('create') }}
         </el-button>
       </div>
     </el-form>
@@ -207,7 +207,7 @@ export default {
       submitting: false,
       form: this.initialForm(),
       rules: {
-        name: [{ required: true, message: "Name is required", trigger: "blur" }],
+        name: [{ required: true, message: this.$tUi('nameRequired'), trigger: "blur" }],
       },
     };
   },
@@ -313,7 +313,7 @@ export default {
             cemail: toNull(this.form.cemail),
           };
           await createOrganisation(payload);
-          this.$message?.success?.("Organisation created successfully");
+          this.$message?.success?.(this.$tUi('organisationCreatedSuccess'));
           this.$emit("refresh-tree");
           this.resetForm();
         } catch (error) {

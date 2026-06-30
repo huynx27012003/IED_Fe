@@ -3,12 +3,12 @@
     <div class="communication-layout">
       <div class="param-tree-pane" :style="{ width: paramTreeWidthPx + 'px' }">
         <div class="param-tree-header">
-          <div class="param-tree-title">Tree View</div>
+          <div class="param-tree-title">{{ $tUi('treeView') }}</div>
         </div>
 
         <div class="param-tree-body">
-          <div v-if="paramTreeLoading" class="param-tree-loading">Loading...</div>
-          <div v-else-if="!paramTreeRoot" class="param-tree-empty">No parameter tree</div>
+          <div v-if="paramTreeLoading" class="param-tree-loading">{{ $tUi('loading') }}</div>
+          <div v-else-if="!paramTreeRoot" class="param-tree-empty">{{ $tUi('noData') }}</div>
           <ul v-else class="param-tree-list">
             <TreeNode
               :node="paramTreeRoot"
@@ -30,7 +30,7 @@
       <div class="table-pane">
         <div class="table-pane-title">
           <div class="table-pane-title-left">
-            <span>Communications and Services</span>
+            <span>{{ $tUi('communicationsAndServices') }}</span>
           </div>
 
            <div class="table-pane-actions">
@@ -39,8 +39,8 @@
                type="button"
                class="table-pane-action-btn"
                @click="onClickEdit"
-               aria-label="Edit"
-               title="Edit"
+                :aria-label="$tUi('edit')"
+                :title="$tUi('edit')"
              >
                <i class="fa-solid fa-pen"></i>
              </button>
@@ -49,9 +49,9 @@
                v-if="!isEditing"
                type="button"
                class="table-pane-action-btn"
-               @click="showDiagramDialog = true"
-               aria-label="Show Diagram"
-               title="Show Diagram"
+                @click="showDiagramDialog = true"
+                :aria-label="$tUi('showDiagram')"
+                :title="$tUi('showDiagram')"
              >
                <i class="fa-solid fa-project-diagram"></i>
              </button>
@@ -60,18 +60,18 @@
                <button
                  type="button"
                  class="table-pane-action-btn"
-                 @click="saveAll"
-                 aria-label="Save"
-                 title="Save"
+                  @click="saveAll"
+                  :aria-label="$tUi('save')"
+                  :title="$tUi('save')"
                >
                  <i class="fa-solid fa-check"></i>
                </button>
                <button
                  type="button"
                  class="table-pane-action-btn"
-                 @click="cancelAll"
-                 aria-label="Cancel"
-                 title="Cancel"
+                  @click="cancelAll"
+                  :aria-label="$tUi('cancel')"
+                  :title="$tUi('cancel')"
                >
                  <i class="fa-solid fa-times"></i>
                </button>
@@ -80,35 +80,35 @@
         </div>
 
         <div class="table-pane-body">
-          <div v-if="!renderTable" class="table-loading">Loading...</div>
+          <div v-if="!renderTable" class="table-loading">{{ $tUi('loading') }}</div>
           <table v-else class="parameter-table communication-table">
             <thead>
               <tr>
                 <th colspan="19" class="comm-device-title">{{ communicationDeviceTitle }}</th>
               </tr>
               <tr>
-                <th rowspan="2" class="info-col">IED Name</th>
-                <th rowspan="2" class="info-col">Port</th>
-                <th rowspan="2" class="info-col">Name</th>
-                <th rowspan="2" class="info-col">Operation</th>
-                <th rowspan="2" class="info-col">Redundancy</th>
-                <th rowspan="2" class="info-col">Subnetwork</th>
-                <th rowspan="2" class="info-col">IP Address</th>
-                <th rowspan="2" class="info-col">Subnet mask</th>
-                <th rowspan="2" class="info-col">Default gateway</th>
-                <th colspan="9">Services</th>
-                <th rowspan="2" class="dest-col">Destination</th>
+                <th rowspan="2" class="info-col">{{ $tUi('iedName') }}</th>
+                <th rowspan="2" class="info-col">{{ $tUi('port') }}</th>
+                <th rowspan="2" class="info-col">{{ $tUi('name') }}</th>
+                <th rowspan="2" class="info-col">{{ $tUi('operation') }}</th>
+                <th rowspan="2" class="info-col">{{ $tUi('redundancy') }}</th>
+                <th rowspan="2" class="info-col">{{ $tUi('subnetwork') }}</th>
+                <th rowspan="2" class="info-col">{{ $tUi('ipAddress') }}</th>
+                <th rowspan="2" class="info-col">{{ $tUi('subnetMask') }}</th>
+                <th rowspan="2" class="info-col">{{ $tUi('defaultGateway') }}</th>
+                <th colspan="9">{{ $tUi('services') }}</th>
+                <th rowspan="2" class="dest-col">{{ $tUi('destination') }}</th>
               </tr>
               <tr>
-                <th class="svc-col">MMS</th>
-                <th class="svc-col">GOOSE</th>
-                <th class="svc-col">SMV</th>
-                <th class="svc-col">HTTPS</th>
-                <th class="svc-col">FTP</th>
-                <th class="svc-col">DNP3.0</th>
-                <th class="svc-col">SNMP</th>
-                <th class="svc-col">SNTP</th>
-                <th class="svc-col">PTP</th>
+                <th class="svc-col">{{ $tUi('mms') }}</th>
+                <th class="svc-col">{{ $tUi('goose') }}</th>
+                <th class="svc-col">{{ $tUi('smv') }}</th>
+                <th class="svc-col">{{ $tUi('https') }}</th>
+                <th class="svc-col">{{ $tUi('ftp') }}</th>
+                <th class="svc-col">{{ $tUi('dnp3') }}</th>
+                <th class="svc-col">{{ $tUi('snmp') }}</th>
+                <th class="svc-col">{{ $tUi('sntp') }}</th>
+                <th class="svc-col">{{ $tUi('ptp') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -136,7 +136,7 @@
                     <el-select
                       v-if="isEditing"
                       v-model="row.networkSwitch1"
-                      placeholder="Select IED"
+                      :placeholder="$tUi('selectIed')"
                       size="small"
                       filterable
                       clearable
@@ -161,7 +161,7 @@
 
   <div v-if="showContextMenu" class="comm-context-menu" :style="{ left: menuX + 'px', top: menuY + 'px' }">
     <ul>
-      <li @click="triggerFileInput">Import</li>
+      <li @click="triggerFileInput">{{ $tUi('import') }}</li>
     </ul>
   </div>
 
@@ -169,7 +169,7 @@
 
    <el-dialog
   v-model="showDiagramDialog"
-  title="Network Topology Diagram"
+  :title="$tUi('networkTopologyDiagram')"
   width="66%"
   top="4vh"
   :before-close="handleCloseDialog"
@@ -181,7 +181,7 @@
     :ieds="allCommunicationData"
   />
   <div v-else class="empty-diagram-state">
-    <p>No communication data available to display diagram</p>
+    <p>{{ $tUi('noCommData') }}</p>
   </div>
 </el-dialog>
  </template>

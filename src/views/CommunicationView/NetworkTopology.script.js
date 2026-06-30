@@ -881,7 +881,7 @@ export default {
       const edge = this.findEdgeByPortRef(ref)
 
       if (!edge) {
-        this.$message?.warning?.('Port has no destination')
+        this.$message?.warning?.(this.$tUi('portNoDestination'))
         return
       }
 

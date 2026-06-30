@@ -17,25 +17,25 @@
             :disabled="state.isLoading"
           >
             <i class="fa-solid fa-folder-open"></i>
-            <span>{{ state.isLoading ? 'Loading...' : 'Choose SCL File' }}</span>
+            <span>{{ state.isLoading ? $tUi('loading') : $tUi('sclChooseFile') }}</span>
           </button>
           <div v-if="state.fileName" class="file-info">
             <i class="fa-solid fa-file-code"></i>
             <span>{{ state.fileName }}</span>
-            <i class="fa-solid fa-xmark close-icon" @click="clearFile" title="Clear"></i>
+            <i class="fa-solid fa-xmark close-icon" @click="clearFile" :title="$tUi('clear')"></i>
           </div>
         </div>
         <div class="pane-body">
           <div v-if="state.isLoading" class="loading-state">
             <i class="fa-solid fa-spinner fa-spin"></i>
-            <span>Parsing SCL file...</span>
+            <span>{{ $tUi('sclParsing') }}</span>
           </div>
           <div
             v-else-if="mode === 'global' && !displaySclTreeData.length"
             class="scl-list-wrap"
           >
             <div v-if="state.isListLoading" class="table-placeholder">
-              Loading SCL list...
+              {{ $tUi('sclLoadingList') }}
             </div>
             <div v-else-if="state.sclImportList && state.sclImportList.length" class="scl-file-list">
               <div
@@ -50,13 +50,13 @@
             </div>
             <div v-else class="empty-state">
               <i class="fa-solid fa-file-import empty-icon"></i>
-              <p>No imported SCL files</p>
+              <p>{{ $tUi('sclNoImportedFiles') }}</p>
             </div>
           </div>
           <div v-else-if="!displaySclTreeData.length" class="empty-state">
             <i class="fa-solid fa-file-import empty-icon"></i>
-            <p>No SCL file loaded</p>
-            <p class="hint">Click "Choose SCL File" to import an SCL/SCD/ICD/CID file</p>
+            <p>{{ $tUi('sclNoFileLoaded') }}</p>
+            <p class="hint">{{ $tUi('sclChooseHint') }}</p>
           </div>
           <ul v-else class="scl-tree">
             <TreeNode
@@ -81,16 +81,16 @@
 
       <div v-if="showTablePane" class="scl-table-pane">
         <div class="pane-title">
-          <span>Data set entries</span>
-          <span v-if="tableRootNode" class="pane-subtitle">for {{ tableRootNode.name }}</span>
+          <span>{{ $tUi('sclDataSetEntries') }}</span>
+          <span v-if="tableRootNode" class="pane-subtitle">{{ $tUi('sclForNode', { name: tableRootNode.name }) }}</span>
         </div>
         <div class="pane-body">
-          <div v-if="state.isLoading" class="table-placeholder">Loading...</div>
+          <div v-if="state.isLoading" class="table-placeholder">{{ $tUi('loading') }}</div>
           <div v-else-if="!displaySclTreeData.length" class="table-placeholder">
-            Import an SCL file to view data.
+            {{ $tUi('sclImportToView') }}
           </div>
           <div v-else-if="!tableRootNode" class="table-placeholder">
-            Select a node in the tree to view its subtree.
+            {{ $tUi('sclSelectNode') }}
           </div>
           <div v-else class="table-area">
             <table class="scl-detail-table" :class="{ 'table-resized': hasUserResized }" :style="tableColumnStyles">
@@ -98,13 +98,13 @@
                 <tr>
                   <th class="name-col">
                     <div class="name-header">
-                      <span>Name</span>
+                      <span>{{ $tUi('name') }}</span>
                       <div class="name-search" ref="nameSearch" @click.stop>
                         <button
                           type="button"
                           class="filter-toggle"
                           @click.stop="toggleFilterMenu"
-                          title="Filter modes"
+                          :title="$tUi('sclFilterModes')"
                         >
                           <i class="fa-solid fa-filter"></i>
                           <i class="fa-solid fa-caret-down"></i>
@@ -113,7 +113,7 @@
                           v-model="searchQuery"
                           type="text"
                           class="search-input"
-                          placeholder="Search or filter results..."
+                          :placeholder="$tUi('searchOrFilterResults')"
                           @keyup.enter="applySclNameFilter"
                         />
                         <div class="selected-filters">
@@ -121,14 +121,14 @@
                             v-for="opt in selectedFilterOptions"
                             :key="opt.key"
                             class="filter-badge selectable"
-                            title="Remove"
+                            :title="$tUi('remove')"
                             @click.stop="toggleFilterOption(opt.key)"
                           >
                             {{ opt.label }}
                             <span class="badge-close">×</span>
                           </span>
                         </div>
-                        <button type="button" class="search-btn" title="Search" @click="applySclNameFilter">
+                        <button type="button" class="search-btn" :title="$tUi('search')" @click="applySclNameFilter">
                           <i class="fa-solid fa-magnifying-glass"></i>
                         </button>
                         <div v-if="filterOpen" class="filter-dropdown">
@@ -148,18 +148,18 @@
                     <div class="resizer-handle" @mousedown="startTableResize($event, 0)"></div>
                   </th>
                   <th>
-                    Description
+                    {{ $tUi('description') }}
                     <div class="resizer-handle" @mousedown="startTableResize($event, 1)"></div>
                   </th>
                   <th class="value-col">
-                    Value
+                    {{ $tUi('value') }}
                     <div class="resizer-handle" @mousedown="startTableResize($event, 2)"></div>
                   </th>
                 </tr>
               </thead>
               <tbody v-if="isFilterLoading">
                 <tr>
-                  <td class="table-placeholder" colspan="3">Loading...</td>
+                  <td class="table-placeholder" colspan="3">{{ $tUi('loading') }}</td>
                 </tr>
               </tbody>
               <tbody v-else-if="tableRows.length">
@@ -176,8 +176,8 @@
                         class="toggle-btn"
                         type="button"
                         @click.stop="toggleTableNode(row.node)"
-                        :aria-label="row.expanded ? 'Collapse' : 'Expand'"
-                        :title="row.expanded ? 'Collapse' : 'Expand'"
+                          :aria-label="row.expanded ? $tUi('collapse') : $tUi('expand')"
+                          :title="row.expanded ? $tUi('collapse') : $tUi('expand')"
                       >
                         <i
                           class="fa-solid fa-caret-right caret"
@@ -311,8 +311,8 @@ export default {
     },
     treePaneTitle() {
       if (this.title) return this.title;
-      if (this.mode === "ied") return "SCL Tree";
-      return "SCL IMPORT";
+      if (this.mode === "ied") return this.$tUi("sclTree");
+      return this.$tUi("sclImport");
     },
     displaySclTreeData() {
       if (!Array.isArray(this.state.sclTreeData) || !this.state.sclTreeData.length) return [];
@@ -462,7 +462,7 @@ export default {
           includeRoot ? nextRoot || null : nextRoot?.children?.[0] || null
         );
       } catch (err) {
-        this.$notifyApiError?.(err, "Failed to filter SCL data");
+        this.$notifyApiError?.(err, this.$tUi("sclFilterFailed"));
       } finally {
         this.isFilterLoading = false;
       }

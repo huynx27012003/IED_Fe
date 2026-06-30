@@ -4,13 +4,13 @@
     <div class="system-setting-layout">
       <div class="param-tree-pane" :style="{ width: paramTreeWidthPx + 'px' }">
         <div class="param-tree-header">
-          <div class="param-tree-title">Parameter Setting</div>
+          <div class="param-tree-title">{{ $tUi('parameterSetting') }}</div>
         </div>
 
         <div class="param-tree-body">
-          <div v-if="paramTreeLoading" class="param-tree-loading">Loading...</div>
+          <div v-if="paramTreeLoading" class="param-tree-loading">{{ $tUi('loadingParamTree') }}</div>
           <div v-else-if="!filteredParamTreeRoot" class="param-tree-empty">
-            No parameter tree
+            {{ $tUi('paramTreeNotLoaded') }}
           </div>
           <ul v-else class="param-tree-list">
             <TreeNode
@@ -34,9 +34,9 @@
                     type="button"
                     class="param-group-trigger"
                     @click.stop="toggleParamGroupDropdown"
-                    :title="`${paramGroupOptions.length} groups available`"
+                    :title="$tUi('groupsAvailable', { count: paramGroupOptions.length })"
                   >
-                    {{ paramGroupOptions.length }} groups available
+                    {{ $tUi('groupsAvailable', { count: paramGroupOptions.length }) }}
                     <i class="fa-solid fa-caret-down"></i>
                   </button>
                 </div>
@@ -51,7 +51,7 @@
       <div class="table-pane">
         <div class="table-pane-title">
           <div class="table-pane-title-left">
-            <span>Data</span>
+            <span>{{ $tUi('data') }}</span>
             <span
               v-if="
                 (freshFocusNode || focusNode || ownerData?.node)?.name ||
@@ -86,8 +86,8 @@
               type="button"
               class="table-pane-action-btn"
               @click="onClickEdit"
-              aria-label="Edit"
-              title="Edit"
+              :aria-label="$tUi('edit')"
+              :title="$tUi('edit')"
             >
               <i class="fa-solid fa-pen"></i>
             </button>
@@ -97,8 +97,8 @@
                 type="button"
                 class="table-pane-action-btn"
                 @click="saveAll"
-                aria-label="Save"
-                title="Save"
+                :aria-label="$tUi('save')"
+                :title="$tUi('save')"
               >
                 <i class="fa-solid fa-check"></i>
               </button>
@@ -106,8 +106,8 @@
                 type="button"
                 class="table-pane-action-btn"
                 @click="cancelAll"
-                aria-label="Cancel"
-                title="Cancel"
+                :aria-label="$tUi('cancel')"
+                :title="$tUi('cancel')"
               >
                 <i class="fa-solid fa-times"></i>
               </button>
@@ -115,8 +115,8 @@
                 type="button"
                 class="table-pane-action-btn"
                 @click="onClickSetOperation('On')"
-                aria-label="Turn On"
-                title="Turn On"
+                :aria-label="$tUi('turnOn')"
+                :title="$tUi('turnOn')"
               >
                 <i class="fa-solid fa-toggle-on"></i>
               </button>
@@ -124,8 +124,8 @@
                 type="button"
                 class="table-pane-action-btn"
                 @click="onClickSetOperation('Off')"
-                aria-label="Turn Off"
-                title="Turn Off"
+                :aria-label="$tUi('turnOff')"
+                :title="$tUi('turnOff')"
               >
                 <i class="fa-solid fa-toggle-off"></i>
               </button>
@@ -136,8 +136,8 @@
               type="button"
               class="table-pane-action-btn"
               @click="openZonePreview"
-              aria-label="Zone diagram"
-              title="Zone diagram"
+              :aria-label="$tUi('zoneDiagram')"
+              :title="$tUi('zoneDiagram')"
             >
               <i class="fa-solid fa-chart-line"></i>
             </button>
@@ -146,8 +146,8 @@
               type="button"
               class="table-pane-action-btn"
               @click="openOvercurrentCurve"
-              aria-label="Overcurrent curve"
-              title="Overcurrent curve"
+              :aria-label="$tUi('overcurrentCurve')"
+              :title="$tUi('overcurrentCurve')"
             >
               <i class="fa-solid fa-bolt"></i>
             </button>
@@ -159,28 +159,28 @@
                 type="button"
                 class="table-pane-action-btn view-mode-trigger"
                 @click.stop="toggleViewModeDropdown"
-                aria-label="View mode"
-                title="View mode"
+                :aria-label="$tUi('viewMode')"
+                :title="$tUi('viewMode')"
               >
                 <i :class="isFilteredView ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
-                <span class="view-mode-label">{{ isFilteredView ? 'Visible Parameters' : 'All Parameters' }}</span>
+                <span class="view-mode-label">{{ isFilteredView ? $tUi('visibleParameters') : $tUi('allParameters') }}</span>
                 <i class="fa-solid fa-caret-down dropdown-caret"></i>
               </button>
               <div v-if="showViewModeDropdown" class="view-mode-menu" @click.stop>
                 <div class="view-mode-option" @click="handleShowAll">
                   <i class="fa-solid fa-eye"></i>
-                  <span>All Parameters</span>
+                  <span>{{ $tUi('allParameters') }}</span>
                 </div>
                 <div class="view-mode-option" @click="handleHideUnnecessary">
                   <i class="fa-solid fa-eye-slash"></i>
-                  <span>Visible Parameters</span>
+                  <span>{{ $tUi('visibleParameters') }}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
         <div class="table-pane-body" @scroll="handleTableScroll">
-          <div v-if="!renderTable" class="table-loading">Loading...</div>
+          <div v-if="!renderTable" class="table-loading">{{ $tUi('loading') }}</div>
           <template v-else>
             <table class="parameter-table" :class="{ 'table-resized': hasUserResized }" :style="tableColumnStyles">
               <thead>
@@ -197,7 +197,7 @@
                           type="button"
                           :class="{ active: !isPrimaryCurrentDisplay }"
                           @click.stop="setConvertedCurrentSide('secondary')"
-                          title="Show secondary values"
+                          :title="$tUi('showSecondaryValues')"
                         >
                           Sec
                         </button>
@@ -205,7 +205,7 @@
                           type="button"
                           :class="{ active: isPrimaryCurrentDisplay }"
                           @click.stop="setConvertedCurrentSide('primary')"
-                          title="Show primary values"
+                          :title="$tUi('showPrimaryValues')"
                         >
                           Prim
                         </button>

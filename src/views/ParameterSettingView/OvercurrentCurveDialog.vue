@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    title="Overcurrent Curve"
+    :title="dialogTitle"
     width="1080px"
     :close-on-click-modal="true"
     @update:model-value="$emit('update:modelValue', $event)"
@@ -9,16 +9,16 @@
     <div class="overcurrent-dialog">
       <div class="curve-toolbar">
         <div class="curve-field group-field">
-          <span class="curve-label">Group</span>
+          <span class="curve-label">{{ $tUi('group') }}</span>
           <span class="group-pill">1</span>
         </div>
 
         <div class="curve-field mode-field">
-          <span class="curve-label">Mode</span>
+          <span class="curve-label">{{ $tUi('mode') }}</span>
           <button
             type="button"
             class="mode-toggle-btn"
-            :disabled="loading || !iedId"
+            :disabled="loading || !activeIedEntries.length"
             :title="`Switch to ${nextDisplayModeLabel}`"
             @click="toggleDisplayMode"
           >
@@ -27,9 +27,8 @@
         </div>
 
         <label class="curve-field">
-          <span class="curve-label">Type</span>
+          <span class="curve-label">{{ $tUi('curveType') }}</span>
           <select v-model="selectedType" class="curve-select" @change="handleTypeChange">
-            <option value="">--</option>
             <option
               v-for="option in typeOptions"
               :key="option.value"
@@ -40,13 +39,34 @@
           </select>
         </label>
 
+        <label v-if="isCompareMode" class="curve-field compare-add-field">
+          <span class="curve-label">{{ $tUi('addIed') }}</span>
+          <select
+            v-model="selectedCompareIedId"
+            class="curve-select"
+            :disabled="loading || compareIedLoading || !availableCompareIedOptions.length"
+            @change="handleAddCompareIed"
+          >
+            <option value="">
+              {{ compareIedLoading ? $tUi('loading') : $tUi('selectIed') }}
+            </option>
+            <option
+              v-for="option in availableCompareIedOptions"
+              :key="`compare-add-${option.id}`"
+              :value="option.id"
+            >
+              {{ option.name }}
+            </option>
+          </select>
+        </label>
+
         <label class="curve-field current-field">
-          <span class="curve-label">Current ({{ currentUnit }})</span>
+          <span class="curve-label">{{ $tUi('current', { unit: currentUnit }) }}</span>
           <input
             v-model.trim="currentText"
             class="curve-input"
             inputmode="decimal"
-            placeholder="current"
+            :placeholder="$tUi('placeholderCurrent')"
             @keydown.enter.prevent="fetchCurve"
           />
         </label>
@@ -54,10 +74,10 @@
         <button
           type="button"
           class="curve-load-btn"
-          :disabled="loading || !iedId"
+          :disabled="loading || !activeIedEntries.length"
           @click="fetchCurve"
         >
-          {{ loading ? "Loading..." : "Load" }}
+          {{ loading ? $tUi('loading') : $tUi('load') }}
         </button>
       </div>
 
@@ -66,26 +86,41 @@
       </div>
 
       <div class="curve-meta">
-        <span>IED: {{ iedId || "--" }}</span>
+        <span>{{ iedMetaLabel }}</span>
         <span>Group source: {{ payload?.groupSource || "request" }}</span>
         <span>Display: {{ displayModeLabel }}</span>
       </div>
 
       <div class="curve-chart-wrap">
         <div v-if="loading" class="curve-state">Loading curve...</div>
-        <div v-else-if="!hasCurveData" class="curve-state">No overcurrent curve data</div>
+        <div v-else-if="!hasCurveData" class="curve-state">{{ $tUi('noCurveData') }}</div>
         <svg
           v-else
           ref="svgRef"
           class="curve-svg"
+          :class="{ 'is-panning': isPanningChart }"
           :viewBox="`0 0 ${chartSize.width} ${chartSize.height}`"
           role="img"
-          aria-label="Overcurrent current-time curve"
+          :aria-label="$tUi('overcurrentChartAria')"
+          @wheel.prevent="handleChartWheel"
           @mousemove="handleChartMouseMove"
           @mousedown="handleChartMouseDown"
-          @mouseup="stopCursorDrag"
+          @mouseup="stopChartPan"
+          @click="handleChartClick"
           @mouseleave="clearHoverCoord"
+          @dblclick.prevent="resetZoom"
         >
+          <defs>
+            <clipPath id="overcurrent-plot-clip">
+              <rect
+                :x="plotArea.left"
+                :y="plotArea.top"
+                :width="plotArea.width"
+                :height="plotArea.height"
+              />
+            </clipPath>
+          </defs>
+
           <rect
             :x="plotArea.left"
             :y="plotArea.top"
@@ -142,20 +177,21 @@
             :x2="cursorLine.x"
             :y1="plotArea.top"
             :y2="plotArea.bottom"
-            class="cursor-line cursor-draggable"
-            @mousedown.stop.prevent="startCursorDrag"
+            class="cursor-line"
           />
-          <polyline
-            v-for="line in compositePaths"
-            :key="line.key"
-            :points="line.points"
-            fill="none"
-            :stroke="line.color"
-            stroke-width="2.8"
-            class="composite-path"
-            stroke-linejoin="round"
-            stroke-linecap="round"
-          />
+          <g clip-path="url(#overcurrent-plot-clip)">
+            <polyline
+              v-for="line in compositePaths"
+              :key="line.key"
+              :points="line.points"
+              fill="none"
+              :stroke="line.color"
+              stroke-width="2.8"
+              class="composite-path"
+              stroke-linejoin="round"
+              stroke-linecap="round"
+            />
+          </g>
 
           <g v-if="hoverPoint">
             <circle
@@ -197,13 +233,22 @@
         </svg>
 
         <div
-          v-if="hoverCoord && !cursorReadout"
+          v-if="hoverCoord"
           class="coord-tooltip"
           :style="{ left: `${hoverPos.x + 12}px`, top: `${hoverPos.y + 12}px` }"
         >
           <div>I: {{ formatNumber(hoverCoord.current) }} {{ currentUnit }}</div>
           <div>t: {{ formatNumber(hoverCoord.time) }} {{ timeUnit }}</div>
         </div>
+
+        <button
+          v-if="zoomBounds"
+          type="button"
+          class="zoom-reset-btn"
+          @click="resetZoom"
+        >
+          Reset zoom
+        </button>
       </div>
 
       <div v-if="hasCurveData" class="curve-legend">
@@ -218,6 +263,7 @@
 
 <script>
 import { getPointsOvercurrent } from "@/api/pointsOvercurrent";
+import { getAllActiveIeds } from "@/api/device";
 
 const COLORS = [
   "#168a6a",
@@ -229,18 +275,25 @@ const COLORS = [
   "#be185d",
   "#65a30d",
 ];
+const DEFAULT_TYPE = "Neutral Overcurrent";
 
 export default {
   name: "OvercurrentCurveDialog",
   props: {
     modelValue: { type: Boolean, default: false },
     iedId: { type: [Number, String], default: null },
+    compareIeds: { type: Array, default: () => [] },
   },
   emits: ["update:modelValue"],
   data() {
     return {
       loading: false,
       payload: null,
+      comparePayloads: [],
+      internalCompareIeds: [],
+      allCompareIeds: [],
+      selectedCompareIedId: "",
+      compareIedLoading: false,
       selectedType: "",
       displayMode: "SECONDARY",
       currentText: "",
@@ -250,10 +303,48 @@ export default {
       hoverCoord: null,
       hoverPos: { x: 0, y: 0 },
       hoverPoint: null,
-      isDraggingCursor: false,
+      isPanningChart: false,
+      panStartClient: { x: 0, y: 0 },
+      panStartBounds: null,
+      panMoved: false,
+      suppressNextClick: false,
+      zoomBounds: null,
     };
   },
   computed: {
+    isCompareMode() {
+      return (Array.isArray(this.compareIeds) && this.compareIeds.length > 1)
+        || this.internalCompareIeds.length > 1;
+    },
+    activeIedEntries() {
+      if (this.isCompareMode) {
+        const source = this.internalCompareIeds.length ? this.internalCompareIeds : this.compareIeds;
+        return source
+          .map((item) => this.normalizeIedEntry(item))
+          .filter((item) => item.id);
+      }
+
+      if (this.iedId == null || this.iedId === "") return [];
+      return [{ id: this.iedId, name: String(this.iedId) }];
+    },
+    dialogTitle() {
+      return this.isCompareMode ? "Compare Overcurrent Characteristic" : "Overcurrent Curve";
+    },
+    iedMetaLabel() {
+      if (!this.activeIedEntries.length) return "IED: --";
+      if (!this.isCompareMode) return `IED: ${this.activeIedEntries[0].id}`;
+      return `IEDs: ${this.activeIedEntries.map((item) => item.name || item.id).join(", ")}`;
+    },
+    availableCompareIedOptions() {
+      const selectedIds = new Set(this.activeIedEntries.map((item) => String(item.id)));
+      return this.allCompareIeds.filter((item) => item.id && !selectedIds.has(String(item.id)));
+    },
+    sourcePayloads() {
+      if (this.isCompareMode) {
+        return this.comparePayloads.filter((item) => item?.payload);
+      }
+      return this.payload ? [{ id: this.iedId, name: String(this.iedId || "IED"), payload: this.payload }] : [];
+    },
     chartSize() {
       return { width: 980, height: 500 };
     },
@@ -292,17 +383,21 @@ export default {
       return this.nextDisplayMode === "PRIMARY" ? "Primary" : "Secondary";
     },
     visibleTypes() {
-      const types = Array.isArray(this.payload?.types) ? this.payload.types : [];
-      if (!this.selectedType) return types;
+      const entries = this.sourcePayloads.flatMap((source) => {
+        const types = Array.isArray(source.payload?.types) ? source.payload.types : [];
+        return types.map((typeItem) => ({ ...source, typeItem }));
+      });
+      if (!this.selectedType) return entries;
 
       const selected = this.normalizeText(this.selectedType);
-      return types.filter((item) => {
-        return [item?.name, item?.type].some((value) => this.normalizeText(value) === selected);
+      return entries.filter((entry) => {
+        return [entry.typeItem?.name, entry.typeItem?.type].some((value) => this.normalizeText(value) === selected);
       });
     },
     plottedLevels() {
       const levels = [];
-      this.visibleTypes.forEach((typeItem) => {
+      this.visibleTypes.forEach((entry) => {
+        const typeItem = entry.typeItem;
         const typeName = typeItem?.name || typeItem?.type || "Overcurrent";
         const typeCode = typeItem?.type || "";
         const sourceLevels = Array.isArray(typeItem?.levels)
@@ -316,25 +411,42 @@ export default {
 
           if (!points.length) return;
 
-          levels.push({ typeName, typeCode, level, points });
+          levels.push({
+            iedId: entry.id,
+            iedName: entry.name,
+            typeName,
+            typeCode,
+            level,
+            points,
+          });
         });
       });
       return levels;
     },
     hasCurveData() {
-      return this.stitchedDomainCurves.length > 0;
+      return this.domainCurves.length > 0;
     },
     currentUnit() {
-      return this.payload?.currentAxisUnit || this.plottedLevels[0]?.level?.currentUnit || "A";
+      return this.sourcePayloads[0]?.payload?.currentAxisUnit || this.plottedLevels[0]?.level?.currentUnit || "A";
     },
     timeUnit() {
       return this.plottedLevels[0]?.level?.timeUnit || "s";
     },
+    dataXBounds() {
+      return this.getLogBounds(this.domainCurves.flatMap((item) => item.points.map((point) => point.x)));
+    },
+    dataYBounds() {
+      return this.getLogBounds(this.domainCurves.flatMap((item) => item.points.map((point) => point.y)));
+    },
     xBounds() {
-      return this.getLogBounds(this.stitchedDomainCurves.flatMap((item) => item.points.map((point) => point.x)));
+      return this.zoomBounds
+        ? { min: this.zoomBounds.xMin, max: this.zoomBounds.xMax }
+        : this.dataXBounds;
     },
     yBounds() {
-      return this.getLogBounds(this.stitchedDomainCurves.flatMap((item) => item.points.map((point) => point.y)));
+      return this.zoomBounds
+        ? { min: this.zoomBounds.yMin, max: this.zoomBounds.yMax }
+        : this.dataYBounds;
     },
     xTicks() {
       return this.getLogTicks(this.xBounds.min, this.xBounds.max).map((value) => ({
@@ -369,11 +481,15 @@ export default {
     levelsByType() {
       const groups = new Map();
       this.plottedLevels.forEach((item) => {
-        const key = item.typeCode || item.typeName;
+        const key = this.isCompareMode
+          ? `${item.iedId || "ied"}|${item.typeCode || item.typeName}`
+          : item.typeCode || item.typeName;
         if (!groups.has(key)) {
           groups.set(key, {
             key,
-            name: item.typeName,
+            name: this.isCompareMode
+              ? `${item.iedName || item.iedId || "IED"} - ${item.typeName}`
+              : item.typeName,
             levels: [],
           });
         }
@@ -383,21 +499,49 @@ export default {
     },
     stitchedDomainCurves() {
       return this.levelsByType
-        .map((group) => {
+        .map((group, index) => {
           const points = this.buildStitchedPoints(group.levels);
           if (points.length < 2) return null;
 
           return {
             key: `${group.key}-stitched`,
             label: `${group.name} Operating`,
-            color: "#dc2626",
+            color: COLORS[index % COLORS.length],
             points,
           };
         })
         .filter(Boolean);
     },
+    effectiveDomainCurves() {
+      return this.visibleTypes
+        .map((entry, index) => {
+          const typeItem = entry.typeItem || {};
+          const points = Array.isArray(typeItem.effectiveCurve?.points)
+            ? typeItem.effectiveCurve.points
+              .map((point) => this.normalizePoint(point))
+              .filter((point) => Number.isFinite(point.x) && point.x > 0 && Number.isFinite(point.y) && point.y > 0)
+            : [];
+          if (points.length < 2) return null;
+
+          const typeName = typeItem?.name || typeItem?.type || "Overcurrent";
+          const labelName = this.isCompareMode
+            ? `${entry.name || entry.id || "IED"} - ${typeName}`
+            : typeName;
+          const keyPrefix = this.isCompareMode ? `${entry.id || "ied"}|` : "";
+          return {
+            key: `${keyPrefix}${typeItem?.type || typeName}-effective`,
+            label: `${labelName} Operating`,
+            color: COLORS[index % COLORS.length],
+            points,
+          };
+        })
+        .filter(Boolean);
+    },
+    domainCurves() {
+      return this.effectiveDomainCurves.length ? this.effectiveDomainCurves : this.stitchedDomainCurves;
+    },
     compositePaths() {
-      return this.stitchedDomainCurves.map((curve) => ({
+      return this.domainCurves.map((curve) => ({
         ...curve,
         points: curve.points.map((point) => `${this.mapX(point.x)},${this.mapY(point.y)}`).join(" "),
       }));
@@ -413,7 +557,7 @@ export default {
     cursorTimeRows() {
       if (!this.cursorCurrent) return [];
 
-      return this.stitchedDomainCurves
+      return this.domainCurves
         .map((curve) => {
           const time = this.getTimeOnPoints(curve.points, this.cursorCurrent);
           if (!Number.isFinite(time) || time <= 0) return null;
@@ -451,6 +595,13 @@ export default {
   watch: {
     modelValue(next) {
       if (next) {
+        this.syncInternalCompareIeds();
+        this.selectedType = "";
+        this.typeOptions = [];
+        this.comparePayloads = [];
+        this.selectedCompareIedId = "";
+        this.resetZoom();
+        this.loadCompareIedOptions();
         this.fetchCurve();
       }
     },
@@ -459,8 +610,77 @@ export default {
         this.fetchCurve();
       }
     },
+    compareIeds: {
+      deep: true,
+      handler(next, prev) {
+        if (this.modelValue && next !== prev) {
+          this.syncInternalCompareIeds();
+          this.selectedType = "";
+          this.typeOptions = [];
+          this.comparePayloads = [];
+          this.selectedCompareIedId = "";
+          this.resetZoom();
+          this.loadCompareIedOptions();
+          this.fetchCurve();
+        }
+      },
+    },
   },
   methods: {
+    normalizeIedEntry(item) {
+      return {
+        id: item?.id == null ? "" : String(item.id).trim(),
+        name: item?.name || item?.iedName || item?.label || item?.id || "IED",
+      };
+    },
+    normalizeIedList(payload) {
+      const source = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload?.result)
+            ? payload.result
+            : [];
+
+      return source
+        .map((item) => this.normalizeIedEntry({
+          id: item?.mrid ?? item?.mrd ?? item?.iedId ?? item?.id,
+          name: item?.name ?? item?.iedName ?? item?.label,
+        }))
+        .filter((item) => item.id && item.name);
+    },
+    syncInternalCompareIeds() {
+      this.internalCompareIeds = (Array.isArray(this.compareIeds) ? this.compareIeds : [])
+        .map((item) => this.normalizeIedEntry(item))
+        .filter((item) => item.id);
+    },
+    async loadCompareIedOptions() {
+      if (!this.isCompareMode) return;
+      this.compareIedLoading = true;
+      try {
+        const response = await getAllActiveIeds();
+        this.allCompareIeds = this.normalizeIedList(response);
+      } catch (error) {
+        this.allCompareIeds = [];
+        this.$notifyApiError?.(error, "Failed to load IED list");
+      } finally {
+        this.compareIedLoading = false;
+      }
+    },
+    handleAddCompareIed() {
+      const selectedId = String(this.selectedCompareIedId || "");
+      if (!selectedId) return;
+
+      const selected = this.allCompareIeds.find((item) => String(item.id) === selectedId);
+      this.selectedCompareIedId = "";
+      if (!selected) return;
+
+      const existingIds = new Set(this.activeIedEntries.map((item) => String(item.id)));
+      if (existingIds.has(String(selected.id))) return;
+
+      this.internalCompareIeds = [...this.activeIedEntries, selected];
+      this.fetchCurve();
+    },
     normalizeText(value) {
       return String(value || "").trim().toLowerCase();
     },
@@ -621,6 +841,60 @@ export default {
         wrapY: event.clientY - wrapRect.top,
       };
     },
+    resetZoom() {
+      this.zoomBounds = null;
+    },
+    zoomLogBounds(bounds, anchor, factor) {
+      const minLog = this.getLog(bounds.min);
+      const maxLog = this.getLog(bounds.max);
+      const anchorLog = this.getLog(anchor);
+      let nextMinLog = anchorLog - (anchorLog - minLog) * factor;
+      let nextMaxLog = anchorLog + (maxLog - anchorLog) * factor;
+      const minSpan = 0.02;
+      const maxSpan = 18;
+
+      if (nextMaxLog - nextMinLog < minSpan) {
+        return bounds;
+      }
+      if (nextMaxLog - nextMinLog > maxSpan) {
+        const center = (nextMinLog + nextMaxLog) / 2;
+        nextMinLog = center - maxSpan / 2;
+        nextMaxLog = center + maxSpan / 2;
+      }
+
+      return {
+        min: 10 ** nextMinLog,
+        max: 10 ** nextMaxLog,
+      };
+    },
+    shiftLogBounds(bounds, deltaLog) {
+      const minLog = this.getLog(bounds.min);
+      const maxLog = this.getLog(bounds.max);
+      const nextMinLog = minLog + deltaLog;
+      const nextMaxLog = maxLog + deltaLog;
+
+      return {
+        min: 10 ** nextMinLog,
+        max: 10 ** nextMaxLog,
+      };
+    },
+    handleChartWheel(event) {
+      if (!this.hasCurveData) return;
+      const point = this.getSvgEventPoint(event);
+      if (!point || !this.isInPlotArea(point.svgX, point.svgY)) return;
+
+      const anchorX = this.domainXFromSvg(point.svgX);
+      const anchorY = this.domainYFromSvg(point.svgY);
+      const factor = event.deltaY < 0 ? 0.82 : 1.22;
+      const nextX = this.zoomLogBounds(this.xBounds, anchorX, factor);
+      const nextY = this.zoomLogBounds(this.yBounds, anchorY, factor);
+
+      this.zoomBounds = { xMin: nextX.min, xMax: nextX.max, yMin: nextY.min, yMax: nextY.max };
+
+      this.hoverCoord = { current: anchorX, time: anchorY };
+      this.hoverPos = { x: point.wrapX, y: point.wrapY };
+      this.hoverPoint = this.findNearestCurvePoint(point.svgX, point.svgY);
+    },
     isInPlotArea(svgX, svgY) {
       return svgX >= this.plotArea.left &&
         svgX <= this.plotArea.right &&
@@ -644,8 +918,8 @@ export default {
       if (!point) return;
       const { svgX, svgY, wrapX, wrapY } = point;
 
-      if (this.isDraggingCursor) {
-        this.setCursorFromSvgX(svgX);
+      if (this.isPanningChart) {
+        this.panChart(event);
       }
 
       if (!this.isInPlotArea(svgX, svgY)) {
@@ -667,26 +941,77 @@ export default {
       const point = this.getSvgEventPoint(event);
       if (!point || !this.isInPlotArea(point.svgX, point.svgY)) return;
 
-      this.setCursorFromSvgX(point.svgX);
-      this.startCursorDrag();
+      this.startChartPan(event);
     },
-    startCursorDrag() {
-      this.isDraggingCursor = true;
-      document.removeEventListener("mousemove", this.handleDocumentCursorMove);
-      document.removeEventListener("mouseup", this.stopCursorDrag);
-      document.addEventListener("mousemove", this.handleDocumentCursorMove);
-      document.addEventListener("mouseup", this.stopCursorDrag);
-    },
-    handleDocumentCursorMove(event) {
-      if (!this.isDraggingCursor) return;
+    handleChartClick(event) {
+      if (this.suppressNextClick) {
+        this.suppressNextClick = false;
+        return;
+      }
       const point = this.getSvgEventPoint(event);
-      if (!point) return;
+      if (!point || !this.isInPlotArea(point.svgX, point.svgY)) return;
+
       this.setCursorFromSvgX(point.svgX);
     },
-    stopCursorDrag() {
-      this.isDraggingCursor = false;
-      document.removeEventListener("mousemove", this.handleDocumentCursorMove);
-      document.removeEventListener("mouseup", this.stopCursorDrag);
+    startChartPan(event) {
+      if (!this.hasCurveData) return;
+      this.isPanningChart = true;
+      this.panMoved = false;
+      this.panStartClient = { x: event.clientX, y: event.clientY };
+      this.panStartBounds = {
+        xMin: this.xBounds.min,
+        xMax: this.xBounds.max,
+        yMin: this.yBounds.min,
+        yMax: this.yBounds.max,
+      };
+      document.removeEventListener("mousemove", this.handleDocumentPanMove);
+      document.removeEventListener("mouseup", this.stopChartPan);
+      document.addEventListener("mousemove", this.handleDocumentPanMove);
+      document.addEventListener("mouseup", this.stopChartPan);
+    },
+    handleDocumentPanMove(event) {
+      this.panChart(event);
+    },
+    panChart(event) {
+      if (!this.isPanningChart || !this.panStartBounds) return;
+      const svg = this.$refs.svgRef;
+      if (!svg || typeof svg.getBoundingClientRect !== "function") return;
+
+      const svgRect = svg.getBoundingClientRect();
+      const dx = event.clientX - this.panStartClient.x;
+      const dy = event.clientY - this.panStartClient.y;
+      if (Math.hypot(dx, dy) > 3) {
+        this.panMoved = true;
+        this.suppressNextClick = true;
+      }
+
+      const plotPixelWidth = svgRect.width * (this.plotArea.width / this.chartSize.width);
+      const plotPixelHeight = svgRect.height * (this.plotArea.height / this.chartSize.height);
+      if (!plotPixelWidth || !plotPixelHeight) return;
+
+      const startX = { min: this.panStartBounds.xMin, max: this.panStartBounds.xMax };
+      const startY = { min: this.panStartBounds.yMin, max: this.panStartBounds.yMax };
+      const xSpanLog = this.getLog(startX.max) - this.getLog(startX.min);
+      const ySpanLog = this.getLog(startY.max) - this.getLog(startY.min);
+      const nextX = this.shiftLogBounds(startX, -(dx / plotPixelWidth) * xSpanLog);
+      const nextY = this.shiftLogBounds(startY, (dy / plotPixelHeight) * ySpanLog);
+
+      this.zoomBounds = { xMin: nextX.min, xMax: nextX.max, yMin: nextY.min, yMax: nextY.max };
+
+      const point = this.getSvgEventPoint(event);
+      if (point && this.isInPlotArea(point.svgX, point.svgY)) {
+        this.hoverCoord = {
+          current: this.domainXFromSvg(point.svgX),
+          time: this.domainYFromSvg(point.svgY),
+        };
+        this.hoverPos = { x: point.wrapX, y: point.wrapY };
+      }
+    },
+    stopChartPan() {
+      this.isPanningChart = false;
+      this.panStartBounds = null;
+      document.removeEventListener("mousemove", this.handleDocumentPanMove);
+      document.removeEventListener("mouseup", this.stopChartPan);
     },
     clearHoverCoord() {
       this.hoverCoord = null;
@@ -820,7 +1145,7 @@ export default {
       let nearest = null;
       let nearestDistance = Infinity;
 
-      this.stitchedDomainCurves.forEach((curve) => {
+      this.domainCurves.forEach((curve) => {
         curve.points.forEach((point) => {
           const x = this.mapX(point.x);
           const y = this.mapY(point.y);
@@ -860,6 +1185,13 @@ export default {
       });
       this.typeOptions = Array.from(existing.values());
     },
+    selectDefaultType() {
+      if (this.selectedType || !this.typeOptions.length) return;
+
+      const neutralOption = this.typeOptions.find((option) => option.value === DEFAULT_TYPE)
+        || this.typeOptions.find((option) => /neutral/i.test(option.label || option.value || ""));
+      this.selectedType = neutralOption?.value || this.typeOptions[0].value;
+    },
     parseCurrentForRequest() {
       const raw = String(this.currentText || "").replace(",", ".").trim();
       if (!raw) return null;
@@ -881,7 +1213,8 @@ export default {
       this.fetchCurve();
     },
     async fetchCurve() {
-      if (!this.iedId) {
+      const iedEntries = this.activeIedEntries;
+      if (!iedEntries.length) {
         this.errorMessage = "Cannot determine IED id";
         return;
       }
@@ -900,20 +1233,28 @@ export default {
       this.errorMessage = "";
 
       try {
-        const data = await getPointsOvercurrent({
-          iedId: this.iedId,
-          group: 1,
-          type: this.selectedType,
-          current,
-          displayMode: this.normalizedDisplayMode,
-        });
+        const responses = await Promise.all(
+          iedEntries.map(async (ied) => {
+            const data = await getPointsOvercurrent({
+              iedId: ied.id,
+              group: 1,
+              type: this.selectedType,
+              current,
+              displayMode: this.normalizedDisplayMode,
+            });
+            return { ...ied, payload: data || null };
+          })
+        );
 
         if (this.requestId !== requestId) return;
-        this.payload = data || null;
+        this.comparePayloads = this.isCompareMode ? responses : [];
+        this.payload = responses[0]?.payload || null;
         if (this.payload?.displayMode) {
           this.displayMode = this.payload.displayMode;
         }
-        this.buildTypeOptions(this.payload?.types);
+        responses.forEach((item) => this.buildTypeOptions(item.payload?.types));
+        this.selectDefaultType();
+        this.resetZoom();
       } catch (error) {
         if (this.requestId === requestId) {
           this.payload = null;
@@ -927,7 +1268,7 @@ export default {
     },
   },
   beforeUnmount() {
-    this.stopCursorDrag();
+    this.stopChartPan();
   },
 };
 </script>
@@ -1060,6 +1401,11 @@ export default {
   width: 100%;
   height: 100%;
   display: block;
+  cursor: crosshair;
+}
+
+.curve-svg.is-panning {
+  cursor: grabbing;
 }
 
 .plot-bg {
@@ -1091,10 +1437,6 @@ export default {
   stroke: #111827;
   stroke-width: 1.2;
   stroke-dasharray: 7 5;
-}
-
-.cursor-draggable {
-  cursor: ew-resize;
 }
 
 .cursor-label {
@@ -1168,6 +1510,28 @@ export default {
   font-size: 12px;
   line-height: 1.45;
   pointer-events: none;
+}
+
+.zoom-reset-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+}
+
+.zoom-reset-btn:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
 }
 
 .curve-state {

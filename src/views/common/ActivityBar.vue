@@ -48,21 +48,21 @@ export default {
     }
   },
   emits: ['view-change', 'toggle-sidebar'],
-  data() {
-    return {
-      topItems: [
+  computed: {
+    topItems() {
+      return [
         {
           id: 'explorer',
           icon: 'fa-solid fa-folder-tree',
-          title: 'Explorer - Tree View'
+          title: this.$tUi('explorerTreeView')
         },
         {
           id: 'sclImport',
           icon: 'fa-solid fa-file-import',
-          title: 'SCL Import'
+          title: this.$tUi('sclImport')
         }
-      ]
-    };
+      ];
+    }
   },
   methods: {
     handleSidebarToggle() {

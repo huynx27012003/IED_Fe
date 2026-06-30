@@ -1,7 +1,7 @@
 <template>
   <ActivityBarItem
     icon="fa-solid fa-compass"
-    title="What's new"
+    :title="$tUi('whatsNew')"
     :active="visible"
     @click="open"
   />
@@ -16,17 +16,17 @@
         class="whats-new-panel"
         role="dialog"
         aria-modal="true"
-        aria-label="What's new in IED Web"
+        :aria-label="$tUi('whatsNewTitle')"
       >
         <header class="whats-new-header">
           <div>
-            <div class="whats-new-eyebrow">IED Web updates</div>
-            <h2>What's new in IED Web</h2>
+            <div class="whats-new-eyebrow">{{ $tUi('whatsNewEyebrow') }}</div>
+            <h2>{{ $tUi('whatsNewTitle') }}</h2>
           </div>
           <button
             type="button"
             class="whats-new-close"
-            aria-label="Close what's new"
+            :aria-label="$tUi('whatsNewClose')"
             @click="close"
           >
             <i class="fa-solid fa-xmark"></i>
@@ -37,7 +37,7 @@
           <section class="whats-new-featured">
             <div class="whats-new-section-title">
               <i class="fa-solid fa-compass"></i>
-              <span>Featured updates</span>
+              <span>{{ $tUi('whatsNewFeatured') }}</span>
             </div>
             <article class="whats-new-hero-card">
               <div class="whats-new-hero-pattern"></div>
@@ -50,7 +50,7 @@
           </section>
 
           <section class="whats-new-release">
-            <h3>0.1.0 Release</h3>
+            <h3>{{ $tUi('whatsNewRelease') }}</h3>
             <article
               v-for="item in items"
               :key="item.title"

@@ -3,7 +3,7 @@
     <el-row :gutter="20" id="main-content">
       <el-col :span="12" class="col-content">
         <div class="block">
-          <div class="block-title">Organisation</div>
+          <div class="block-title">{{ $tUi('blockTitleOrganisation') }}</div>
           <div v-if="isLoading" class="loading-text">Loading organisation...</div>
           <div v-else>
             <el-descriptions :column="1" size="small" border>
@@ -22,7 +22,7 @@
 
       <el-col :span="12" class="col-content">
         <div class="block">
-          <div class="block-title">Contact Person</div>
+          <div class="block-title">{{ $tUi('blockTitleContactPerson') }}</div>
           <el-descriptions :column="1" size="small" border>
             <el-descriptions-item
               v-for="item in contactFields"

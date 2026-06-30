@@ -7,11 +7,13 @@ import 'element-plus/dist/index.css'
 import store from './store'
 import { installApiActionFeedback } from '@/helpers/apiActionFeedback'
 import { installApiFeedback } from '@/helpers/apiFeedback'
+import { installI18n } from '@/helpers/i18n'
 
 function bootstrapApp() {
   const app = createApp(App)
   installApiFeedback(app)
   installApiActionFeedback()
+  installI18n(app, store)
   app.use(router)
   app.use(ElementPlus)
   app.use(store)

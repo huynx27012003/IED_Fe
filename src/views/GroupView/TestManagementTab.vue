@@ -2,24 +2,24 @@
   <div class="system-setting-tab">
     <h3>{{ ownerData.name }}</h3>
     <div class="toolbar">
-      <el-button v-if="!isEditing" type="primary" @click="enterEditMode">
-        Edit
-      </el-button>
+        <el-button v-if="!isEditing" type="primary" @click="enterEditMode">
+          {{ $tUi('edit') }}
+        </el-button>
       <template v-else>
-        <el-button type="success" @click="saveAll">Save</el-button>
-        <el-button type="danger" @click="cancelAll">Cancel</el-button>
+        <el-button type="success" @click="saveAll">{{ $tUi('save') }}</el-button>
+        <el-button type="danger" @click="cancelAll">{{ $tUi('cancel') }}</el-button>
       </template>
     </div>
 
     <table class="parameter-table">
       <thead>
         <tr>
-          <th>Parameter</th>
-          <th class="value-col">Value</th>
-          <th>Unit</th>
-          <th>Min</th>
-          <th>Max</th>
-          <th>Description</th>
+          <th>{{ $tUi('parameter') }}</th>
+          <th class="value-col">{{ $tUi('value') }}</th>
+          <th>{{ $tUi('unit') }}</th>
+          <th>{{ $tUi('min') }}</th>
+          <th>{{ $tUi('max') }}</th>
+          <th>{{ $tUi('description') }}</th>
         </tr>
       </thead>
       <tbody v-if="rowsToRender.length">
@@ -67,7 +67,7 @@
                   <el-select
                     v-if="row.options && !isOnOff(row)"
                     v-model="editStates[row.id]"
-                    placeholder="Select"
+                    :placeholder="$tUi('select')"
                     style="width: 100%"
                   >
                     <el-option

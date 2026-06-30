@@ -66,17 +66,17 @@
             <div v-if="showOwner" class="child-nav">
               <div v-if="ownerTreeLoading" class="empty-owner-message">
                 <i class="fa-solid fa-spinner fa-spin"></i>
-                <p>Loading owner tree...</p>
+                <p>{{ $tUi('loadingOwnerTree') }}</p>
               </div>
               <div v-else-if="ownerTreeLoaded && !renderOwnerList.length" class="empty-owner-message">
-                <p>No organisation found.</p>
+                <p>{{ $tUi('noOrganisationFound') }}</p>
                 <button
                   type="button"
                   class="empty-owner-add-btn"
                   @click="openAddOrganisationDialog(null)"
                 >
                   <i class="fa-solid fa-sitemap"></i>
-                  Add Organisation
+                  {{ $tUi('addOrganisationBtn') }}
                 </button>
               </div>
               <ul v-else-if="renderOwnerList.length">
@@ -151,17 +151,17 @@
             v-if="showSCL && !sidebarCollapsed"
             @mousedown="startResizeOwner"
             class="resizer-handle"
-            title="Resize Owner Tree"
+            :title="$tUi('resizeOwnerTree')"
           ></div>
 
           <div v-if="showSCL && !sidebarCollapsed" ref="sclPane" class="sidebar-pane" :style="{ flex: 'none', width: sclWidthPx + 'px', height: '100%', display: 'flex', flexDirection: 'column', borderLeft: '1px solid #ddd', minWidth: '0', backgroundColor: 'white' }">
             <div class="title-temp scl-pane-header" style="padding-right: 10px; align-items: center;">
               <div class="tab-container">
                 <div class="tab">
-                  SCL Management for {{ sclTargetName }}
+                  {{ $tUi('sclManagementFor', { name: sclTargetName }) }}
                 </div>
               </div>
-              <div style="cursor: pointer;" @click="showSCL = false" title="Close">
+              <div style="cursor: pointer;" @click="showSCL = false" :title="$tUi('close')">
                 <i class="fa-solid fa-xmark"></i>
               </div>
             </div>
@@ -173,7 +173,7 @@
             v-if="showSCL && !sidebarCollapsed"
             @mousedown="startResizeScl"
             class="resizer"
-            title="Resize SCL Pane"
+            :title="$tUi('resizeSclPane')"
           ></div>
 
           <div v-if="false" ref="paramPane" class="sidebar-pane" :style="{ flex: 'none', width: paramWidthPx + 'px', height: '100%', display: 'flex', flexDirection: 'column', borderLeft: '1px solid #ddd', minWidth: '0', backgroundColor: 'white' }">
@@ -183,24 +183,24 @@
                   class="fa-solid fa-eye toggle-icon"
                   :class="{ active: !hideOperationOff }"
                   @click.stop="setHideOperation(false)"
-                  title="Show nodes with Operation = Off"
+                  :title="$tUi('showOperationOn')"
                 ></i>
                 <i
                   class="fa-solid fa-eye-slash toggle-icon"
                   :class="{ active: hideOperationOff }"
                   @click.stop="setHideOperation(true)"
-                  title="Hide nodes with Operation = Off"
+                  :title="$tUi('hideOperationOff')"
                 ></i>
               </div>
-              <div class="tab-container"><div class="tab">Parameter Setting</div></div>
-              <div style="cursor: pointer;" @click="showParam = false" title="Close">
+              <div class="tab-container"><div class="tab">{{ $tUi('parameterSetting') }}</div></div>
+              <div style="cursor: pointer;" @click="showParam = false" :title="$tUi('close')">
                 <i class="fa-solid fa-xmark"></i>
               </div>
             </div>
             <div class="child-nav">
-              <div v-if="paramLoading" class="scl-loading">Loading...</div>
+              <div v-if="paramLoading" class="scl-loading">{{ $tUi('loadingParamTree') }}</div>
               <div v-else-if="!paramTreeData.length" class="empty-location-message" style="padding: 12px; color: #666;">
-                Parameter tree not loaded.
+                {{ $tUi('paramTreeNotLoaded') }}
               </div>
               <ul v-else>
                 <TreeNode
@@ -230,7 +230,7 @@
             v-if="false"
             @mousedown="startResizeParam"
             class="resizer"
-            title="Resize Parameter Pane"
+            :title="$tUi('resizeParamPane')"
           ></div>
           </div>
 
@@ -327,8 +327,10 @@
       @open-show-voltagelevel="openShowAssetDialog"
       @open-show-bay="openShowAssetDialog"
       @open-show-ied="openShowAssetDialog"
+      @open-overcurrent-compare="openOvercurrentCompareDialog"
       @open-add-voltage-level="openAddVoltageLevelDialog"
       @open-add-bay="openAddBayDialog"
+      @open-bulk-ied-import="openBulkIedImportDialog"
       @add-group="handleAddGroup"
       @show-all-group="handleShowAllGroup"
       @start-rename="handleStartRename"
@@ -336,7 +338,7 @@
 
     <el-dialog
       v-model="addDeviceDialogVisible"
-      title="Add Device"
+      :title="$tUi('addDeviceTitle')"
       width="60%"
       :close-on-click-modal="true"
       :destroy-on-close="true"
@@ -350,7 +352,7 @@
 
     <el-dialog
       v-model="addOrganisationDialogVisible"
-      title="Add Organisation"
+      :title="$tUi('addOrganisationTitle')"
       width="70%"
       :close-on-click-modal="true"
       :destroy-on-close="true"
@@ -364,7 +366,7 @@
 
     <el-dialog
       v-model="addSubstationDialogVisible"
-      title="Add Substation"
+      :title="$tUi('addSubstationTitle')"
       width="70%"
       :close-on-click-modal="true"
       :destroy-on-close="true"
@@ -378,7 +380,7 @@
 
     <el-dialog
       v-model="addVoltageLevelDialogVisible"
-      title="Add Voltage Level"
+      :title="$tUi('addVoltageLevelTitle')"
       width="70%"
       :close-on-click-modal="true"
       :destroy-on-close="true"
@@ -392,7 +394,7 @@
 
     <el-dialog
       v-model="addBayDialogVisible"
-      title="Add Bay"
+      :title="$tUi('addBayTitle')"
       width="50%"
       destroy-on-close
     >
@@ -401,6 +403,23 @@
         :nodeData="addBayNode"
         @cancel="addBayDialogVisible = false"
         @success="onBayCreated"
+      />
+    </el-dialog>
+
+    <el-dialog
+      v-model="bulkIedImportDialogVisible"
+      :title="$t('importIed')"
+      width="88%"
+      class="bulk-ied-import-dialog"
+      :close-on-click-modal="false"
+      :destroy-on-close="true"
+    >
+      <BulkIedImportDialog
+        v-if="bulkIedImportDialogVisible"
+        :substation-node="bulkIedImportNode"
+        :tree="ownerServerList"
+        @close="bulkIedImportDialogVisible = false"
+        @import-complete="onBulkIedImportComplete"
       />
     </el-dialog>
 
@@ -420,6 +439,11 @@
         @refresh-tree="reloadTree"
       />
     </el-dialog>
+
+    <OvercurrentCurveDialog
+      v-model="compareOvercurrentDialogVisible"
+      :compare-ieds="compareOvercurrentIeds"
+    />
   </div>
 </template>
 

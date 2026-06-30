@@ -30,7 +30,7 @@
           <i class="fa fa-search search-icon"></i>
           <input
             ref="searchInput"
-            :placeholder="isExpanded ? 'Type to start searching' : 'Search'"
+            :placeholder="isExpanded ? $tUi('typeToSearch') : $tUi('search')"
             @blur="collapseSearch"
             v-model="searchText"
             @input="onInput"
@@ -84,11 +84,11 @@
             <el-dropdown-menu>
               <el-dropdown-item command="config">
                 <i style="margin-right: 8px" class="fa fa-wrench"></i>
-                Config Server
+                {{ $tUi('configServer') }}
               </el-dropdown-item>
               <el-dropdown-item command="language">
                 <i style="margin-right: 8px" class="fa-solid fa-language"></i>
-                Languages
+                {{ $tUi('languages') }}
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -118,7 +118,7 @@
                 command="logout"
               >
                 <i class="fa fa-sign-out" style="margin-right: 8px"></i>
-                Logout
+                {{ $tUi('logout') }}
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -129,11 +129,11 @@
     <!-- Config Dialog -->
     <el-dialog
       v-model="dialogConfigVisible"
-      title="Config server address"
+      :title="$tUi('configServerAddress')"
       width="400px"
     >
       <el-form :model="formConfig" label-width="80px">
-        <el-form-item label="Domain">
+        <el-form-item :label="$tUi('domain')">
           <el-input
             v-model="formConfig.domain"
             placeholder="https://domain.com/api/"
@@ -142,8 +142,8 @@
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogConfigVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="setServerAddr">Save</el-button>
+          <el-button @click="dialogConfigVisible = false">{{ $tUi('cancel') }}</el-button>
+          <el-button type="primary" @click="setServerAddr">{{ $tUi('save') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -151,26 +151,26 @@
     <!-- Language Dialog -->
     <el-dialog
       v-model="dialogLanguageVisible"
-      title="Select Language"
+      :title="$tUi('selectLanguage')"
       width="300px"
       :z-index="1000"
     >
       <el-select
         v-model="selectedLanguage"
-        placeholder="Choose language"
+        :placeholder="$tUi('chooseLanguage')"
         style="width: 100%"
         popper-append-to-body
         teleported
         popper-class="language-select-dropdown"
         :popper-options="{ strategy: 'fixed' }"
       >
-        <el-option label="English" value="en-vi" />
-        <el-option label="Vietnamese" value="vi-vi" />
+        <el-option :label="$tUi('english')" value="en-vi" />
+        <el-option :label="$tUi('vietnamese')" value="vi-vi" />
       </el-select>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogLanguageVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="saveLanguage">Save</el-button>
+          <el-button @click="dialogLanguageVisible = false">{{ $tUi('cancel') }}</el-button>
+          <el-button type="primary" @click="saveLanguage">{{ $tUi('save') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -227,8 +227,8 @@ export default {
       this.$store.commit("setLanguage", this.selectedLanguage);
       this.$message.success(
         this.selectedLanguage === "en-vi"
-          ? "Language set to English"
-          : "Switched to Vietnamese"
+          ? this.$tUi("languageEnglishSuccess")
+          : this.$tUi("languageVietnameseSuccess")
       );
       this.dialogLanguageVisible = false;
     },
@@ -297,7 +297,7 @@ export default {
             else this.$router.replace({ name: "login" });
           })
           .catch(() => this.$router.replace({ name: "login" }))
-          .finally(() => this.$message.success("Đăng xuất thành công!"));
+          .finally(() => this.$message.success(this.$tUi("logoutSuccess")));
       }
       if (command === "language") {
         this.dialogLanguageVisible = true;
@@ -311,9 +311,9 @@ export default {
       ) {
         this.$store.commit("setServerAddr", this.formConfig.domain);
         this.dialogConfigVisible = false;
-        this.$message.success("Server address updated successfully!");
+        this.$message.success(this.$tUi("serverAddressUpdated"));
       } else {
-        this.$message.error("Invalid domain");
+        this.$message.error(this.$tUi("invalidDomain"));
       }
     },
   },

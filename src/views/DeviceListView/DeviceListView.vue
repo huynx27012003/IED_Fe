@@ -15,14 +15,14 @@
                 <i class="fa-solid fa-microchip summary-icon"></i>
               </div>
               <div class="summary-value">{{ totalDevices }}</div>
-              <div class="summary-label">Total Devices</div>
+              <div class="summary-label">{{ $tUi('totalDevices') }}</div>
               <div class="summary-sub">{{ nodeMode }} · {{ nodeName }}</div>
             </div>
 
             <!-- By Type -->
             <div class="chart-card">
               <div class="chart-header">
-                <span class="chart-title">By Type</span>
+                <span class="chart-title">{{ $tUi('byType') }}</span>
                 <span class="chart-badge">{{ typeStats.length }} types</span>
               </div>
               <div class="chart-body">
@@ -34,7 +34,7 @@
             <!-- By Role -->
             <div class="chart-card">
               <div class="chart-header">
-                <span class="chart-title">By Role</span>
+                <span class="chart-title">{{ $tUi('byRole') }}</span>
                 <span class="chart-badge">{{ roleStats.length }} roles</span>
               </div>
               <div class="chart-body">
@@ -47,7 +47,7 @@
             <!-- By Vendor -->
             <div class="chart-card">
               <div class="chart-header">
-                <span class="chart-title">By Vendor</span>
+                <span class="chart-title">{{ $tUi('byVendor') }}</span>
                 <div class="tab-group">
                   <button
                     v-for="t in ['Count','A–Z']"
@@ -65,7 +65,7 @@
             <!-- By Model -->
             <div class="chart-card">
               <div class="chart-header">
-                <span class="chart-title">By Model</span>
+                <span class="chart-title">{{ $tUi('byModel') }}</span>
                 <span class="chart-badge">top {{ Math.min(modelStats.length, 10) }}</span>
               </div>
               <div class="chart-body chart-body--hbar" :style="{ height: Math.max(160, modelStats.slice(0,10).length * 36 + 40) + 'px' }">

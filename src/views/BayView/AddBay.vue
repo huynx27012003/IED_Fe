@@ -11,56 +11,56 @@
       <!-- Only show if it's set to something other than 0 to avoid confusion, or hidden entirely -->
       
       <!-- Voltage Level ID (Read-only) -->
-      <el-form-item label="Voltage Level ID">
+      <el-form-item :label="$tUi('voltageLevelId')">
         <el-input v-model="form.voltageLevelId" disabled></el-input>
       </el-form-item>
 
-      <el-form-item label="Name" prop="name">
-        <el-input v-model="form.name" placeholder="Enter bay name"></el-input>
+      <el-form-item :label="$tUi('name')" prop="name">
+        <el-input v-model="form.name" :placeholder="$tUi('enterBayName')"></el-input>
       </el-form-item>
 
-      <el-form-item label="Alias Name" prop="aliasName">
-        <el-input v-model="form.aliasName" placeholder="Enter alias name"></el-input>
+      <el-form-item :label="$tUi('aliasName')" prop="aliasName">
+        <el-input v-model="form.aliasName" :placeholder="$tUi('enterAliasName')"></el-input>
       </el-form-item>
 
-      <el-form-item label="Description" prop="description">
+      <el-form-item :label="$tUi('description')" prop="description">
         <el-input
           type="textarea"
           v-model="form.description"
-          placeholder="Enter description"
+          :placeholder="$tUi('enterDescription')"
         ></el-input>
       </el-form-item>
 
-      <el-form-item label="Breaker Configuration" prop="breakerConfiguration">
-        <el-select v-model="form.breakerConfiguration" placeholder="Select configuration">
-          <el-option label="Breaker And A Half" value="breakerAndAHalf"></el-option>
-          <el-option label="Double Breaker" value="doubleBreaker"></el-option>
-          <el-option label="No Breaker" value="noBreaker"></el-option>
-          <el-option label="Single Breaker" value="singleBreaker"></el-option>
+      <el-form-item :label="$tUi('breakerConfiguration')" prop="breakerConfiguration">
+        <el-select v-model="form.breakerConfiguration" :placeholder="$tUi('selectConfiguration')">
+          <el-option :label="$tUi('breakerAndAHalf')" value="breakerAndAHalf"></el-option>
+          <el-option :label="$tUi('doubleBreaker')" value="doubleBreaker"></el-option>
+          <el-option :label="$tUi('noBreaker')" value="noBreaker"></el-option>
+          <el-option :label="$tUi('singleBreaker')" value="singleBreaker"></el-option>
         </el-select>
       </el-form-item>
 
-      <el-form-item label="Bus Bar Configuration" prop="busBarConfiguration">
-        <el-select v-model="form.busBarConfiguration" placeholder="Select configuration">
-          <el-option label="Double Bus" value="doubleBus"></el-option>
-          <el-option label="Main With Transfer" value="mainWithTransfer"></el-option>
-          <el-option label="Ring Bus" value="ringBus"></el-option>
-          <el-option label="Single Bus" value="singBus"></el-option> 
+      <el-form-item :label="$tUi('busBarConfiguration')" prop="busBarConfiguration">
+        <el-select v-model="form.busBarConfiguration" :placeholder="$tUi('selectConfiguration')">
+          <el-option :label="$tUi('doubleBus')" value="doubleBus"></el-option>
+          <el-option :label="$tUi('mainWithTransfer')" value="mainWithTransfer"></el-option>
+          <el-option :label="$tUi('ringBus')" value="ringBus"></el-option>
+          <el-option :label="$tUi('singleBus')" value="singBus"></el-option>
         </el-select>
       </el-form-item>
 
-      <el-form-item label="Energy Measurement">
-        <el-checkbox v-model="form.bayEnergyMeasFlag">Enable</el-checkbox>
+      <el-form-item :label="$tUi('energyMeasurement')">
+        <el-checkbox v-model="form.bayEnergyMeasFlag">{{ $tUi('enable') }}</el-checkbox>
       </el-form-item>
 
-      <el-form-item label="Power Measurement">
-        <el-checkbox v-model="form.bayPowerMeasFlag">Enable</el-checkbox>
+      <el-form-item :label="$tUi('powerMeasurement')">
+        <el-checkbox v-model="form.bayPowerMeasFlag">{{ $tUi('enable') }}</el-checkbox>
       </el-form-item>
 
       <el-form-item>
         <div class="actions">
-          <el-button @click="$emit('cancel')">Cancel</el-button>
-          <el-button type="primary" @click="submitForm">Create</el-button>
+          <el-button @click="$emit('cancel')">{{ $tUi('cancel') }}</el-button>
+          <el-button type="primary" @click="submitForm">{{ $tUi('create') }}</el-button>
         </div>
       </el-form-item>
     </el-form>
@@ -95,13 +95,13 @@ export default {
       },
       rules: {
         name: [
-          { required: true, message: "Please enter bay name", trigger: "blur" },
+          { required: true, message: this.$tUi("enterBayName"), trigger: "blur" },
         ],
         breakerConfiguration: [
-            { required: true, message: "Please select breaker configuration", trigger: "change" }
+            { required: true, message: this.$tUi("selectBreakerConfiguration"), trigger: "change" }
         ],
         busBarConfiguration: [
-            { required: true, message: "Please select bus bar configuration", trigger: "change" }
+            { required: true, message: this.$tUi("selectBusBarConfiguration"), trigger: "change" }
         ]
       },
     };
@@ -133,11 +133,11 @@ export default {
           this.loading = true;
           try {
             await createBay(this.form);
-            this.$message.success("Bay created successfully");
+            this.$message.success(this.$tUi("bayCreatedSuccess"));
             this.$emit("success");
             this.resetForm();
           } catch (error) {
-            this.$notifyApiError?.(error, "Failed to create bay");
+            this.$notifyApiError?.(error, this.$tUi("failedToCreateBay"));
           } finally {
             this.loading = false;
           }

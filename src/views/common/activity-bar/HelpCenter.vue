@@ -1,7 +1,7 @@
 <template>
   <ActivityBarItem
     icon="fa-solid fa-circle-question"
-    title="Help"
+    :title="$tUi('help')"
     :active="menuVisible || dialogVisible"
     @click="toggleMenu"
   >
@@ -59,7 +59,7 @@
         <button
           type="button"
           class="help-dialog-close"
-          aria-label="Close help dialog"
+          :aria-label="$tUi('helpCloseDialog')"
           @click="closeDialog"
         >
           <i class="fa-solid fa-xmark"></i>

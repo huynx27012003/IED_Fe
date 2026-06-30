@@ -22,7 +22,7 @@
       </div>
       <div class="spoke"></div>
     </div>
-    <span class="loading-text">Đang tải...</span>
+    <span class="loading-text">{{ $tUi('loadingText') }}</span>
   </div>
 </template>
 

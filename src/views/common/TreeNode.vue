@@ -524,7 +524,7 @@ export default {
     async confirmRename() {
       const newName = this.renameValue?.trim();
       if (!newName) {
-        this.$message?.warning?.("Name cannot be empty");
+        this.$message?.warning?.(this.$tUi('nameCannotBeEmpty'));
         return;
       }
       if (newName === this.node?.name) {
@@ -534,7 +534,7 @@ export default {
       const mode = this.node?.mode;
       const id = this.node?.id;
       if (!mode || !id) {
-        this.$message?.error?.("Invalid node");
+        this.$message?.error?.(this.$tUi('invalidNode'));
         this.$emit("cancel-rename");
         return;
       }
@@ -542,7 +542,7 @@ export default {
         const response = await renameAsset(mode, id, newName);
         const updatedName = response?.data?.name || response?.name || newName;
         this.$emit("rename-node", { id, mode, newName: updatedName });
-        this.$message?.success?.("Renamed successfully");
+        this.$message?.success?.(this.$tUi('renamedSuccess'));
         this.$emit("request-tree-refresh");
       } catch (error) {
         this.$notifyApiError?.(error, "Failed to rename");
@@ -885,7 +885,7 @@ export default {
 
       try {
         await moveAsset(mode, id, ownerId);
-        this.$message?.success?.("Node moved successfully");
+        this.$message?.success?.(this.$tUi('nodeMovedSuccess'));
         this.$emit("request-tree-refresh");
       } catch (error) {
         this.$notifyApiError?.(error, "Failed to move node");

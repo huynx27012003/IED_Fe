@@ -169,13 +169,13 @@ export default {
       const iedId = node?.mode === "ied" ? node.id : null;
 
       if (!iedId) {
-        this.$message?.warning?.("Cannot determine IED id for import");
+        this.$message?.warning?.(this.$tUi('cannotDetermineIedImport'));
         return;
       }
       this.importLoading = true;
       try {
         await importCommunicationServices(iedId, this.selectedFile);
-        this.$message?.success?.("Import communication services successfully");
+        this.$message?.success?.(this.$tUi('importCommSuccess'));
         this.showImportConfirm = false;
         this.selectedFile = null;
         this.selectedFileName = "";
@@ -183,7 +183,7 @@ export default {
           await this.fetchCommunicationRows(this.currentNode);
         }
       } catch (error) {
-        this.$notifyApiError?.(error, "Failed to import communication services");
+          this.$notifyApiError?.(error, "Failed to save");
       } finally {
         this.importLoading = false;
       }
@@ -249,13 +249,13 @@ export default {
       if (payload.length) {
         try {
           await editCommunicationDestination(payload);
-          this.$message?.success?.("Saved successfully");
+          this.$message?.success?.(this.$tUi('saveCommSuccess'));
           this.isEditing = false;
           if (this.currentNode) {
             await this.fetchCommunicationRows(this.currentNode);
           }
         } catch (error) {
-          this.$notifyApiError?.(error, "Failed to save");
+        this.$notifyApiError?.(error, "Failed to import communication services");
         }
       } else {
         this.isEditing = false;

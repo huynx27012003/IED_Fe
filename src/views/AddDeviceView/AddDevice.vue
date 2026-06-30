@@ -6,26 +6,26 @@
       ref="deviceForm"
       label-width="150px"
     >
-      <el-form-item label="Alias Name" prop="aliasName">
+      <el-form-item :label="$tUi('aliasName')" prop="aliasName">
         <el-input
           v-model="deviceForm.aliasName"
-          placeholder="Enter alias name"
+          :placeholder="$tUi('enterAliasName')"
         />
       </el-form-item>
-      <el-form-item label="Name" prop="name">
-        <el-input v-model="deviceForm.name" placeholder="Enter device name" />
+      <el-form-item :label="$tUi('name')" prop="name">
+        <el-input v-model="deviceForm.name" :placeholder="$tUi('enterDeviceName')" />
       </el-form-item>
-      <el-form-item label="Description" prop="description">
+      <el-form-item :label="$tUi('description')" prop="description">
         <el-input
           v-model="deviceForm.description"
           type="textarea"
-          placeholder="Enter description"
+          :placeholder="$tUi('enterDescription')"
         />
       </el-form-item>
-      <el-form-item label="Vendor" prop="vendor">
+      <el-form-item :label="$tUi('vendor')" prop="vendor">
         <el-select
           v-model="deviceForm.vendor"
-          placeholder="Select vendor"
+          :placeholder="$tUi('selectVendor')"
           style="width: 100%"
           @change="onVendorChange"
         >
@@ -37,10 +37,10 @@
           ></el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="Device Type" prop="deviceType">
+      <el-form-item :label="$tUi('deviceType')" prop="deviceType">
         <el-select
           v-model="deviceForm.deviceType"
-          placeholder="Select device type"
+          :placeholder="$tUi('selectDeviceType')"
           style="width: 100%"
           @change="onDeviceTypeChange"
           :disabled="!deviceForm.vendor"
@@ -53,10 +53,10 @@
           ></el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="Model" prop="model">
+      <el-form-item :label="$tUi('model')" prop="model">
         <el-select
           v-model="deviceForm.model"
-          placeholder="Select model"
+          :placeholder="$tUi('selectModel')"
           style="width: 100%"
           :disabled="
             !deviceForm.vendor || !deviceForm.deviceType || models.length === 0
@@ -72,10 +72,10 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="Role" prop="role">
+      <el-form-item :label="$tUi('role')" prop="role">
         <el-input
           v-model="deviceForm.role"
-          placeholder="Role (auto-filled)"
+          :placeholder="$tUi('roleAutoFilled')"
           disabled
         />
       </el-form-item>
@@ -92,7 +92,7 @@
       <!-- <el-form-item label="Aggregate" prop="aggregate">
         <el-switch v-model="deviceForm.aggregate" />
       </el-form-item> -->
-      <el-form-item label="In Service" prop="inService">
+      <el-form-item :label="$tUi('inService')" prop="inService">
         <el-switch v-model="deviceForm.inService" />
       </el-form-item>
       <!-- <el-form-item label="Normally In Service" prop="normallyInService">
@@ -127,21 +127,21 @@
         <el-switch v-model="deviceForm.powerDirectionFlag" />
       </el-form-item> -->
       <el-form-item>
-        <el-button type="primary" @click="handleSave">Save</el-button>
-        <el-button @click="handleCancel">Cancel</el-button>
+        <el-button type="primary" @click="handleSave">{{ $tUi('save') }}</el-button>
+        <el-button @click="handleCancel">{{ $tUi('cancel') }}</el-button>
       </el-form-item>
     </el-form>
     <el-dialog
       v-model="confirmDialogVisible"
-      title="Confirm Save"
+      :title="$tUi('confirmSave')"
       width="30%"
       :before-close="cancelDialog"
     >
-      <span>Are you sure you want to save the device?</span>
+      <span>{{ $tUi('confirmSaveDevice') }}</span>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="cancelDialog">Cancel</el-button>
-          <el-button type="primary" @click="confirmSave">Confirm</el-button>
+          <el-button @click="cancelDialog">{{ $tUi('cancel') }}</el-button>
+          <el-button type="primary" @click="confirmSave">{{ $tUi('confirm') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -189,42 +189,42 @@ export default {
         aliasName: [
           {
             required: true,
-            message: "Please enter alias name",
+            message: this.$tUi("enterAliasName"),
             trigger: "blur",
           },
         ],
         name: [
           {
             required: true,
-            message: "Please enter device name",
+            message: this.$tUi("enterDeviceName"),
             trigger: "blur",
           },
         ],
         vendor: [
           {
             required: true,
-            message: "Please select a vendor",
+            message: this.$tUi("selectVendor"),
             trigger: "change",
           },
         ],
         deviceType: [
           {
             required: true,
-            message: "Please select a device type",
+            message: this.$tUi("selectDeviceType"),
             trigger: "change",
           },
         ],
         model: [
           {
             required: true,
-            message: "Please select a model",
+            message: this.$tUi("selectModel"),
             trigger: "change",
           },
         ],
         role: [
           {
             required: true,
-            message: "Please select a device type to auto-fill role",
+            message: this.$tUi("selectDeviceType"),
             trigger: "change",
           },
         ],
@@ -264,14 +264,14 @@ export default {
       try {
         this.vendors = await getVendors();
       } catch (error) {
-        this.$notifyApiError?.(error, "Failed to load vendors");
+        this.$notifyApiError?.(error, this.$tUi("failedToLoadVendors"));
       }
     },
     async fetchDeviceTypes() {
       try {
         this.deviceTypes = await getDeviceTypes();
       } catch (error) {
-        this.$notifyApiError?.(error, "Failed to load device types");
+        this.$notifyApiError?.(error, this.$tUi("failedToLoadDeviceTypes"));
       }
     },
     fetchModels: debounce(async function () {
@@ -290,7 +290,7 @@ export default {
         this.models = Array.isArray(models) ? models : [];
         if (this.models.length === 0) {
           this.$message.warning(
-            "No models available for the selected vendor and device type"
+            this.$tUi("noModelsAvailable")
           );
           this.deviceForm.model = "";
         } else {
@@ -299,7 +299,7 @@ export default {
           });
         }
       } catch (error) {
-        this.$notifyApiError?.(error, "Failed to load models");
+        this.$notifyApiError?.(error, this.$tUi("failedToLoadModels"));
         this.models = [];
         this.deviceForm.model = "";
       } finally {
@@ -327,7 +327,7 @@ export default {
         if (valid) {
           this.confirmDialogVisible = true;
         } else {
-          this.$message.error("Please fill in all required fields");
+          this.$message.error(this.$tUi("pleaseFillRequired"));
         }
       });
     },
@@ -339,12 +339,12 @@ export default {
         };
 
         await createDevice(deviceData);
-        this.$message.success("Device created successfully");
+        this.$message.success(this.$tUi("deviceCreatedSuccess"));
         this.resetForm();
         this.confirmDialogVisible = false;
         this.$emit("device-created");
       } catch (error) {
-        this.$notifyApiError?.(error, "Failed to create device");
+        this.$notifyApiError?.(error, this.$tUi("failedToCreateDevice"));
         this.confirmDialogVisible = false;
       }
     },

@@ -8,9 +8,13 @@
         :compare-setting-loading="compareSettingLoading"
         :compare-setting-options="compareSettingOptions"
         :selected-compare-ied-id="selectedCompareIedId"
+        :compare-overcurrent-loading="compareOvercurrentLoading"
+        :compare-overcurrent-options="compareOvercurrentOptions"
+        :selected-compare-overcurrent-ied-id="selectedCompareOvercurrentIedId"
         @action="handleMenuAction"
         @open-submenu="openSub(0, $event)"
         @select-compare-setting="selectCompareSetting"
+        @select-compare-overcurrent="selectCompareOvercurrent"
       />
       <input
         ref="fileInput"
@@ -75,6 +79,7 @@ import { deleteBay } from "@/api/bay";
 import Loading from "@/components/Loading.vue";
 import ContextMenuList from "./context-menu/ContextMenuList.vue";
 import { buildContextMenuSections } from "./context-menu/contextMenuItems";
+import { mapGetters } from "vuex";
 
 let copiedAssetCache = null;
 
@@ -97,11 +102,13 @@ export default {
     "open-show-voltagelevel",
     "open-show-bay",
     "open-show-ied",
+    "open-overcurrent-compare",
     "add-group",
     "rename-node",
     "start-rename",
     "open-add-voltage-level",
     "open-add-bay",
+    "open-bulk-ied-import",
     "set-clipboard",
   ],
   props: {
@@ -123,12 +130,16 @@ export default {
       compareSettingLoading: false,
       compareSettingOptions: [],
       selectedCompareIedId: null,
+      compareOvercurrentLoading: false,
+      compareOvercurrentOptions: [],
+      selectedCompareOvercurrentIedId: null,
       pendingFileAction: "",
       selectedFile: null,
       isLoading: false,
     };
   },
   computed: {
+    ...mapGetters(["language"]),
     nodeMode() {
       return this.selectedNode?.mode || "";
     },
@@ -141,12 +152,12 @@ export default {
       return this.clipboardAsset || copiedAssetCache || null;
     },
     pasteActionLabel() {
-      if (!this.activeClipboardAsset) return "Paste";
+      if (!this.activeClipboardAsset) return this.$tUi("paste");
       const name =
         this.activeClipboardAsset?.name ||
         this.activeClipboardAsset?.id ||
-        "item";
-      return `Paste (${name})`;
+        this.$tUi("item");
+      return `${this.$tUi("paste")} (${name})`;
     },
     canPasteHere() {
       if (!this.activeClipboardAsset || !this.selectedNode?.id) return false;
@@ -162,6 +173,7 @@ export default {
         hasSelectedNode: !!this.selectedNode?.id,
         pasteActionLabel: this.pasteActionLabel,
         canPasteHere: this.canPasteHere,
+        language: this.language,
       });
     },
   },
@@ -274,6 +286,21 @@ export default {
         this.compareSettingLoading = false;
       }
     },
+    async openCompareOvercurrentSubmenu() {
+      this.openSub(0, "compareOvercurrentCharacteristic");
+      this.compareOvercurrentLoading = true;
+      this.compareOvercurrentOptions = [];
+
+      try {
+        const response = await getAllActiveIeds();
+        this.compareOvercurrentOptions = this.normalizeCompareIedList(response);
+      } catch (error) {
+        this.compareOvercurrentOptions = [];
+        this.$notifyApiError?.(error, "Failed to load IED list");
+      } finally {
+        this.compareOvercurrentLoading = false;
+      }
+    },
     selectCompareSetting(item) {
       if (!item?.id) return;
       const sourceIedId = this.getSelectedIedId();
@@ -293,6 +320,27 @@ export default {
         compareSourceName: this.selectedNode?.name || sourceIedId,
         compareTargetId: item.id,
         compareTargetName: item.name || item.id,
+      });
+      this.$nextTick(() => this.$emit("close"));
+    },
+    selectCompareOvercurrent(item) {
+      if (!item?.id) return;
+      const sourceIedId = this.getSelectedIedId();
+      if (!sourceIedId) {
+        this.$message?.warning?.("Current IED id is missing");
+        return;
+      }
+
+      this.selectedCompareOvercurrentIedId = item.id;
+      this.$emit("open-overcurrent-compare", {
+        source: {
+          id: sourceIedId,
+          name: this.selectedNode?.name || sourceIedId,
+        },
+        target: {
+          id: item.id,
+          name: item.name || item.id,
+        },
       });
       this.$nextTick(() => this.$emit("close"));
     },
@@ -437,6 +485,15 @@ export default {
           return;
         }
         await this.openCompareSettingSubmenu();
+        return;
+      }
+
+      if (action === "compareOvercurrentCharacteristic") {
+        if (this.isOpen(0, "compareOvercurrentCharacteristic")) {
+          this.activePath = [];
+          return;
+        }
+        await this.openCompareOvercurrentSubmenu();
         return;
       }
 
@@ -714,6 +771,10 @@ export default {
           return;
         } else if (action === "addBay") {
           this.$emit("open-add-bay", this.selectedNode);
+          this.$nextTick(() => this.$emit("close"));
+          return;
+        } else if (action === "bulkIedImport") {
+          this.$emit("open-bulk-ied-import", this.selectedNode);
           this.$nextTick(() => this.$emit("close"));
           return;
         } else if (["download", "move", "duplicate", "export", "import", "edit", "addAsset"].includes(action)) {

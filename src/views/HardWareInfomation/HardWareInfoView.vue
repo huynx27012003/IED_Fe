@@ -5,10 +5,10 @@
       <table class="hardware-table">
         <thead>
           <tr>
-            <th>Parameter</th>
-            <th>Value</th>
-            <th>Connector</th>
-            <th>References</th>
+            <th>{{ $tUi('parameter') }}</th>
+            <th>{{ $tUi('value') }}</th>
+            <th>{{ $tUi('connector') }}</th>
+            <th>{{ $tUi('references') }}</th>
           </tr>
         </thead>
         <tbody>

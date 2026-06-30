@@ -1,7 +1,7 @@
 <template>
   <button
     class="sidebar-toggle-modern"
-    :title="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+    :title="collapsed ? $tUi('expandSidebar') : $tUi('collapseSidebar')"
     @click="$emit('toggle')"
   >
     <i :class="collapsed ? 'fa-solid fa-angles-right' : 'fa-solid fa-angles-left'"></i>

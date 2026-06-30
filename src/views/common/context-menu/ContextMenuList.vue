@@ -44,6 +44,26 @@
           </template>
         </template>
 
+        <template v-else-if="item.submenuType === 'compareOvercurrentCharacteristic'">
+          <div v-if="compareOvercurrentLoading" class="submenu-item compare-submenu-status">
+            Loading IED list...
+          </div>
+          <div v-else-if="!compareOvercurrentOptions.length" class="submenu-item compare-submenu-status">
+            No IED available
+          </div>
+          <template v-else>
+            <div
+              v-for="option in compareOvercurrentOptions"
+              :key="`compare-overcurrent-ied-${option.id}`"
+              class="submenu-item"
+              :class="{ 'compare-submenu-item-selected': selectedCompareOvercurrentIedId === option.id }"
+              @click.stop="$emit('select-compare-overcurrent', option)"
+            >
+              {{ option.name }}
+            </div>
+          </template>
+        </template>
+
         <template v-else>
           <div
             v-for="child in item.children || []"
@@ -69,8 +89,11 @@ export default {
     compareSettingLoading: { type: Boolean, default: false },
     compareSettingOptions: { type: Array, default: () => [] },
     selectedCompareIedId: { type: [String, Number], default: null },
+    compareOvercurrentLoading: { type: Boolean, default: false },
+    compareOvercurrentOptions: { type: Array, default: () => [] },
+    selectedCompareOvercurrentIedId: { type: [String, Number], default: null },
   },
-  emits: ["action", "open-submenu", "select-compare-setting"],
+  emits: ["action", "open-submenu", "select-compare-setting", "select-compare-overcurrent"],
   methods: {
     isOpen(level, key) {
       return this.activePath[level] === key;

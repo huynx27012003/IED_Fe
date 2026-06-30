@@ -2,7 +2,7 @@
   <div class="setting-compare-tab">
     <div v-if="loading" class="state-block">
       <i class="fa-solid fa-spinner fa-spin state-icon"></i>
-      <span>Loading compare tree…</span>
+      <span>{{ $tUi('loadingCompareTree') }}</span>
     </div>
     <div v-else-if="errorMessage" class="state-block state-block--error">
       <i class="fa-solid fa-circle-exclamation state-icon"></i>
@@ -13,7 +13,7 @@
       <div class="tree-panel">
         <div class="tree-panel-header">
           <i class="fa-solid fa-diagram-project header-icon"></i>
-          <span class="tree-panel-title">Settings {{ leftTreeName }}</span>
+          <span class="tree-panel-title">{{ $tUi('settingsLeft', { name: leftTreeName }) }}</span>
         </div>
         <div class="tree-body">
           <ul v-if="leftTree" class="compare-tree-root">
@@ -30,7 +30,7 @@
           </ul>
           <div v-else class="empty-state">
             <i class="fa-regular fa-folder-open" style="font-size: 20px; opacity: 0.4;"></i>
-            <span>No left tree data</span>
+            <span>{{ $tUi('noLeftTree') }}</span>
           </div>
         </div>
       </div>
@@ -38,7 +38,7 @@
       <div class="tree-panel">
         <div class="tree-panel-header">
           <i class="fa-solid fa-diagram-project header-icon"></i>
-          <span class="tree-panel-title">Settings {{ rightTreeName }}</span>
+          <span class="tree-panel-title">{{ $tUi('settingsRight', { name: rightTreeName }) }}</span>
         </div>
         <div class="tree-body">
           <ul v-if="rightTree" class="compare-tree-root">
@@ -55,7 +55,7 @@
           </ul>
           <div v-else class="empty-state">
             <i class="fa-regular fa-folder-open" style="font-size: 20px; opacity: 0.4;"></i>
-            <span>No right tree data</span>
+            <span>{{ $tUi('noRightTree') }}</span>
           </div>
         </div>
       </div>
@@ -70,10 +70,10 @@
             <!-- Dark topbar identical to AssetInfoView -->
             <div class="dialog-topbar">
               <div class="dialog-topbar-left">
-                <div class="dialog-mode-badge">Compare</div>
-                <span class="dialog-title">Subtree Compare</span>
+              <div class="dialog-mode-badge">{{ $tUi('compare') }}</div>
+              <span class="dialog-title">{{ $tUi('subtreeCompare') }}</span>
               </div>
-              <button type="button" class="dialog-close-btn" @click="showSubtreeDialog = false" aria-label="Close">
+              <button type="button" class="dialog-close-btn" @click="showSubtreeDialog = false" :aria-label="$tUi('close')">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
@@ -89,15 +89,15 @@
                   </div>
                 </div>
                 <div class="subtree-table-body">
-                  <table class="compare-subtree-table">
+                    <table class="compare-subtree-table">
                     <thead>
                       <tr>
-                        <th>Parameter</th>
-                        <th>Value</th>
-                        <th>Unit</th>
-                        <th>Min</th>
-                        <th>Max</th>
-                        <th>Reference</th>
+                        <th>{{ $tUi('parameter') }}</th>
+                        <th>{{ $tUi('value') }}</th>
+                        <th>{{ $tUi('unit') }}</th>
+                        <th>{{ $tUi('min') }}</th>
+                        <th>{{ $tUi('max') }}</th>
+                        <th>{{ $tUi('reference') }}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -130,15 +130,15 @@
                   </div>
                 </div>
                 <div class="subtree-table-body">
-                  <table class="compare-subtree-table">
+                    <table class="compare-subtree-table">
                     <thead>
                       <tr>
-                        <th>Parameter</th>
-                        <th>Value</th>
-                        <th>Unit</th>
-                        <th>Min</th>
-                        <th>Max</th>
-                        <th>Reference</th>
+                        <th>{{ $tUi('parameter') }}</th>
+                        <th>{{ $tUi('value') }}</th>
+                        <th>{{ $tUi('unit') }}</th>
+                        <th>{{ $tUi('min') }}</th>
+                        <th>{{ $tUi('max') }}</th>
+                        <th>{{ $tUi('reference') }}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -212,10 +212,10 @@ export default {
       return this.buildSubtreeRows(this.selectedRightSubtreeNode);
     },
     leftSubtreeTitle() {
-      return `Settings ${this.selectedLeftSubtreeNode?.name || this.leftTreeName}`;
+      return this.$tUi('settingsLeft', { name: this.selectedLeftSubtreeNode?.name || this.leftTreeName });
     },
     rightSubtreeTitle() {
-      return `Settings ${this.selectedRightSubtreeNode?.name || this.rightTreeName}`;
+      return this.$tUi('settingsRight', { name: this.selectedRightSubtreeNode?.name || this.rightTreeName });
     },
   },
   watch: {

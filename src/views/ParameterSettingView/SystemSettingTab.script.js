@@ -511,7 +511,7 @@ export default {
     },
     openOvercurrentCurve() {
       if (!this.currentIedId) {
-        this.$message?.warning?.("Cannot determine IED id for overcurrent curve");
+        this.$message?.warning?.(this.$tUi('cannotDetermineIedOvercurrentCurve'));
         return;
       }
 
@@ -610,7 +610,7 @@ export default {
     async openZonePreview() {
       const iedId = this.resolveCurrentIedId();
       if (!iedId) {
-        this.$message?.warning?.("Cannot determine IED id for diagram");
+        this.$message?.warning?.(this.$tUi('cannotDetermineIedDiagram'));
         return;
       }
 

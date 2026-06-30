@@ -27,13 +27,13 @@
             </div>
 
             <div class="dp-grid">
-              <div class="dp-row"><span>IP</span><strong>{{ port.ipAddress || '—' }}</strong></div>
-              <div class="dp-row"><span>Mask</span><strong>{{ port.subnetMask || '—' }}</strong></div>
-              <div class="dp-row"><span>Gateway</span><strong>{{ port.defaultGateway || '—' }}</strong></div>
-              <div class="dp-row"><span>Subnet</span><strong>{{ port.subNetwork || '—' }}</strong></div>
-              <div class="dp-row"><span>Type</span><strong>{{ port.type || '—' }}</strong></div>
+              <div class="dp-row"><span>{{ $tUi('ip') }}</span><strong>{{ port.ipAddress || '—' }}</strong></div>
+              <div class="dp-row"><span>{{ $tUi('mask') }}</span><strong>{{ port.subnetMask || '—' }}</strong></div>
+              <div class="dp-row"><span>{{ $tUi('gateway') }}</span><strong>{{ port.defaultGateway || '—' }}</strong></div>
+              <div class="dp-row"><span>{{ $tUi('subnet') }}</span><strong>{{ port.subNetwork || '—' }}</strong></div>
+              <div class="dp-row"><span>{{ $tUi('type') }}</span><strong>{{ port.type || '—' }}</strong></div>
               <div class="dp-row">
-                <span>Destination</span>
+                <span>{{ $tUi('destination') }}</span>
                 <strong style="color: #0f766e">{{ port.destination || '—' }}</strong>
               </div>
             </div>
@@ -73,12 +73,12 @@
             </div>
 
             <div class="dp-grid">
-              <div class="dp-row"><span>Source IED</span><strong>{{ detailEdge.srcId }}</strong></div>
-              <div class="dp-row"><span>Destination</span><strong>{{ detailEdge.dstId }}</strong></div>
-              <div class="dp-row"><span>Port</span><strong>{{ detailEdge.portName || '—' }}</strong></div>
-              <div class="dp-row"><span>IP</span><strong>{{ detailEdge.ipAddress || '—' }}</strong></div>
-              <div class="dp-row"><span>Subnet</span><strong>{{ detailEdge.subNetwork || '—' }}</strong></div>
-              <div class="dp-row"><span>Gateway</span><strong>{{ detailEdge.defaultGateway || '—' }}</strong></div>
+              <div class="dp-row"><span>{{ $tUi('sourceIed') }}</span><strong>{{ detailEdge.srcId }}</strong></div>
+              <div class="dp-row"><span>{{ $tUi('destination') }}</span><strong>{{ detailEdge.dstId }}</strong></div>
+              <div class="dp-row"><span>{{ $tUi('port') }}</span><strong>{{ detailEdge.portName || '—' }}</strong></div>
+              <div class="dp-row"><span>{{ $tUi('ip') }}</span><strong>{{ detailEdge.ipAddress || '—' }}</strong></div>
+              <div class="dp-row"><span>{{ $tUi('subnet') }}</span><strong>{{ detailEdge.subNetwork || '—' }}</strong></div>
+              <div class="dp-row"><span>{{ $tUi('gateway') }}</span><strong>{{ detailEdge.defaultGateway || '—' }}</strong></div>
             </div>
 
             <div class="dp-services">

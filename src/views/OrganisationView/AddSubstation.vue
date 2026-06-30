@@ -9,47 +9,47 @@
     >
       <el-row :gutter="16">
         <el-col :span="12">
-          <el-form-item label="Owner ID (orId)" prop="orId">
+          <el-form-item :label="$tUi('ownerId') + ' (orId)'" prop="orId">
             <el-input v-model="form.orId" disabled />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Name" prop="name">
-            <el-input v-model="form.name" placeholder="Enter name" />
+          <el-form-item :label="$tUi('name')" prop="name">
+            <el-input v-model="form.name" :placeholder="$tUi('enterName')" />
           </el-form-item>
         </el-col>
       </el-row>
 
       <el-row :gutter="16">
         <el-col :span="12">
-          <el-form-item label="Alias Name" prop="aliasName">
-            <el-input v-model="form.aliasName" placeholder="Enter alias name" />
+          <el-form-item :label="$tUi('aliasName')" prop="aliasName">
+            <el-input v-model="form.aliasName" :placeholder="$tUi('enterAliasName')" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Industry" prop="industry">
-            <el-input v-model="form.industry" placeholder="Enter industry" />
+          <el-form-item :label="$tUi('industry')" prop="industry">
+            <el-input v-model="form.industry" :placeholder="$tUi('enterIndustry')" />
           </el-form-item>
         </el-col>
       </el-row>
 
-      <el-form-item label="Description" prop="description">
+      <el-form-item :label="$tUi('description')" prop="description">
         <el-input
           type="textarea"
           :rows="3"
           v-model="form.description"
-          placeholder="Enter description"
+          :placeholder="$tUi('enterDescription')"
         />
       </el-form-item>
 
       <div class="actions">
-        <el-button @click="resetForm" :disabled="submitting">Reset</el-button>
+        <el-button @click="resetForm" :disabled="submitting">{{ $tUi('reset') }}</el-button>
         <el-button
           type="primary"
           @click="handleSubmit"
           :loading="submitting"
         >
-          Create
+          {{ $tUi('create') }}
         </el-button>
       </div>
     </el-form>
@@ -69,8 +69,8 @@ export default {
       submitting: false,
       form: this.initialForm(),
       rules: {
-        orId: [{ required: true, message: "Owner ID is required", trigger: "blur" }],
-        name: [{ required: true, message: "Name is required", trigger: "blur" }],
+        orId: [{ required: true, message: this.$tUi('substationIdRequired'), trigger: "blur" }],
+        name: [{ required: true, message: this.$tUi('nameRequired'), trigger: "blur" }],
       },
     };
   },
@@ -127,7 +127,7 @@ export default {
         try {
           const payload = { ...this.form, orId: Number(this.ownerId) };
           await createSubstation(payload);
-          this.$message?.success?.("Substation created successfully");
+          this.$message?.success?.(this.$tUi('substationCreatedSuccess'));
           this.$emit("refresh-tree");
           this.resetForm();
         } catch (error) {

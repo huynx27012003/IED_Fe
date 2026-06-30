@@ -3,19 +3,19 @@
     <div class="attachment-toolbar">
       <button type="button" class="toolbar-btn" :disabled="uploading" @click="triggerFileInput">
         <i class="fa-solid fa-arrow-up-from-bracket"></i>
-        <span>{{ uploading ? "Uploading..." : "Upload" }}</span>
+        <span>{{ uploading ? $tUi('uploading') : $tUi('upload') }}</span>
       </button>
       <button type="button" class="toolbar-btn" :disabled="!selectedKeys.length || downloading" @click="$emit('download-selected')">
         <i class="fa-solid fa-arrow-down-to-line"></i>
-        <span>{{ downloading ? "Downloading..." : "Download" }}</span>
+        <span>{{ downloading ? $tUi('downloading') : $tUi('download') }}</span>
       </button>
       <button type="button" class="toolbar-btn" disabled>
         <i class="fa-regular fa-copy"></i>
-        <span>Copy</span>
+        <span>{{ $tUi('copy') }}</span>
       </button>
       <button type="button" class="toolbar-btn toolbar-btn--danger" :disabled="!selectedKeys.length || deleting" @click="$emit('delete-selected')">
         <i class="fa-regular fa-trash-can"></i>
-        <span>{{ deleting ? "Deleting..." : "Delete" }}</span>
+        <span>{{ deleting ? $tUi('deleting') : $tUi('delete') }}</span>
       </button>
 
       <div class="toolbar-divider"></div>
@@ -23,16 +23,16 @@
       <div class="toolbar-filter">
         <i class="fa-solid fa-arrow-up-wide-short toolbar-filter-icon"></i>
         <select v-model="localActiveSortKey" class="toolbar-select">
-          <option value="date">Latest first</option>
-          <option value="dateAsc">Oldest first</option>
-          <option value="name">Name A-Z</option>
-          <option value="nameDesc">Name Z-A</option>
-          <option value="type">Type A-Z</option>
-          <option value="typeDesc">Type Z-A</option>
-          <option value="size">Largest first</option>
-          <option value="sizeAsc">Smallest first</option>
-          <option value="user">User A-Z</option>
-          <option value="userDesc">User Z-A</option>
+          <option value="date">{{ $tUi('sortLatestFirst') }}</option>
+          <option value="dateAsc">{{ $tUi('sortOldestFirst') }}</option>
+          <option value="name">{{ $tUi('sortNameAZ') }}</option>
+          <option value="nameDesc">{{ $tUi('sortNameZA') }}</option>
+          <option value="type">{{ $tUi('sortTypeAZ') }}</option>
+          <option value="typeDesc">{{ $tUi('sortTypeZA') }}</option>
+          <option value="size">{{ $tUi('sortLargestFirst') }}</option>
+          <option value="sizeAsc">{{ $tUi('sortSmallestFirst') }}</option>
+          <option value="user">{{ $tUi('sortUserAZ') }}</option>
+          <option value="userDesc">{{ $tUi('sortUserZA') }}</option>
         </select>
       </div>
 
@@ -41,7 +41,7 @@
         <el-select
           v-model="localSelectedTypeFilters"
           class="toolbar-type-select"
-          placeholder="All types"
+          :placeholder="$tUi('allTypes')"
           multiple
           collapse-tags
           collapse-tags-tooltip
@@ -57,7 +57,7 @@
 
     <div v-if="loading" class="state-block">
       <i class="fa-solid fa-spinner fa-spin state-icon"></i>
-      <span>Loading attachments...</span>
+      <span>{{ $tUi('loadingAttachments') }}</span>
     </div>
     <div v-else-if="error" class="state-block state-block--error">
       <i class="fa-solid fa-circle-exclamation state-icon"></i>
@@ -70,11 +70,11 @@
             <th class="check-col">
               <input type="checkbox" class="table-checkbox" :checked="allSelected" @change="$emit('toggle-select-all', $event)" />
             </th>
-            <th class="col-name">Name</th>
-            <th class="col-date">Date Modified</th>
-            <th class="col-type">Type</th>
-            <th class="col-size">Size</th>
-            <th class="col-user">Uploaded By</th>
+            <th class="col-name">{{ $tUi('colName') }}</th>
+            <th class="col-date">{{ $tUi('colDateModified') }}</th>
+            <th class="col-type">{{ $tUi('colType') }}</th>
+            <th class="col-size">{{ $tUi('colSize') }}</th>
+            <th class="col-user">{{ $tUi('colUploadedBy') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -96,7 +96,7 @@
           <tr v-if="!rows.length">
             <td colspan="6" class="empty-row">
               <i class="fa-regular fa-folder-open" style="margin-right: 8px; opacity: 0.5;"></i>
-              No attachments found
+              {{ $tUi('noData') }}
             </td>
           </tr>
         </tbody>

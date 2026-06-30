@@ -7,12 +7,12 @@
         </div>
       </div>
 
-      <div class="login-title">IED Management System</div>
+      <div class="login-title">{{ $tUi('iedManagementSystem') }}</div>
 
       <div class="login-form">
         <el-button class="sso-button" @click="startSSOPopupLogin">
           <i class="fa-solid fa-right-to-bracket"></i>
-          Login with SSO
+          {{ $tUi('loginWithSso') }}
         </el-button>
       </div>
     </div>
@@ -36,7 +36,7 @@ export default {
       const res = resp.data || {};
       const loginUrl = res.data;
       if (!loginUrl) {
-        this.$message.error('Không lấy được SSO login URL');
+        this.$message.error(this.$tUi('ssoLoginUrlFailed'));
         return;
       }
 
@@ -63,7 +63,7 @@ export default {
       };
       window.addEventListener('message', handler, false);
     })
-    .catch((error) => this.$notifyApiError?.(error, 'Không lấy được SSO login URL'));
+    .catch((error) => this.$notifyApiError?.(error, this.$tUi('ssoLoginUrlFailed')));
 }
 ,
     exchangeCodeForToken(code) {
@@ -71,12 +71,12 @@ export default {
         .then(resp => {
           const res = resp.data || {};
           if (res.code !== 1) { 
-            this.$message.error(res.message || 'SSO login failed'); 
+            this.$message.error(res.message || this.$tUi('ssoLoginFailed'));
             return; 
           }
           const ssoToken = res.data;
           if (!ssoToken || !ssoToken.accessToken) { 
-            this.$message.error('Thiếu accessToken'); 
+            this.$message.error(this.$tUi('missingAccessToken'));
             return; 
           }
           localStorage.setItem('accessToken' + CLIENT_ID, ssoToken.accessToken);
@@ -102,7 +102,7 @@ export default {
           this.setUser(userData);
           this.$router.replace({ name: 'tree' });
         })
-        .catch((error) => this.$notifyApiError?.(error, 'Không đổi code lấy token được'));
+        .catch((error) => this.$notifyApiError?.(error, this.$tUi('ssoTokenExchangeFailed')));
     }
   },
 };

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    title="Protection Zone"
+    :title="$tUi('protectionZone')"
     width="920px"
     :close-on-click-modal="true"
     @update:model-value="$emit('update:modelValue', $event)"
@@ -31,8 +31,8 @@
             class="diagram-filter-arrow"
             type="button"
             @click.stop="toggleLevelDropdown(item.type)"
-            aria-label="Select levels"
-            title="Select levels"
+            :aria-label="$tUi('selectLevels')"
+            :title="$tUi('selectLevels')"
           >
             ▾
           </button>
@@ -52,9 +52,9 @@
                 :checked="isLevelSelected(item.type, lv)"
                 @change="toggleLevelSelection(item.type, lv)"
               />
-              <span>Level {{ lv }}</span>
+              <span>{{ $tUi('level', { n: lv }) }}</span>
             </label>
-            <div v-if="!item.levels.length" class="level-empty">No levels</div>
+            <div v-if="!item.levels.length" class="level-empty">{{ $tUi('noLevels') }}</div>
           </div>
         </div>
 

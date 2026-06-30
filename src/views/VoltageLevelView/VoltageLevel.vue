@@ -3,7 +3,7 @@
     <el-row :gutter="20" id="main-content">
       <el-col :span="12" class="col-content">
         <div class="block">
-          <div class="block-title">Voltage Level</div>
+          <div class="block-title">{{ $tUi('blockTitleVoltageLevel') }}</div>
           <div v-if="isLoading" class="loading-text">Loading voltage level...</div>
           <div v-else>
             <el-descriptions :column="1" size="small" border class="voltage-descriptions">
@@ -22,7 +22,7 @@
 
       <el-col :span="12" class="col-content">
         <div class="block">
-          <div class="block-title">Details</div>
+          <div class="block-title">{{ $tUi('blockTitleDetails') }}</div>
           <el-descriptions :column="1" size="small" border class="voltage-descriptions">
             <el-descriptions-item
               v-for="item in detailFields"

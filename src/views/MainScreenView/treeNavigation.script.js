@@ -6,6 +6,7 @@ import ActivityBar from "../common/ActivityBar.vue";
 import SCLManage from "../common/SCLManage.vue";
 import PropertiesPane from "../common/PropertiesPane.vue";
 import AssetInfoView from "@/views/common/AssetInfoView.vue";
+import OvercurrentCurveDialog from "@/views/ParameterSettingView/OvercurrentCurveDialog.vue";
 import { findNodeById } from "@/api/treenode";
 import AddDevice from "@/views/AddDeviceView/AddDevice.vue";
 import AddOrganisation from "@/views/OrganisationView/AddOrganisation.vue";
@@ -13,6 +14,7 @@ import AddSubstation from "@/views/OrganisationView/AddSubstation.vue";
 import AddVoltageLevel from "@/views/VoltageLevelView/AddVoltageLevel.vue";
 import AddBay from "@/views/BayView/AddBay.vue";
 import DeviceListView from "@/views/DeviceListView/DeviceListView.vue";
+import BulkIedImportDialog from "@/views/ImportIED/BulkIedImportDialog.vue";
 import {
   getEntityTreeRaw,
   getPropertiesById,
@@ -62,6 +64,7 @@ const translations = {
     lastModified: "Last Modified",
     author: "Author",
     lastSavedBy: "Last Saved By",
+    importIed: "Import IED",
   },
   "vi-vi": {
     home: "Trang chủ",
@@ -88,6 +91,7 @@ const translations = {
     lastModified: "Sửa đổi lần cuối",
     author: "Tác giả",
     lastSavedBy: "Lưu lần cuối bởi",
+    importIed: "Nhập IED",
   },
 };
 
@@ -149,12 +153,14 @@ export default {
     SCLManage,
     PropertiesPane,
     AssetInfoView,
+    OvercurrentCurveDialog,
     AddDevice,
     AddOrganisation,
     AddSubstation,
     AddVoltageLevel,
     AddBay,
     DeviceListView,
+    BulkIedImportDialog,
   },
   computed: {
     ...mapGetters(["language"]),
@@ -200,13 +206,17 @@ export default {
       addSubstationDialogVisible: false,
       addVoltageLevelDialogVisible: false,
       showAssetInfoDialogVisible: false,
+      compareOvercurrentDialogVisible: false,
       addDeviceNode: null,
       addOrganisationNode: null,
       addSubstationNode: null,
       addVoltageLevelNode: null,
       showAssetInfoNode: null,
+      compareOvercurrentIeds: [],
       addBayDialogVisible: false,
       addBayNode: null,
+      bulkIedImportDialogVisible: false,
+      bulkIedImportNode: null,
       currentNodeId: null,
       activeTab: {},
       tabs: [],
@@ -869,6 +879,17 @@ export default {
       this.showAssetInfoNode = node || null;
       this.showAssetInfoDialogVisible = true;
     },
+    openOvercurrentCompareDialog(payload) {
+      const source = payload?.source;
+      const target = payload?.target;
+      if (!source?.id || !target?.id) {
+        this.$message?.warning?.(this.$tUi('cannotDetermineIedOvercurrent'));
+        return;
+      }
+
+      this.compareOvercurrentIeds = [source, target];
+      this.compareOvercurrentDialogVisible = true;
+    },
     openAddVoltageLevelDialog(node) {
       this.addVoltageLevelNode = node || null;
       this.addVoltageLevelDialogVisible = true;
@@ -896,6 +917,14 @@ export default {
     onBayCreated() {
       this.addBayDialogVisible = false;
       this.reloadTree();
+    },
+    openBulkIedImportDialog(node) {
+      this.bulkIedImportNode = node || null;
+      this.bulkIedImportDialogVisible = true;
+    },
+    async onBulkIedImportComplete() {
+      this.iedInfoCache = {};
+      await this.reloadTree();
     },
     openSidebar() {
       this.sidebarCollapsed = false;
@@ -1268,7 +1297,7 @@ export default {
       this.ownerServerList = this.ownerServerList.filter(
         (owner) => owner.id !== node.id
       );
-      this.$message.success("Xóa owner thành công (mock)");
+      this.$message.success(this.$tUi('removeOwnerSuccess'));
     },
     async removeAsset(node) {
       this.ownerServerList.forEach((owner) => {
@@ -1276,7 +1305,7 @@ export default {
           owner.children = owner.children.filter((c) => c.id !== node.id);
         }
       });
-      this.$message.success("Asset đã được xóa thành công (mock)");
+      this.$message.success(this.$tUi('removeAssetSuccess'));
     },
     async removeLocation(node) {
       this.ownerServerList.forEach((owner) => {
@@ -1284,7 +1313,7 @@ export default {
           owner.children = owner.children.filter((c) => c.id !== node.id);
         }
       });
-      this.$message.success("Xóa location thành công (mock)");
+      this.$message.success(this.$tUi('removeLocationSuccess'));
     },
     refreshProps() {
       this.properties = this.selectedId

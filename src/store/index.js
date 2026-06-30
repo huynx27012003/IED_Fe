@@ -10,7 +10,7 @@ const store = createStore({
       user: savedUser || null,
       serverAddr: localStorage.getItem('SERVER_ADDR') || 'http://103.163.118.212:30827',
       selectedOwner: null,
-      language: 'en-vi',
+      language: localStorage.getItem('language') || 'en-vi',
       apiPendingCount: 0,
       lastApiError: null
     }

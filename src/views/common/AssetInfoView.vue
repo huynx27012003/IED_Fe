@@ -6,7 +6,7 @@
         <div class="topbar-mode-badge">{{ modeLabel }}</div>
         <div class="asset-name">{{ assetDisplayName }}</div>
       </div>
-      <button type="button" class="asset-close-btn" aria-label="Close" title="Close" @click="$emit('close')">
+      <button type="button" class="asset-close-btn" :aria-label="$tUi('close')" :title="$tUi('close')" @click="$emit('close')">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -22,7 +22,7 @@
             @click="activeSection = 'information'"
           >
             <i class="fa-solid fa-circle-info sidebar-icon"></i>
-            <span>Information</span>
+            <span>{{ $tUi('information') }}</span>
           </button>
           <button
             type="button"
@@ -31,7 +31,7 @@
             @click="activeSection = 'attachment'"
           >
             <i class="fa-solid fa-paperclip sidebar-icon"></i>
-            <span>Attachments</span>
+            <span>{{ $tUi('attachments') }}</span>
             <span v-if="attachments.length" class="sidebar-badge">{{ attachments.length }}</span>
           </button>
         </nav>
@@ -43,13 +43,13 @@
         <div class="section-header">
           <div class="section-title">
             <i :class="activeSection === 'information' ? 'fa-solid fa-circle-info' : 'fa-solid fa-paperclip'" class="section-icon"></i>
-            {{ activeSection === 'information' ? modeLabel + ' Details' : 'Attachments' }}
+            {{ activeSection === 'information' ? (modeLabel + ' ' + $tUi('details')) : $tUi('attachments') }}
           </div>
           <div v-if="activeSection === 'information'" class="section-actions">
             <template v-if="!isEditing">
-              <button type="button" class="action-btn" @click="onClickEdit" aria-label="Edit" title="Edit">
+              <button type="button" class="action-btn" @click="onClickEdit" :aria-label="$tUi('edit')" :title="$tUi('edit')">
                 <i class="fa-solid fa-pen-to-square"></i>
-                <span>Edit</span>
+                <span>{{ $tUi('edit') }}</span>
               </button>
             </template>
             <template v-else>
@@ -58,21 +58,21 @@
                 class="action-btn action-btn--save"
                 @click="saveEdit"
                 :disabled="savingAsset"
-                aria-label="Save"
-                title="Save"
+                :aria-label="$tUi('save')"
+                :title="$tUi('save')"
               >
                 <i :class="savingAsset ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-check'"></i>
-                <span>{{ savingAsset ? 'Saving…' : 'Save' }}</span>
+                <span>{{ savingAsset ? $tUi('saving') : $tUi('save') }}</span>
               </button>
               <button
                 type="button"
                 class="action-btn action-btn--cancel"
                 @click="cancelEdit"
-                aria-label="Cancel"
-                title="Cancel"
+                :aria-label="$tUi('cancel')"
+                :title="$tUi('cancel')"
               >
                 <i class="fa-solid fa-xmark"></i>
-                <span>Cancel</span>
+                <span>{{ $tUi('cancel') }}</span>
               </button>
             </template>
           </div>
@@ -82,7 +82,7 @@
         <template v-if="activeSection === 'information'">
           <div v-if="isLoading" class="state-block">
             <i class="fa-solid fa-spinner fa-spin state-icon"></i>
-            <span>Loading {{ modeLabel.toLowerCase() }} information…</span>
+            <span>{{ $tUi('loadingInfo', { mode: modeLabel.toLowerCase() }) }}</span>
           </div>
           <div v-else-if="errorMessage" class="state-block state-block--error">
             <i class="fa-solid fa-circle-exclamation state-icon"></i>
@@ -90,14 +90,14 @@
           </div>
           <div v-else-if="!informationFields.length" class="state-block">
             <i class="fa-regular fa-folder-open state-icon"></i>
-            <span>No information available.</span>
+            <span>{{ $tUi('noInfoAvailable') }}</span>
           </div>
 
           <div v-else-if="isOrganisationMode" class="organisation-layout">
             <div class="form-group">
               <div class="form-group-header">
                 <i class="fa-solid fa-building form-group-icon"></i>
-                Company Information
+                {{ $tUi('companyInformation') }}
               </div>
               <div class="fields-grid">
                 <div v-for="item in organisationCompanyFields" :key="item.key" class="field-row">
@@ -117,7 +117,7 @@
             <div class="form-group">
               <div class="form-group-header">
                 <i class="fa-solid fa-user form-group-icon"></i>
-                Contact Person
+                {{ $tUi('contactPerson') }}
               </div>
               <div class="fields-grid">
                 <div v-for="item in organisationContactFields" :key="item.key" class="field-row">
@@ -551,19 +551,19 @@ export default {
     async saveEdit() {
       if (this.savingAsset || !this.isEditing) return;
       const updater = this.modeConfig?.updater;
-      if (!updater) { this.$message?.warning?.("Update is not supported for this asset mode."); return; }
+      if (!updater) { this.$message?.warning?.(this.$tUi('updateNotSupported')); return; }
       const payload = this.buildUpdatePayload();
-      if (!payload) { this.$message?.warning?.("Invalid update payload."); return; }
+      if (!payload) { this.$message?.warning?.(this.$tUi('invalidUpdatePayload')); return; }
       this.savingAsset = true;
       try {
         await updater(payload);
         this.originalFormValues = { ...this.formValues };
         this.isEditing = false;
-        this.$message?.success?.(`${this.modeLabel} updated successfully.`);
+        this.$message?.success?.(this.$tUi('updatedSuccess', { label: this.modeLabel }));
         await this.fetchAssetInfo();
         this.$emit("refresh-tree");
       } catch (error) {
-        this.$notifyApiError?.(error, `Failed to update ${this.modeLabel.toLowerCase()}.`);
+        this.$notifyApiError?.(error, this.$tUi('failedToUpdate', { mode: this.modeLabel.toLowerCase() }));
       } finally {
         this.savingAsset = false;
       }
@@ -577,12 +577,12 @@ export default {
       const input = event?.target;
       const file = input?.files?.[0] || null;
       if (!file) return;
-      if (!this.assetMode) { this.$message?.error?.("Invalid asset mode."); input.value = ""; return; }
-      if (this.assetId === null || this.assetId === undefined || this.assetId === "") { this.$message?.error?.("Invalid asset id."); input.value = ""; return; }
+      if (!this.assetMode) { this.$message?.error?.(this.$tUi('invalidAssetMode')); input.value = ""; return; }
+      if (this.assetId === null || this.assetId === undefined || this.assetId === "") { this.$message?.error?.(this.$tUi('invalidAssetId')); input.value = ""; return; }
       this.attachmentsUploading = true;
       try {
         await uploadAttachment(this.assetMode, this.assetId, file);
-        this.$message?.success?.(`Uploaded ${file.name}`);
+        this.$message?.success?.(this.$tUi('uploadedSuccess', { name: file.name }));
         await this.fetchAttachments();
       } catch (error) {
         this.$notifyApiError?.(error, "Failed to upload attachment.");
@@ -603,7 +603,7 @@ export default {
     },
     async onClickDownloadSelected() {
       const selectedRows = this.attachmentRows.filter((r) => this.selectedAttachmentKeys.includes(r.key));
-      if (!selectedRows.length) { this.$message?.warning?.("Please select attachment(s) to download."); return; }
+      if (!selectedRows.length) { this.$message?.warning?.(this.$tUi('selectAttachmentDownload')); return; }
       this.attachmentsDownloading = true;
       let successCount = 0;
       try {
@@ -613,8 +613,8 @@ export default {
           this.triggerBrowserDownload(response.data, row.fileName);
           successCount += 1;
         }
-        if (successCount > 0) this.$message?.success?.(`Downloaded ${successCount} attachment(s).`);
-        else this.$message?.warning?.("No valid attachment id to download.");
+        if (successCount > 0) this.$message?.success?.(this.$tUi('downloadCountSuccess', { count: successCount }));
+        else this.$message?.warning?.(this.$tUi('noValidAttachmentIdDownload'));
       } catch (error) {
         this.$notifyApiError?.(error, "Failed to download attachment.");
       } finally {
@@ -623,13 +623,13 @@ export default {
     },
     async onClickDeleteSelected() {
       const selectedRows = this.attachmentRows.filter((r) => this.selectedAttachmentKeys.includes(r.key));
-      if (!selectedRows.length) { this.$message?.warning?.("Please select attachment(s) to delete."); return; }
+      if (!selectedRows.length) { this.$message?.warning?.(this.$tUi('selectAttachmentDelete')); return; }
       const attachmentIds = selectedRows.map((r) => r.mrid).filter((id) => id !== null && id !== undefined && id !== "");
-      if (!attachmentIds.length) { this.$message?.warning?.("No valid attachment id to delete."); return; }
+      if (!attachmentIds.length) { this.$message?.warning?.(this.$tUi('noValidAttachmentIdDelete')); return; }
       this.attachmentsDeleting = true;
       try {
         await deleteAttachments(attachmentIds);
-        this.$message?.success?.(`Deleted ${attachmentIds.length} attachment(s).`);
+        this.$message?.success?.(this.$tUi('deleteCountSuccess', { count: attachmentIds.length }));
         this.selectedAttachmentKeys = [];
         await this.fetchAttachments();
       } catch (error) {
@@ -726,15 +726,15 @@ export default {
       this.formValues = {};
       this.originalFormValues = {};
       this.savingAsset = false;
-      if (!this.modeConfig) { this.errorMessage = "This asset mode is not supported yet."; return; }
-      if (this.assetId === null || this.assetId === undefined || this.assetId === "") { this.errorMessage = "Invalid asset id."; return; }
+      if (!this.modeConfig) { this.errorMessage = this.$tUi('assetModeNotSupported'); return; }
+      if (this.assetId === null || this.assetId === undefined || this.assetId === "") { this.errorMessage = this.$tUi('invalidAssetId'); return; }
       this.isLoading = true;
       try {
         const response = await this.modeConfig.fetcher(this.assetId);
         const data = response?.data ?? response;
         this.assetPayload = data && typeof data === "object" ? data : {};
       } catch (error) {
-        this.errorMessage = this.$apiErrorMessage?.(error, `Unable to load ${this.modeLabel.toLowerCase()} information.`) || `Unable to load ${this.modeLabel.toLowerCase()} information.`;
+        this.errorMessage = this.$apiErrorMessage?.(error, this.$tUi('unableToLoadInfo', { mode: this.modeLabel.toLowerCase() })) || this.$tUi('unableToLoadInfo', { mode: this.modeLabel.toLowerCase() });
         this.assetPayload = {};
       } finally {
         this.isLoading = false;
@@ -753,13 +753,13 @@ export default {
       this.attachmentsError = "";
       this.attachments = [];
       this.selectedAttachmentKeys = [];
-      if (!this.assetMode) { this.attachmentsLoading = false; this.attachmentsError = "Invalid asset mode."; return; }
-      if (this.assetId === null || this.assetId === undefined || this.assetId === "") { this.attachmentsLoading = false; this.attachmentsError = "Invalid asset id."; return; }
+      if (!this.assetMode) { this.attachmentsLoading = false; this.attachmentsError = this.$tUi('invalidAssetMode'); return; }
+      if (this.assetId === null || this.assetId === undefined || this.assetId === "") { this.attachmentsLoading = false; this.attachmentsError = this.$tUi('invalidAssetId'); return; }
       try {
         const response = await getAttachmentsByAsset(this.assetMode, this.assetId);
         this.attachments = this.normalizeAttachmentList(response);
       } catch (error) {
-        this.attachmentsError = this.$apiErrorMessage?.(error, "Unable to load attachment list.") || "Unable to load attachment list.";
+        this.attachmentsError = this.$apiErrorMessage?.(error, this.$tUi('unableToLoadAttachments')) || this.$tUi('unableToLoadAttachments');
         this.attachments = [];
       } finally {
         this.attachmentsLoading = false;

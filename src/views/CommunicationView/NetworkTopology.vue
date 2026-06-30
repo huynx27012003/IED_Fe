@@ -3,7 +3,7 @@
     <div class="topo-toolbar">
       <div class="topo-title">
         <span class="topo-title-dot" />
-        Network Topology
+        {{ $tUi('networkTopology') }}
         <span class="topo-count">{{ uniqueDevices.length }} devices · {{ totalLinks }} links</span>
       </div>
 
@@ -21,14 +21,14 @@
       </div>
 
       <div class="topo-route-actions">
-        <button class="route-btn" @click="autoRouteAll" title="Auto route all links">Auto Route</button>
+        <button class="route-btn" @click="autoRouteAll" :title="$tUi('autoRouteAll')">{{ $tUi('autoRoute') }}</button>
         <button
           class="route-btn ghost"
           :disabled="!canResetAll"
           @click="resetAllLayout"
-          title="Reset topology to default"
+          :title="$tUi('resetTopology')"
         >
-          Reset All
+          {{ $tUi('resetAll') }}
         </button>
         <span v-if="routeActionStatus" class="route-status" :class="routeActionStatusType">
           {{ routeActionStatus }}
@@ -36,10 +36,10 @@
       </div>
 
       <div class="topo-zoom-controls">
-        <button class="zoom-btn" @click="resetZoom" title="Reset zoom">⤢</button>
-        <button class="zoom-btn" @click="zoomIn" title="Zoom in">+</button>
+        <button class="zoom-btn" @click="resetZoom" :title="$tUi('resetZoom')">⤢</button>
+        <button class="zoom-btn" @click="zoomIn" :title="$tUi('zoomIn')">+</button>
         <span class="zoom-level">{{ Math.round(zoom * 100) }}%</span>
-        <button class="zoom-btn" @click="zoomOut" title="Zoom out">−</button>
+        <button class="zoom-btn" @click="zoomOut" :title="$tUi('zoomOut')">−</button>
       </div>
     </div>
 
